@@ -205,15 +205,24 @@ describe("MarkdownEditor - Loading Initial Content", () => {
   });
 
   it("handles network errors during fetch", async () => {
-    global.fetch = jest
-      .fn()
-      .mockRejectedValueOnce(new Error("Network failure"));
+    // Suppress console.error during this test
+    const originalConsoleError = console.error;
+    console.error = jest.fn();
 
-    render(<MarkdownEditor filename="test-resume" />);
+    try {
+      global.fetch = jest
+        .fn()
+        .mockRejectedValueOnce(new Error("Network failure"));
 
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Error loading resume");
-    });
+      render(<MarkdownEditor filename="test-resume" />);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Error loading resume");
+      });
+    } finally {
+      // Restore original console.error
+      console.error = originalConsoleError;
+    }
   });
 });
 

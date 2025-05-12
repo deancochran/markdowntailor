@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 import React from "react";
+if (
+  typeof globalThis.TextEncoder === "undefined" ||
+  typeof globalThis.TextDecoder === "undefined"
+) {
+  const util = require("util");
+  globalThis.TextEncoder = util.TextEncoder;
+  globalThis.TextDecoder = util.TextDecoder;
+}
 
 // Fetch API mock
 global.fetch = jest.fn().mockImplementation(() =>
