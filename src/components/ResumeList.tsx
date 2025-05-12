@@ -1,0 +1,212 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { FileText, Plus, AlertCircle } from "lucide-react";
+
+interface Resume {
+  filename: string;
+  path: string;
+}
+
+const ResumeList: React.FC = () => {
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [newResumeName, setNewResumeName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchResumes = async () => {
+      try {
+        const response = await fetch('/api/resumes');
+        if (!response.ok) {
+          throw new Error('Failed to fetch resumes');
+        }
+        const data = await response.json();
+        setResumes(data.resumes || []);
+      } catch (err) {
+        setError('Error loading resumes');
+        // Only log errors in non-test environments
+        if (process.env.NODE_ENV !== 'test') {
+          console.error('Error loading resumes:', err);
+        }
+        toast.error("Failed to load resumes");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResumes();
+  }, []);
+
+  const handleCreateNewResume = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newResumeName.trim()) return;
+
+    setIsCreating(true);
+    
+    // Import utility functions
+    const { sanitizeFilename, createDefaultResume, isValidResumeName } = await import('../utils/resumeUtils');
+
+    if (!isValidResumeName(newResumeName)) {
+      setError('Invalid resume name. Please use a different name.');
+      toast.error("Invalid resume name");
+      setIsCreating(false);
+      return;
+    }
+
+    const sanitizedName = sanitizeFilename(newResumeName.trim());
+    try {
+      const response = await fetch(`/api/resumes/${sanitizedName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: createDefaultResume(newResumeName.trim()),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create new resume');
+      }
+
+      toast.success("Resume created successfully");
+      
+      // Navigate to the new resume
+      router.push(`/editor/${sanitizedName}`);
+    } catch (err) {
+      setError('Error creating new resume');
+      // Only log errors in non-test environments
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error creating new resume:', err);
+      }
+      toast.error("Failed to create resume");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container py-6" data-testid="loading-skeleton">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-60" />
+            <Skeleton className="h-4 w-full" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full rounded-md" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container py-6">
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle size={20} className="text-destructive" />
+              <span>Error</span>
+            </CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-6">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Create New Resume</CardTitle>
+          <CardDescription>
+            Enter a name for your new resume to get started
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateNewResume} className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <Input
+                id="newResumeName"
+                value={newResumeName}
+                onChange={(e) => setNewResumeName(e.target.value)}
+                placeholder="Enter resume name"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create Resume"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      
+      {resumes.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <FileText size={32} className="text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No resumes found</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Create your first resume using the form above to get started
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {resumes.map((resume) => (
+            <Card key={resume.filename} className="overflow-hidden transition-all hover:shadow-md">
+              <Link href={`/editor/${resume.filename}`} className="block h-full">
+                <CardHeader>
+                  <CardTitle className="text-xl">{resume.filename}</CardTitle>
+                  <CardDescription>
+                    Click to edit this resume
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter className="bg-muted/50 pt-2">
+                  <Button variant="ghost" size="sm" className="ml-auto">
+                    Edit Resume
+                  </Button>
+                </CardFooter>
+              </Link>
+            </Card>
+          ))}
+          <Card key="create-new-resume" className="border-dashed hover:border-primary/50 transition-colors">
+            <button
+              onClick={() => document.getElementById('newResumeName')?.focus()}
+              className="h-full w-full flex flex-col items-center justify-center p-6"
+            >
+              <div className="rounded-full border-2 border-muted p-2 mb-2">
+                <Plus size={24} className="text-muted-foreground" />
+              </div>
+              <p className="font-medium">Create New Resume</p>
+            </button>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ResumeList;
