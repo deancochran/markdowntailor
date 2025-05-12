@@ -1,14 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, FileText } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Plus, AlertCircle } from "lucide-react";
 
 interface Resume {
   filename: string;
@@ -19,24 +26,24 @@ const ResumeList: React.FC = () => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newResumeName, setNewResumeName] = useState('');
+  const [newResumeName, setNewResumeName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const fetchResumes = async () => {
       try {
-        const response = await fetch('/api/resumes');
+        const response = await fetch("/api/resumes");
         if (!response.ok) {
-          throw new Error('Failed to fetch resumes');
+          throw new Error("Failed to fetch resumes");
         }
         const data = await response.json();
         setResumes(data.resumes || []);
       } catch (err) {
-        setError('Error loading resumes');
+        setError("Error loading resumes");
         // Only log errors in non-test environments
-        if (process.env.NODE_ENV !== 'test') {
-          console.error('Error loading resumes:', err);
+        if (process.env.NODE_ENV !== "test") {
+          console.error("Error loading resumes:", err);
         }
         toast.error("Failed to load resumes");
       } finally {
@@ -52,12 +59,13 @@ const ResumeList: React.FC = () => {
     if (!newResumeName.trim()) return;
 
     setIsCreating(true);
-    
+
     // Import utility functions
-    const { sanitizeFilename, createDefaultResume, isValidResumeName } = await import('../utils/resumeUtils');
+    const { sanitizeFilename, createDefaultResume, isValidResumeName } =
+      await import("../utils/resumeUtils");
 
     if (!isValidResumeName(newResumeName)) {
-      setError('Invalid resume name. Please use a different name.');
+      setError("Invalid resume name. Please use a different name.");
       toast.error("Invalid resume name");
       setIsCreating(false);
       return;
@@ -66,26 +74,26 @@ const ResumeList: React.FC = () => {
     const sanitizedName = sanitizeFilename(newResumeName.trim());
     try {
       const response = await fetch(`/api/resumes/${sanitizedName}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'text/plain',
+          "Content-Type": "text/plain",
         },
         body: createDefaultResume(newResumeName.trim()),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create new resume');
+        throw new Error("Failed to create new resume");
       }
 
       toast.success("Resume created successfully");
-      
+
       // Navigate to the new resume
       router.push(`/editor/${sanitizedName}`);
     } catch (err) {
-      setError('Error creating new resume');
+      setError("Error creating new resume");
       // Only log errors in non-test environments
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error creating new resume:', err);
+      if (process.env.NODE_ENV !== "test") {
+        console.error("Error creating new resume:", err);
       }
       toast.error("Failed to create resume");
     } finally {
@@ -95,7 +103,7 @@ const ResumeList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container py-6" data-testid="loading-skeleton">
+      <div className="container py-2" data-testid="loading-skeleton">
         <Card>
           <CardHeader>
             <Skeleton className="h-8 w-60" />
@@ -115,7 +123,7 @@ const ResumeList: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container py-6">
+      <div className="container py-2">
         <Card className="border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -135,16 +143,19 @@ const ResumeList: React.FC = () => {
   }
 
   return (
-    <div className="container py-6">
+    <div className="container py-2">
       <Card className="mb-8">
-        <CardHeader>
+        <CardHeader className="px-6 py-4">
           <CardTitle>Create New Resume</CardTitle>
           <CardDescription>
             Enter a name for your new resume to get started
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateNewResume} className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="px-6 py-4">
+          <form
+            onSubmit={handleCreateNewResume}
+            className="flex flex-col sm:flex-row gap-4"
+          >
             <div className="flex-1">
               <Input
                 id="newResumeName"
@@ -160,10 +171,10 @@ const ResumeList: React.FC = () => {
           </form>
         </CardContent>
       </Card>
-      
+
       {resumes.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+          <CardContent className="flex flex-col items-center justify-center py-12 px-6">
             <div className="rounded-full bg-muted p-4 mb-4">
               <FileText size={32} className="text-muted-foreground" />
             </div>
@@ -176,33 +187,28 @@ const ResumeList: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {resumes.map((resume) => (
-            <Card key={resume.filename} className="overflow-hidden transition-all hover:shadow-md">
-              <Link href={`/editor/${resume.filename}`} className="block h-full">
-                <CardHeader>
+            <Card
+              key={resume.filename}
+              className="overflow-hidden transition-all hover:shadow-md flex flex-col h-full"
+            >
+              <Link href={`/editor/${resume.filename}`} className="flex-1">
+                <CardHeader className="px-4 py-3">
                   <CardTitle className="text-xl">{resume.filename}</CardTitle>
-                  <CardDescription>
-                    Click to edit this resume
-                  </CardDescription>
+                  <CardDescription>Resume document</CardDescription>
                 </CardHeader>
-                <CardFooter className="bg-muted/50 pt-2">
-                  <Button variant="ghost" size="sm" className="ml-auto">
-                    Edit Resume
-                  </Button>
-                </CardFooter>
+                <CardContent className="px-4 pb-2 pt-0">
+                  <p className="text-sm text-muted-foreground">
+                    Last modified: {new Date().toLocaleDateString()}
+                  </p>
+                </CardContent>
               </Link>
+              <CardFooter className="mt-auto flex items-center justify-end">
+                <Link href={`/editor/${resume.filename}`}>
+                  <Button size="sm">Edit Resume</Button>
+                </Link>
+              </CardFooter>
             </Card>
           ))}
-          <Card key="create-new-resume" className="border-dashed hover:border-primary/50 transition-colors">
-            <button
-              onClick={() => document.getElementById('newResumeName')?.focus()}
-              className="h-full w-full flex flex-col items-center justify-center p-6"
-            >
-              <div className="rounded-full border-2 border-muted p-2 mb-2">
-                <Plus size={24} className="text-muted-foreground" />
-              </div>
-              <p className="font-medium">Create New Resume</p>
-            </button>
-          </Card>
         </div>
       )}
     </div>

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,7 +10,7 @@ const nextConfig = {
     return config;
   },
   // Add transpilePackages to handle @uiw/react-md-editor
-  transpilePackages: ['@uiw/react-md-editor'],
+  transpilePackages: ["@uiw/react-md-editor"],
 };
 
 export default nextConfig;

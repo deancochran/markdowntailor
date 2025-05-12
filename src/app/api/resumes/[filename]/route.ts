@@ -6,10 +6,10 @@ import { sanitizeFilename, getResumeFileExtension } from '../../../../utils/resu
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const { filename } = params;
+    const { filename } = await params;
     const sanitizedFilename = sanitizeFilename(filename);
     const extension = getResumeFileExtension(sanitizedFilename);
     const filePath = path.join(process.cwd(), 'src', 'data', 'resumes', `${sanitizedFilename}${extension}`);
@@ -41,10 +41,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { filename: string } }
+  { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const { filename } = params;
+    const { filename } = await params;
     const sanitizedFilename = sanitizeFilename(filename);
     const extension = getResumeFileExtension(sanitizedFilename);
     const markdown = await request.text();

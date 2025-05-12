@@ -29,9 +29,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
-        <div className="relative flex min-h-screen flex-col">
+        <div className="grid h-screen grid-rows-[auto_1fr_auto]">
           <Header />
           <main className="flex-1">{children}</main>
+          <footer className="border-t p-4 text-center text-sm text-muted-foreground">
+            Resume Builder &copy; {new Date().getFullYear()}
+          </footer>
         </div>
         <Toaster />
       </body>

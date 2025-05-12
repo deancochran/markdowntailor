@@ -25,75 +25,101 @@ export function formatDate(date: Date): string {
 }
 
 /**
- * Creates a default resume template with basic structure
+ * Creates a default resume template using the sample resume content
  * @param name Optional name to include in the template
- * @returns Markdown string with resume template
+ * @returns Markdown string with resume template based on sample resume
  */
 export function createDefaultResume(name: string = 'Your Name'): string {
-  return `# ${name}
+  // In a production application, we would use a dynamic import or fs.readFileSync
+  // to read the sample resume file. For now, we're using a hardcoded implementation
+  // that replaces the name in the sample resume with the provided name.
+  
+  // This finds the first occurrence of a name pattern (the first h1 in markdown)
+  // and replaces it with the provided name
+  const sampleResumeContent = getSampleResumeContent();
+  return sampleResumeContent.replace(/^# .*$/m, `# ${name}`);
+}
 
-## Professional Title
+/**
+ * Returns the content of the sample resume
+ * In a production app, this would read from the actual file
+ * @returns The content of the sample resume
+ */
+function getSampleResumeContent(): string {
+  return `# John Doe
 
-Email: email@example.com | Phone: (123) 456-7890 | [LinkedIn](https://linkedin.com/in/yourprofile) | [GitHub](https://github.com/yourusername)
+## Software Engineer
+
+Email: john.doe@example.com | Phone: (123) 456-7890 | [LinkedIn](https://linkedin.com/in/johndoe) | [GitHub](https://github.com/johndoe)
 
 ---
 
 ## Summary
 
-A brief 2-3 sentence summary of your professional background and key strengths.
+Experienced software engineer with over 5 years of expertise in full-stack development, cloud architecture, and DevOps. Passionate about building scalable web applications and solving complex problems with elegant solutions.
 
 ---
 
 ## Experience
 
-### Job Title - Company Name
-*Month Year - Present*
+### Senior Software Engineer - Tech Innovations Inc.
+*January 2021 - Present*
 
-- Accomplishment or responsibility
-- Accomplishment or responsibility
-- Accomplishment or responsibility
+- Led a team of 5 developers to rebuild the company's core platform, resulting in a 40% increase in performance
+- Implemented CI/CD pipelines using GitHub Actions, reducing deployment time by 60%
+- Architected and developed microservices using Node.js and Docker that process over 1M transactions daily
+- Mentored junior developers through code reviews and pair programming sessions
 
-### Previous Job Title - Previous Company
-*Month Year - Month Year*
+### Software Developer - Digital Solutions Ltd.
+*June 2018 - December 2020*
 
-- Accomplishment or responsibility
-- Accomplishment or responsibility
-- Accomplishment or responsibility
-
----
-
-## Education
-
-### Degree - Institution
-*Year - Year*
-
-- GPA, honors, relevant coursework
-- Activities, clubs, or projects
+- Developed and maintained RESTful APIs for mobile and web applications
+- Collaborated with UX designers to implement responsive front-end interfaces using React
+- Optimized database queries, resulting in a 30% reduction in load times
+- Participated in Agile development processes, including daily stand-ups and sprint planning
 
 ---
 
 ## Skills
 
-- Skill Category: List of specific skills
-- Skill Category: List of specific skills
-- Skill Category: List of specific skills
+- **Languages**: JavaScript/TypeScript, Python, Java, SQL
+- **Frontend**: React, Next.js, HTML5, CSS3, Tailwind CSS
+- **Backend**: Node.js, Express, Django, Spring Boot
+- **Database**: PostgreSQL, MongoDB, Redis
+- **DevOps**: Docker, Kubernetes, AWS, GitHub Actions, Terraform
+- **Other**: RESTful APIs, GraphQL, WebSockets, Microservices, Agile methodologies
+
+---
+
+## Education
+
+### Bachelor of Science in Computer Science
+*University of Technology, 2014-2018*
+
+- GPA: 3.8/4.0
+- Relevant coursework: Data Structures, Algorithms, Web Development, Database Systems
+- Senior Project: Developed an AI-powered task management system
 
 ---
 
 ## Projects
 
-### Project Name
-- Brief description of the project
-- Technologies used
-- Link to project or GitHub repository
+### Personal Finance Tracker
+- Built a full-stack application using MERN stack with authentication and data visualization
+- Implemented OAuth 2.0 for secure third-party integrations
+- [github.com/johndoe/finance-tracker](https://github.com/johndoe/finance-tracker)
+
+### Open Source Contribution - DevTools Extension
+- Contributed to a popular browser extension for developers with over 50k users
+- Added new features for network traffic analysis and implemented performance improvements
 
 ---
 
 ## Certifications
 
-- Certification Name, Year
-- Certification Name, Year
-`;
+- AWS Certified Solutions Architect, 2022
+- Certified Kubernetes Administrator (CKA), 2021
+- MongoDB Certified Developer, 2020`;
 }
 
 /**
