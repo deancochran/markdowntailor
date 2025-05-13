@@ -53,11 +53,9 @@ export default function EditorContent({ filename }: { filename: string }) {
   }
 
   return (
-    <div className="h-screen">
-      <MarkdownEditor
-        initialMarkdown={initialMarkdown || ""}
-        filename={filename}
-      />
-    </div>
+    <MarkdownEditor
+      initialMarkdown={initialMarkdown || ""}
+      filename={filename}
+    />
   );
 }
