@@ -14,15 +14,5 @@ services:
       timeout: 5s
       retries: 5
 
-  neon-proxy:
-    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
-    env_file:
-      - .env
-    ports:
-      - "4444:4444"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
 volumes:
   db_data:

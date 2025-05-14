@@ -16,19 +16,43 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface Resume {
   filename: string;
   path: string;
 }
 
+// Form schema for resume creation
+const createResumeSchema = z.object({
+  resumeName: z.string().min(1, "Resume name is required")
+});
+
+type CreateResumeFormValues = z.infer<typeof createResumeSchema>;
+
 const ResumeList: React.FC = () => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newResumeName, setNewResumeName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
+  
+  // Define form
+  const form = useForm<CreateResumeFormValues>({
+    resolver: zodResolver(createResumeSchema),
+    defaultValues: {
+      resumeName: ""
+    }
+  });
 
   useEffect(() => {
     const fetchResumes = async () => {
@@ -54,9 +78,8 @@ const ResumeList: React.FC = () => {
     fetchResumes();
   }, []);
 
-  const handleCreateNewResume = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newResumeName.trim()) return;
+  const handleCreateNewResume = async (data: CreateResumeFormValues) => {
+    if (!data.resumeName.trim()) return;
 
     setIsCreating(true);
 
@@ -64,21 +87,21 @@ const ResumeList: React.FC = () => {
     const { sanitizeFilename, createDefaultResume, isValidResumeName } =
       await import("../utils/resumeUtils");
 
-    if (!isValidResumeName(newResumeName)) {
+    if (!isValidResumeName(data.resumeName)) {
       setError("Invalid resume name. Please use a different name.");
       toast.error("Invalid resume name");
       setIsCreating(false);
       return;
     }
 
-    const sanitizedName = sanitizeFilename(newResumeName.trim());
+    const sanitizedName = sanitizeFilename(data.resumeName.trim());
     try {
       const response = await fetch(`/api/resumes/${sanitizedName}`, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
         },
-        body: createDefaultResume(newResumeName.trim()),
+        body: createDefaultResume(data.resumeName.trim()),
       });
 
       if (!response.ok) {
@@ -152,23 +175,33 @@ const ResumeList: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-6 py-4">
-          <form
-            onSubmit={handleCreateNewResume}
-            className="flex flex-col sm:flex-row gap-4"
-          >
-            <div className="flex-1">
-              <Input
-                id="newResumeName"
-                value={newResumeName}
-                onChange={(e) => setNewResumeName(e.target.value)}
-                placeholder="Enter resume name"
-                required
-              />
-            </div>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create Resume"}
-            </Button>
-          </form>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleCreateNewResume)}
+              className="flex flex-col sm:flex-row gap-4"
+            >
+              <div className="flex-1">
+                <FormField
+                  control={form.control}
+                  name="resumeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter resume name"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? "Creating..." : "Create Resume"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
 
