@@ -91,3 +91,15 @@ export const authenticators = pgTable(
     },
   ],
 );
+
+export const resumes = pgTable("user", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  markdown: text("markdown").notNull(),
+  css: text("css").notNull(),
+});

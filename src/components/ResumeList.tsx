@@ -9,16 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, FileText } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -26,6 +16,16 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, FileText } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 interface Resume {
   filename: string;
@@ -34,7 +34,7 @@ interface Resume {
 
 // Form schema for resume creation
 const createResumeSchema = z.object({
-  resumeName: z.string().min(1, "Resume name is required")
+  resumeName: z.string().min(1, "Resume name is required"),
 });
 
 type CreateResumeFormValues = z.infer<typeof createResumeSchema>;
@@ -45,13 +45,13 @@ const ResumeList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
-  
+
   // Define form
   const form = useForm<CreateResumeFormValues>({
     resolver: zodResolver(createResumeSchema),
     defaultValues: {
-      resumeName: ""
-    }
+      resumeName: "",
+    },
   });
 
   useEffect(() => {
@@ -187,10 +187,7 @@ const ResumeList: React.FC = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input
-                          placeholder="Enter resume name"
-                          {...field}
-                        />
+                        <Input placeholder="Enter resume name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
