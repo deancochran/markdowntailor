@@ -1,5 +1,4 @@
-"use client";
-import ResumeList from "@/components/ResumeList";
+// import ResumeList from "@/components/ResumeList";
 
 export default function ResumesPage() {
   return (
@@ -11,7 +10,7 @@ export default function ResumesPage() {
             Create, manage, and export your resumes
           </p>
         </header>
-        <ResumeList />
+        {/* <ResumeList /> */}
       </div>
     </div>
   );
