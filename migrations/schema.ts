@@ -57,6 +57,20 @@ export const authenticator = pgTable("authenticator", {
 	unique("authenticator_credentialID_unique").on(table.credentialId),
 ]);
 
+export const resume = pgTable("resume", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	title: text().notNull(),
+	markdown: text().notNull(),
+	css: text().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "resume_userId_user_id_fk"
+		}).onDelete("cascade"),
+]);
+
 export const session = pgTable("session", {
 	sessionToken: text().primaryKey().notNull(),
 	userId: text().notNull(),

@@ -11,9 +11,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <div>
       <div className="flex flex-col items-center justify-center space-y-6 text-center">
-        <div className="space-y-2">
+        <div className="space-y-2 mt-14">
           <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
             Resume Builder
           </h1>

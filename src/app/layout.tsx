@@ -1,8 +1,12 @@
-import { Header } from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 
+import { auth } from "@/auth";
+import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Button } from "@/components/ui/button";
+import { login, logout } from "@/lib/actions/auth";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,11 +14,12 @@ export const metadata: Metadata = {
   description: "A markdown-based resume editor",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
@@ -24,10 +29,41 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="grid h-screen grid-rows-[auto_1fr_auto]">
-            <Header />
-            <main className="w-full h-full flex items-start">{children}</main>
-            <footer className="border-t p-4 text-center text-sm text-muted-foreground">
+          <div className="h-screen flex flex-col">
+            <header className="sticky h-16 top-0 z-50 border-b shadow-xl">
+              <div className="flex w-full px-8 h-14 items-center justify-between">
+                <div className="flex items-center">
+                  <Link href="/" className="mr-6 flex items-center space-x-2">
+                    <span className="font-bold">Resume Builder</span>
+                  </Link>
+                </div>
+
+                <div className="flex items-center">
+                  <nav className="flex items-center space-x-2">
+                    {session ? (
+                      <div className="flex items-center gap-4">
+                        <Link href="/resumes">
+                          <Button type="button">My Resumes</Button>
+                        </Link>
+                        <form action={logout}>
+                          <Button type="submit">Sign Out</Button>
+                        </form>
+                      </div>
+                    ) : (
+                      <form action={login}>
+                        <Button type="submit">Sign In With Github</Button>
+                      </form>
+                    )}
+                    <ModeToggle />
+                  </nav>
+                </div>
+              </div>
+            </header>
+
+            <main className="w-full h-[calc(100vh-4rem)] overflow-y-scroll flex items-start px-4">
+              {children}
+            </main>
+            <footer className="pt-4 pb-8 text-center text-sm text-muted-foreground border-t">
               Resume Builder &copy; {new Date().getFullYear()}
             </footer>
           </div>

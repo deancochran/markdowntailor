@@ -1,14 +1,14 @@
 import { auth } from "@/auth";
+import { CreateResumeForm } from "@/components/forms/CreateResumeForm";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db/drizzle";
-import { resumes } from "@/db/schemas";
-
+import { resume } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { FileText } from "lucide-react";
 import Link from "next/link";
@@ -18,10 +18,11 @@ export default async function ResumesPage() {
   if (!session) {
     redirect("/");
   }
-  const all_resumes = await db
+  const resumes = await db
     .select()
-    .from(resumes)
-    .where(eq(resumes.userId, session.user.id));
+    .from(resume)
+    .where(eq(resume.userId, session.user.id));
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="py-6 px-4 sm:px-6 lg:px-8">
@@ -32,43 +33,10 @@ export default async function ResumesPage() {
           </p>
         </header>
 
-        <div className="container py-2">
-          {/* <Card className="mb-8">
-            <CardHeader className="px-6 py-4">
-              <CardTitle>Create New Resume</CardTitle>
-              <CardDescription>
-                Enter a name for your new resume to get started
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 py-4">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(handleCreateNewResume)}
-                  className="flex flex-col sm:flex-row gap-4"
-                >
-                  <div className="flex-1">
-                    <FormField
-                      control={form.control}
-                      name="resumeName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input placeholder="Enter resume name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button type="submit" disabled={isCreating}>
-                    {isCreating ? "Creating..." : "Create Resume"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card> */}
+        <div className="container items-center py-2">
+          <CreateResumeForm session={session} />
 
-          {all_resumes.length === 0 ? (
+          {resumes.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 px-6">
                 <div className="rounded-full bg-muted p-4 mb-4">
@@ -82,14 +50,14 @@ export default async function ResumesPage() {
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {all_resumes.map((resume) => (
+              {resumes.map((r) => (
                 <Card
-                  key={resume.id}
+                  key={r.id}
                   className="overflow-hidden transition-all hover:shadow-md flex flex-col h-full"
                 >
-                  <Link href={`/editor/${resume.id}`} className="flex-1">
+                  <Link href={`/resumes/${r.id}`} className="flex-1">
                     <CardHeader className="px-4 py-3">
-                      <CardTitle className="text-xl">{resume.title}</CardTitle>
+                      <CardTitle className="text-xl">{r.title}</CardTitle>
                       <CardDescription>Resume document</CardDescription>
                     </CardHeader>
                     <CardContent className="px-4 pb-2 pt-0">

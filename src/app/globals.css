@@ -3,7 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+}
+
 :root {
+    /* INTER FONT */
+    --heading-font-family: "Inter", sans-serif;
+    --base-font-family: "Inter", sans-serif;
+    --anchor-font-family: "inherit";
+
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);

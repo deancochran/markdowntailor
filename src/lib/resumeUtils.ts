@@ -8,7 +8,7 @@
  */
 export function sanitizeFilename(filename: string): string {
   // Remove any path traversal characters and unsafe characters
-  return filename.replace(/[\/\\?%*:|"<>]/g, '-');
+  return filename.replace(/[\/\\?%*:|"<>]/g, "-");
 }
 
 /**
@@ -17,11 +17,11 @@ export function sanitizeFilename(filename: string): string {
  * @returns Formatted date string (e.g., "January 2021")
  */
 export function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = { 
-    year: 'numeric', 
-    month: 'long'
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
   };
-  return date.toLocaleDateString('en-US', options);
+  return date.toLocaleDateString("en-US", options);
 }
 
 /**
@@ -29,15 +29,110 @@ export function formatDate(date: Date): string {
  * @param name Optional name to include in the template
  * @returns Markdown string with resume template based on sample resume
  */
-export function createDefaultResume(name: string = 'Your Name'): string {
+export function createDefaultResume(name: string = "Your Name"): string {
   // In a production application, we would use a dynamic import or fs.readFileSync
   // to read the sample resume file. For now, we're using a hardcoded implementation
   // that replaces the name in the sample resume with the provided name.
-  
+
   // This finds the first occurrence of a name pattern (the first h1 in markdown)
   // and replaces it with the provided name
   const sampleResumeContent = getSampleResumeContent();
   return sampleResumeContent.replace(/^# .*$/m, `# ${name}`);
+}
+
+export function defaultCssTemplate(): string {
+  return `/* Resume styling */
+  /* Resume styling */
+  /* Resume styling */
+  body {
+    background-color: white;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 24px;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: black;
+  }
+
+  h2 {
+    font-size: 18px;
+    border-bottom: 1px solid #000;
+    padding-top: 8px;
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: black;
+  }
+
+  h3 {
+    margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    color: black;
+  }
+
+    h4 {
+    padding-top: 8px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    color: black;
+  }
+
+  /* Links */
+  a {
+    color: blue;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* text */
+  p {
+    font-size: small;
+  }
+
+  /* Lists */
+  ul {
+    padding-left: 13px;
+
+  }
+
+  li {
+    font-size:small;
+  }
+
+  strong {
+    font-weight: bold;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  /* Custom */
+  .section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    margin-bottom: 4px;
+
+  }
+
+  .section-content {
+    display: flex;
+    align-items:  center;
+    gap: 4px;
+  }
+`;
 }
 
 /**
@@ -45,7 +140,7 @@ export function createDefaultResume(name: string = 'Your Name'): string {
  * In a production app, this would read from the actual file
  * @returns The content of the sample resume
  */
-function getSampleResumeContent(): string {
+export function getSampleResumeContent(): string {
   return `# John Doe
 
 ## Software Engineer
@@ -128,7 +223,7 @@ Experienced software engineer with over 5 years of expertise in full-stack devel
  * @returns The appropriate file extension (.md by default)
  */
 export function getResumeFileExtension(filename: string): string {
-  return filename.endsWith('.md') ? '' : '.md';
+  return filename.endsWith(".md") ? "" : ".md";
 }
 
 /**
