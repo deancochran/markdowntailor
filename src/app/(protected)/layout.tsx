@@ -8,7 +8,7 @@ export default async function ProtectedLayout({
 }>) {
   const session = await auth();
   if (!session) {
-    redirect("/");
+    redirect("/login");
   }
   return <div className="h-full w-full">{children}</div>;
 }

@@ -6,60 +6,21 @@ import {
   type InsertResumeSchema,
   resume,
   resumeVersions,
+  UpdateResumeSchema,
+  updateResumeSchema,
 } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 
 export type Toast = {
   description: string;
 };
 
-export const getData = async (userId: string) => {
-  const data = await db
-    .select({
-      id: resume.id,
-      title: resume.title,
-      userId: resume.userId,
-    })
-    .from(resume)
-    .where(eq(resume.userId, userId));
-  return data;
-};
-
-// // Fetch current resume
-// const resume = await db.query.resume.findFirst({
-//   where: eq(resume.id, resumeId),
-// });
-
-// // Get current version count
-// const { count } = await db
-//   .select({ count: count() })
-//   .from(resumeVersions)
-//   .where(eq(resumeVersions.resumeId, resumeId))
-//   .then((res) => res[0] ?? { count: 0 });
-
-// // Insert previous version before updating
-// await db.insert(resumeVersions).values({
-//   resumeId: resume.id,
-//   version: count + 1,
-//   title: resume.title,
-//   content: resume.content,
-// });
-
-// view version history
-// await db.query.resumeVersions.findMany({
-//   where: eq(resumeVersions.resumeId, resumeId),
-//   orderBy: desc(resumeVersions.version),
-// });
-
 /**
  * Create a new resume
  */
-export async function addResume(
-  values: z.infer<InsertResumeSchema>,
-): Promise<string> {
+export async function addResume(values: z.infer<InsertResumeSchema>) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -68,7 +29,7 @@ export async function addResume(
   const validatedFields = insertResumeSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return `Failed to create Resume`;
+    throw new Error("Failed to create Resume");
   }
   // Create new resume
   const [newResume] = await db
@@ -78,9 +39,7 @@ export async function addResume(
       userId: session.user.id,
     })
     .returning();
-
-  revalidatePath("/resumes");
-  redirect(`/editor/${newResume.id}`);
+  return newResume.id;
 }
 
 /**
@@ -97,10 +56,6 @@ export async function getResume(resumeId: string) {
     .select()
     .from(resume)
     .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
-
-  if (!resumeData) {
-    throw new Error("Resume not found");
-  }
 
   return resumeData;
 }
@@ -127,34 +82,29 @@ export async function getResumes() {
 /**
  * Save a resume and create a new version
  */
-export async function saveResume(formData: FormData) {
+export async function saveResume(values: z.infer<UpdateResumeSchema>) {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
-  // Get form data
-  const resumeId = formData.get("id") as string;
-  const title = formData.get("title") as string;
-  const markdown = formData.get("markdown") as string;
-  const css = formData.get("css") as string;
-  const content = formData.get("content") as string;
+  const validatedFields = updateResumeSchema.safeParse(values);
 
-  // Validate input
-  const validated = resumeFormSchema.parse({
-    id: resumeId,
-    title,
-    markdown,
-    css,
-    content,
-  });
+  if (!validatedFields.success) {
+    return `Failed to create Resume`;
+  }
 
   // Check if user owns this resume
   const [existingResume] = await db
     .select()
     .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    .where(
+      and(
+        eq(resume.id, validatedFields.data.id),
+        eq(resume.userId, session.user.id),
+      ),
+    );
 
   if (!existingResume) {
     throw new Error("Resume not found or you don't have permission to edit it");
@@ -164,7 +114,7 @@ export async function saveResume(formData: FormData) {
   const latestVersions = await db
     .select()
     .from(resumeVersions)
-    .where(eq(resumeVersions.resumeId, resumeId))
+    .where(eq(resumeVersions.resumeId, validatedFields.data.id))
     .orderBy(desc(resumeVersions.version))
     .limit(1);
 
@@ -176,25 +126,27 @@ export async function saveResume(formData: FormData) {
   await db
     .update(resume)
     .set({
-      title: validated.title,
-      markdown: validated.markdown,
-      css: validated.css,
-      content: validated.content,
-      updatedAt: new Date(),
+      title: validatedFields.data.title,
+      markdown: validatedFields.data.markdown,
+      css: validatedFields.data.css,
+      content: validatedFields.data.content,
     })
-    .where(eq(resume.id, resumeId));
+    .where(eq(resume.id, validatedFields.data.id));
 
   // Create new version
-  await db.insert(resumeVersions).values({
-    resumeId,
-    version: newVersion,
-    title: validated.title,
-    markdown: validated.markdown,
-    css: validated.css,
-    content: validated.content,
-  });
+  const [updated_resume] = await db
+    .insert(resumeVersions)
+    .values({
+      title: validatedFields.data.title,
+      markdown: validatedFields.data.markdown,
+      css: validatedFields.data.css,
+      content: validatedFields.data.content,
+      version: newVersion,
+      resumeId: validatedFields.data.id,
+    })
+    .returning();
 
-  revalidatePath(`/editor/${resumeId}`);
+  revalidatePath(`/resumes/${updated_resume.id}`);
   return { success: true };
 }
 
@@ -222,9 +174,6 @@ export async function deleteResume(resumeId: string) {
 
   // Delete resume (cascades to versions due to foreign key constraint)
   await db.delete(resume).where(eq(resume.id, resumeId));
-
-  revalidatePath("/dashboard");
-  return { success: true };
 }
 
 /**
@@ -308,6 +257,6 @@ export async function restoreVersion(formData: FormData) {
     })
     .where(eq(resume.id, resumeId));
 
-  revalidatePath(`/editor/${resumeId}`);
+  revalidatePath(`/resumes/${resumeId}`);
   return { success: true };
 }

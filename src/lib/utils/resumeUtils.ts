@@ -1,49 +1,7 @@
-// resumeUtils.ts
-// Utility functions for the resume builder
-
-/**
- * Sanitizes a filename by replacing invalid characters
- * @param filename The original filename
- * @returns A sanitized filename safe for use in paths
- */
-export function sanitizeFilename(filename: string): string {
-  // Remove any path traversal characters and unsafe characters
-  return filename.replace(/[\/\\?%*:|"<>]/g, "-");
-}
-
-/**
- * Formats a date for display in a resume
- * @param date The date to format
- * @returns Formatted date string (e.g., "January 2021")
- */
-export function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "long",
-  };
-  return date.toLocaleDateString("en-US", options);
-}
-
-/**
- * Creates a default resume template using the sample resume content
- * @param name Optional name to include in the template
- * @returns Markdown string with resume template based on sample resume
- */
-export function createDefaultResume(name: string = "Your Name"): string {
-  // In a production application, we would use a dynamic import or fs.readFileSync
-  // to read the sample resume file. For now, we're using a hardcoded implementation
-  // that replaces the name in the sample resume with the provided name.
-
-  // This finds the first occurrence of a name pattern (the first h1 in markdown)
-  // and replaces it with the provided name
-  const sampleResumeContent = getSampleResumeContent();
-  return sampleResumeContent.replace(/^# .*$/m, `# ${name}`);
-}
-
 export function defaultCssTemplate(): string {
-  return `/* Resume styling */
+  return `
   /* Resume styling */
-  /* Resume styling */
+
   body {
     background-color: white;
     font-family: Arial, sans-serif;
@@ -135,12 +93,7 @@ export function defaultCssTemplate(): string {
 `;
 }
 
-/**
- * Returns the content of the sample resume
- * In a production app, this would read from the actual file
- * @returns The content of the sample resume
- */
-export function getSampleResumeContent(): string {
+export function defaultMarkdownTemplate(): string {
   return `# John Doe
 
 ## Software Engineer

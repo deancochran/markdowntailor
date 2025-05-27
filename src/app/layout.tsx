@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { login, logout } from "@/lib/actions/auth";
+import { logout } from "@/lib/actions/auth";
 import Link from "next/link";
 import "./globals.css";
 
@@ -50,9 +50,9 @@ export default async function RootLayout({
                         </form>
                       </div>
                     ) : (
-                      <form action={login}>
-                        <Button type="submit">Sign In With Github</Button>
-                      </form>
+                      <Link href="/login">
+                        <Button type="button">Sign In</Button>
+                      </Link>
                     )}
                     <ModeToggle />
                   </nav>

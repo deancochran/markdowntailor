@@ -130,9 +130,9 @@ export const resume = pgTable("resume", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  markdown: text("markdown").default(""),
-  css: text("css").default(""),
-  content: text("content").default(""),
+  markdown: text("markdown").notNull().default(""),
+  css: text("css").notNull().default(""),
+  content: text("content").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -149,10 +149,14 @@ export const resumeVersions = pgTable("resume_versions", {
     .references(() => resume.id, { onDelete: "cascade" }),
   version: integer("version").notNull(),
   title: text("title").notNull(),
-  markdown: text("markdown").default(""),
-  css: text("css").default(""),
-  content: text("content").default(""),
+  markdown: text("markdown").notNull().default(""),
+  css: text("css").notNull().default(""),
+  content: text("content").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const insertResumeSchema = createInsertSchema(resume);
