@@ -1,5 +1,4 @@
 import { Toaster } from "@/components/ui/sonner";
-import type { Metadata } from "next";
 
 import { auth } from "@/auth";
 import { ModeToggle } from "@/components/ModeToggle";

@@ -1,3 +1,16 @@
+import { z } from "zod";
+
+export const AIResumeOutput = z.object({
+  markdown: z
+    .string()
+    .describe("The entire resume content formatted in Markdown."),
+  css: z
+    .string()
+    .describe(
+      "CSS rules to style the resume. This should be a valid CSS string.",
+    ),
+});
+
 export function defaultCssTemplate(): string {
   return `
   /* Resume styling */

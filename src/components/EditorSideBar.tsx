@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resume } from "@/db/schema";
 import { InferSelectModel } from "drizzle-orm";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { UseFormSetValue } from "react-hook-form";
 
 // Use Monaco Editor for both Markdown and CSS with autocomplete and syntax highlighting
@@ -24,20 +25,13 @@ const monacoOptions = {
 };
 
 interface EditorSidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   markdown: string;
   css: string;
   setValue: UseFormSetValue<InferSelectModel<typeof resume>>;
 }
 
-export function EditorSidebar({
-  activeTab,
-  setActiveTab,
-  markdown,
-  css,
-  setValue,
-}: EditorSidebarProps) {
+export function EditorSidebar({ markdown, css, setValue }: EditorSidebarProps) {
+  const [activeTab, setActiveTab] = useState("markdown");
   return (
     <div className="col-span-1 h-full border-r">
       <Tabs

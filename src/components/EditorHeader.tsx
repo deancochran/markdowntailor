@@ -5,7 +5,7 @@ import { ArrowLeft, Download, Printer, Save, Trash } from "lucide-react";
 import Link from "next/link";
 
 interface EditorHeaderProps {
-  register: any;
+  register: unknown;
   isSaving: boolean;
   onSave: () => void;
   isDeleting: boolean;
