@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/actions/auth";
+import { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 
@@ -22,12 +23,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="h-screen flex flex-col">
             <header className="sticky h-16 top-0 z-50 border-b shadow-xl">
               <div className="flex w-full px-8 h-14 items-center justify-between">
@@ -59,12 +55,7 @@ export default async function RootLayout({
               </div>
             </header>
 
-            <main className="w-full h-[calc(100vh-4rem)] overflow-y-scroll flex items-start px-4">
-              {children}
-            </main>
-            <footer className="pt-4 pb-8 text-center text-sm text-muted-foreground border-t">
-              Resume Builder &copy; {new Date().getFullYear()}
-            </footer>
+            <main className="h-full overflow-auto">{children}</main>
           </div>
           <Toaster />
         </ThemeProvider>

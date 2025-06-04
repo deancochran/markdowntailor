@@ -1,6 +1,7 @@
 import { useMessages } from "@/hooks/use-messages";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
+import { motion } from "motion/react";
 import { memo } from "react";
 import { PreviewMessage, ThinkingMessage } from "./message";
 
@@ -17,16 +18,46 @@ function PureMessages({
   setMessages,
   reload,
 }: MessagesProps) {
-  const { containerRef: messagesContainerRef, hasSentMessage } = useMessages({
+  const {
+    containerRef: messagesContainerRef,
+    hasSentMessage,
+    endRef: messagesEndRef,
+    onViewportEnter,
+    onViewportLeave,
+  } = useMessages({
     status,
   });
 
   return (
     <div
       ref={messagesContainerRef}
-      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 relative"
+      className="flex flex-col gap-6 w-full h-full"
     >
-      {messages.length === 0 && <p>Welcome to the chat!</p>}
+      {messages.length === 0 && (
+        <div
+          key="overview"
+          className="max-w-3xl mx-auto md:mt-20 px-8 size-full flex flex-col justify-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.5 }}
+            className="text-2xl font-semibold"
+          >
+            Hello there!
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.6 }}
+            className="text-2xl text-zinc-500"
+          >
+            How can I help you today?
+          </motion.div>
+        </div>
+      )}
 
       {messages.map((message, index) => (
         <PreviewMessage
@@ -45,12 +76,12 @@ function PureMessages({
         messages.length > 0 &&
         messages[messages.length - 1].role === "user" && <ThinkingMessage />}
 
-      {/* <motion.div
+      <motion.div
         ref={messagesEndRef}
         className="shrink-0 min-w-[24px] min-h-[24px]"
         onViewportLeave={onViewportLeave}
         onViewportEnter={onViewportEnter}
-      /> */}
+      />
     </div>
   );
 }

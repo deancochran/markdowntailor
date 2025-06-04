@@ -15,6 +15,13 @@
       "when": 1747655857291,
       "tag": "0001_keen_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748960574124,
+      "tag": "0002_lowly_skreet",
+      "breakpoints": true
     }
   ]
 }

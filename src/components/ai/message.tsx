@@ -11,6 +11,7 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import cx from "classnames";
 import equal from "fast-deep-equal";
+import { Copy, Pen, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
@@ -55,12 +56,14 @@ const PurePreviewMessage = ({
         >
           {message.role === "assistant" && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
-              <div className="translate-y-px">AI ICON</div>
+              <div className="translate-y-px">
+                <Sparkles />
+              </div>
             </div>
           )}
 
           <div
-            className={cn("flex flex-col gap-4 w-full", {
+            className={cn("flex flex-col gap-1 w-full", {
               "min-h-96": message.role === "assistant" && requiresScrollPadding,
             })}
           >
@@ -110,7 +113,7 @@ const PurePreviewMessage = ({
                                 setMode("edit");
                               }}
                             >
-                              EDIT ICON
+                              <Pen />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Edit message</TooltipContent>
@@ -147,28 +150,30 @@ const PurePreviewMessage = ({
                 }
               }
 
-              if (type === "tool-invocation") {
-                const { toolInvocation } = part;
-                const { toolName, toolCallId, state } = toolInvocation;
+              // if (type === "tool-invocation") {
+              //   const { toolInvocation } = part;
+              //   const { toolName, toolCallId, state } = toolInvocation;
 
-                if (state === "call") {
-                  return <div key={toolCallId}>{toolName} tool call!</div>;
-                }
+              //   if (state === "call") {
+              //     return <div key={toolCallId}>{toolName} tool call!</div>;
+              //   }
 
-                if (state === "result") {
-                  const { result } = toolInvocation;
+              //   if (state === "result") {
+              //     const { result } = toolInvocation;
 
-                  return (
-                    <div key={toolCallId}>
-                      <pre>{JSON.stringify(result, null, 2)}</pre>
-                    </div>
-                  );
-                }
-              }
+              //     return (
+              //       <div key={toolCallId}>
+              //         <pre>{JSON.stringify(result, null, 2)}</pre>
+              //       </div>
+              //     );
+              //   }
+              // }
             })}
 
             <TooltipProvider delayDuration={0}>
-              <div className="flex flex-row gap-2">
+              <div
+                className={`flex flex-row gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -190,7 +195,7 @@ const PurePreviewMessage = ({
                         toast.success("Copied to clipboard!");
                       }}
                     >
-                      Copy
+                      <Copy />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Copy</TooltipContent>
@@ -237,12 +242,12 @@ export const ThinkingMessage = () => {
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          AI ICON
+          <Sparkles />
         </div>
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            Hmm...
+            thinking...
           </div>
         </div>
       </div>

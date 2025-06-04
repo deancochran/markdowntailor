@@ -21,24 +21,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Paperclip, SendHorizontal, Square } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { PreviewAttachment } from "./preview-attachment";
 
 function PureMultimodalInput({
-  chatId,
   input,
   setInput,
   status,
   stop,
   attachments,
   setAttachments,
-  messages,
   setMessages,
-  append,
   handleSubmit,
   className,
-  selectedVisibilityType,
 }: {
   chatId?: string;
   input: UseChatHelpers["input"];
@@ -52,7 +48,6 @@ function PureMultimodalInput({
   append?: UseChatHelpers["append"];
   handleSubmit: UseChatHelpers["handleSubmit"];
   className?: string;
-  selectedVisibilityType?: VisibilityType;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -67,13 +62,6 @@ function PureMultimodalInput({
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
-    }
-  };
-
-  const resetHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = "98px";
     }
   };
 
@@ -107,27 +95,17 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
 
   const submitForm = useCallback(() => {
-    window.history.replaceState({}, "", `/chat/${chatId}`);
-
     handleSubmit(undefined, {
       experimental_attachments: attachments,
     });
 
     setAttachments([]);
     setLocalStorageInput("");
-    resetHeight();
 
     if (width && width > 768) {
       textareaRef.current?.focus();
     }
-  }, [
-    attachments,
-    handleSubmit,
-    setAttachments,
-    setLocalStorageInput,
-    width,
-    chatId,
-  ]);
+  }, [attachments, handleSubmit, setAttachments, setLocalStorageInput, width]);
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -217,16 +195,6 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {/* {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            append={append}
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-          />
-        )} */}
-
       <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
@@ -259,49 +227,50 @@ function PureMultimodalInput({
         </div>
       )}
 
-      <Textarea
-        data-testid="multimodal-input"
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cx(
-          "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700",
-          className,
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
+      <div className="flex flex-col gap-1 relative w-full bg-muted rounded-2xl">
+        <Textarea
+          data-testid="multimodal-input"
+          ref={textareaRef}
+          placeholder="Send a message..."
+          value={input}
+          onChange={handleInput}
+          className={cx(
+            "min-h-[28px] max-h-[56px] overflow-hidden resize-none rounded-2xl !text-base bg-muted dark:border-zinc-700 ring-none shadow-none border-none ring-0",
+            className,
+          )}
+          rows={2}
+          autoFocus
+          onKeyDown={(event) => {
+            if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
 
-            if (status !== "ready") {
-              toast.error("Please wait for the model to finish its response!");
-            } else {
-              submitForm();
+              if (status !== "ready") {
+                toast.error(
+                  "Please wait for the model to finish its response!",
+                );
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
+        <div className="flex flex-row items-center justify-between">
+          <AttachmentsButton fileInputRef={fileInputRef} status={status} />
 
-      <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-      </div>
-
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === "submitted" ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
-          />
-        )}
+          {status === "submitted" ? (
+            <StopButton stop={stop} setMessages={setMessages} />
+          ) : (
+            <SendButton
+              input={input}
+              submitForm={submitForm}
+              uploadQueue={uploadQueue}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -313,8 +282,7 @@ export const MultimodalInput = memo(
     if (prevProps.input !== nextProps.input) return false;
     if (prevProps.status !== nextProps.status) return false;
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
-      return false;
+    return false;
 
     return true;
   },
@@ -338,7 +306,7 @@ function PureAttachmentsButton({
       disabled={status !== "ready"}
       variant="ghost"
     >
-      Paperclip Icon
+      <Paperclip />
     </Button>
   );
 }
@@ -362,7 +330,7 @@ function PureStopButton({
         setMessages((messages) => messages);
       }}
     >
-      Stop Icon
+      <Square />
     </Button>
   );
 }
@@ -388,7 +356,7 @@ function PureSendButton({
       }}
       disabled={input.length === 0 || uploadQueue.length > 0}
     >
-      Up Icon
+      <SendHorizontal />
     </Button>
   );
 }

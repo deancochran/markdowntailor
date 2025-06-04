@@ -3,9 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Printer, Save, Trash } from "lucide-react";
 import Link from "next/link";
+import { UseFormRegister } from "react-hook-form";
 
 interface EditorHeaderProps {
-  register: unknown;
+  register: UseFormRegister<{
+    id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    title: string;
+    markdown: string;
+    css: string;
+    content: string;
+  }>;
   isSaving: boolean;
   onSave: () => void;
   isDeleting: boolean;

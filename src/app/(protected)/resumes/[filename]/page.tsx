@@ -3,14 +3,13 @@ import { selectResumeSchema } from "@/db/schema";
 import { getResume } from "@/lib/actions/resume";
 import { Suspense } from "react";
 
-interface PageProps {
-  params: {
-    filename: string;
-  };
-}
+export default async function EditorPage({
+  params,
+}: {
+  params: Promise<{ filename: string }>;
+}) {
+  const { filename } = await params;
 
-export default async function EditorPage({ params }: PageProps) {
-  const filename = (await params).filename;
   const resume = await getResume(filename);
   if (!resume) {
     return (
@@ -40,7 +39,7 @@ export default async function EditorPage({ params }: PageProps) {
   }
   return (
     <Suspense fallback={<p>Loading...</p>}>
-      <ResumeEditor resume={validation.data} />
+      <ResumeEditor resume={resume} />
     </Suspense>
   );
 }

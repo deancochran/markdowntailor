@@ -1,4 +1,5 @@
 "use client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resume as Resume } from "@/db/schema";
 import { deleteResume, saveResume } from "@/lib/actions/resume"; // Import deleteResume
 import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
@@ -10,7 +11,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { EditorChatPreview } from "./EditorChatPreview";
 import { EditorHeader } from "./EditorHeader";
-import { EditorSidebar } from "./EditorSideBar";
+
+import { DiffEditor } from "@monaco-editor/react";
+import { useTheme } from "next-themes";
 
 export default function ResumeEditor({
   resume,
@@ -82,8 +85,10 @@ export default function ResumeEditor({
     }
   };
 
+  const [editorsTab, setEditorsTab] = useState("markdown");
+  const { setTheme, theme } = useTheme();
   return (
-    <div className="grid grid-row h-full">
+    <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
       <EditorHeader
         register={register}
         isSaving={isSaving}
@@ -94,8 +99,76 @@ export default function ResumeEditor({
         onDownloadHTML={handleDownloadHTML}
       />
 
-      <div className="grid grid-cols-2 h-full border">
-        <EditorSidebar markdown={markdown} css={css} setValue={setValue} />
+      {/* This parent container does NOT need overflow-hidden
+              because EditorSidebar and EditorChatPreview now manage their own overflow. */}
+      <div className="relative grid grid-cols-2 min-h-0 p-4 h-full bg-muted">
+        {/* These components internally ensure they are h-full and manage their scroll */}
+        <div className="relative overflow-hidden">
+          <Tabs
+            value={editorsTab}
+            onValueChange={setEditorsTab}
+            className="flex flex-col gap-0 h-full border overflow-hidden"
+          >
+            <TabsList className="w-full flex justify-start border-b rounded-none px-4 flex-shrink-0">
+              <TabsTrigger value="markdown" className="px-4 py-2">
+                Markdown
+              </TabsTrigger>
+              <TabsTrigger value="css" className="px-4 py-2">
+                CSS
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent
+              value="markdown"
+              className="flex-1 min-h-0 overflow-hidden"
+            >
+              <DiffEditor
+                language="markdown"
+                original={markdown}
+                modified={markdown}
+                options={{
+                  automaticLayout: true,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                  renderSideBySide: false,
+                  cursorSmoothCaretAnimation: "on",
+                  smoothScrolling: true,
+                  scrollBeyondLastLine: true,
+                  lineNumbers: "off",
+                  renderGutterMenu: false,
+                  renderOverviewRuler: false,
+                  minimap: {
+                    enabled: false,
+                  },
+                }}
+                theme={theme === "dark" ? "vs-dark" : "light"}
+              />
+            </TabsContent>
+            <TabsContent value="css" className="flex-1 min-h-0 overflow-hidden">
+              <DiffEditor
+                language="css"
+                original={css}
+                modified={css}
+                options={{
+                  automaticLayout: true,
+                  formatOnPaste: true,
+                  formatOnType: true,
+                  renderSideBySide: false,
+                  cursorSmoothCaretAnimation: "on",
+                  smoothScrolling: true,
+                  scrollBeyondLastLine: true,
+                  lineNumbers: "off",
+                  renderGutterMenu: false,
+                  renderOverviewRuler: false,
+                  minimap: {
+                    enabled: false,
+                  },
+                }}
+                theme={theme === "dark" ? "vs-dark" : "light"}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
         <EditorChatPreview markdown={markdown} css={css} setValue={setValue} />
       </div>
     </div>
