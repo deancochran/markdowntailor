@@ -21,7 +21,7 @@ import {
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Messages } from "./ai/messages";
@@ -58,7 +58,9 @@ export default function ResumeEditor({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
+    if (isSaving) return; // Prevent multiple saves
+
     setIsSaving(true);
     try {
       await saveResume({
@@ -74,7 +76,7 @@ export default function ResumeEditor({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [id, title, markdown, css, isSaving]);
 
   const handleDownloadHTML = () => {
     try {
@@ -86,16 +88,46 @@ export default function ResumeEditor({
     }
   };
 
-  const handleGeneratePdf = () => {
+  const handleGeneratePdf = useCallback(() => {
     try {
       // PDF generation logic
       const htmlContent = generateHTMLContent(markdown, css);
       printDocument(htmlContent);
+      toast.success("PDF generation started");
     } catch (error) {
       console.error("PDF generation error:", error);
       toast.error("Failed to generate PDF");
     }
-  };
+  }, [markdown, css]);
+
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if Ctrl (or Cmd on Mac) is pressed
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+          case "s":
+            event.preventDefault();
+            handleSave();
+            break;
+          case "p":
+            event.preventDefault();
+            handleGeneratePdf();
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function to remove event listener
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleSave, handleGeneratePdf]);
 
   const [editorsTab, setEditorsTab] = useState("markdown");
   const { theme } = useTheme();

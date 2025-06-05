@@ -1,3 +1,4 @@
+import ResumeEditorLoadingSkeleton from "@/components/loading/ResumeEditorLoadingSkeleton";
 import ResumeEditor from "@/components/ResumeEditor";
 import { selectResumeSchema } from "@/db/schema";
 import { getResume } from "@/lib/actions/resume";
@@ -38,7 +39,7 @@ export default async function EditorPage({
     );
   }
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<ResumeEditorLoadingSkeleton />}>
       <ResumeEditor resume={resume} />
     </Suspense>
   );
