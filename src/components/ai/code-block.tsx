@@ -1,14 +1,16 @@
 "use client";
 
 interface CodeBlockProps {
-  node: any;
-  inline: boolean;
-  className: string;
-  children: any;
+  node?: Element; // 'node' might be optional or might have a specific structure
+  // from the AST. Check the library's documentation.
+  inline?: boolean; // Often optional with a default
+  className?: string; // Often optional
+  children: React.ReactNode; // A common approach, then extract string
+  // OR, more specifically if you know children is always the code string:
+  // children: string | string[];
 }
 
 export function CodeBlock({
-  node,
   inline,
   className,
   children,

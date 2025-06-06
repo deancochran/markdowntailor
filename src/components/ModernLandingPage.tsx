@@ -11,19 +11,13 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function ModernLandingPage() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true); // Start as true to match server render
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-
-  useEffect(() => {
-    setIsVisible(true);
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const [mounted, setMounted] = useState(false);
 
   const testimonials = [
     {
@@ -49,19 +43,30 @@ export default function ModernLandingPage() {
     },
   ];
 
+  // Static stats to avoid hydration issues
   const stats = [
     { number: "50K+", label: "Resumes Created" },
     { number: "89%", label: "Interview Rate" },
     { number: "500+", label: "Companies Hiring" },
-    {
-      number: [...Array(testimonials[currentTestimonial].rating)].map(
-        (_, i) => (
-          <Star key={i} className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
-        ),
-      ),
-      label: "User Rating",
-    },
+    { number: "4.9/5", label: "User Rating" }, // Use static stars
   ];
+
+  useEffect(() => {
+    setMounted(true);
+    // Add a small delay before starting animations to ensure hydration is complete
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 4000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [testimonials.length]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
@@ -69,7 +74,9 @@ export default function ModernLandingPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-ring/10 blur-3xl"></div>
         <div
-          className={`relative flex flex-col items-center justify-center min-h-[80vh] text-center px-4 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+          className={`relative flex flex-col items-center justify-center min-h-[80vh] text-center px-4 transition-all duration-1000 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
         >
           <div className="flex items-center gap-2 mb-6 px-4 py-2 bg-muted/50 rounded-full text-muted-foreground text-sm font-medium border border-border/50">
             <Sparkles className="h-4 w-4" />
@@ -91,13 +98,13 @@ export default function ModernLandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
+            <Link
+              href="/resumes"
+              className="bg-primary text-primary-foreground rounded text-center flex items-center justify-center hover:bg-primary/90 m-px py-3 px-8 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
               Create Your Resume
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            </Link>
             <Button
               variant="outline"
               size="lg"
@@ -126,7 +133,7 @@ export default function ModernLandingPage() {
       {/* Why Choose Us Section */}
       <section
         id="features"
-        className="py-20 px-4 max-w-6xl mx-auto space-y-20  scroll-mt-20 flex flex-col items-center justify-center"
+        className="py-20 px-4 max-w-6xl mx-auto space-y-20 scroll-mt-20 flex flex-col items-center justify-center"
       >
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -192,8 +199,7 @@ export default function ModernLandingPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center gap-3">
-              <FileDown className="h-8 w-8 text-primary" />{" "}
-              {/* Changed text-gray-600 to text-primary */}
+              <FileDown className="h-8 w-8 text-primary" />
               <CardTitle>Multiple Export Options</CardTitle>
             </CardHeader>
             <CardContent>
@@ -229,17 +235,14 @@ export default function ModernLandingPage() {
           <Card className="bg-card/80 backdrop-blur border-0 shadow-xl">
             <CardContent className="p-8">
               <div className="flex justify-center mb-4">
-                {[...Array(testimonials[currentTestimonial].rating)].map(
-                  (_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-chart-4 text-chart-4"
-                    />
-                  ),
-                )}
+                <Star className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
+                <Star className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
+                <Star className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
+                <Star className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
+                <Star className="h-5 w-5 fill-chart-4 text-chart-4 inline" />
               </div>
               <blockquote className="text-xl text-muted-foreground mb-6 italic">
-                "{testimonials[currentTestimonial].text}"
+                &quot;{testimonials[currentTestimonial].text}&quot;
               </blockquote>
               <div className="font-semibold text-foreground">
                 {testimonials[currentTestimonial].name}
@@ -315,7 +318,7 @@ export default function ModernLandingPage() {
             variant="secondary"
             className="px-12 py-6 text-lg font-semibold hover:shadow-xl transition-all duration-300 group"
           >
-            Start Building Now - It's Free
+            Start Building Now - It&apos;s Free
             <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
           <p className="text-sm mt-4 opacity-75">

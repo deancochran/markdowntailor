@@ -3,10 +3,10 @@
 import { signIn, signOut } from "@/auth";
 
 export const githublogin = async () => {
-  await signIn("github", { redirectTo: "/" });
+  await signIn("github", { redirectTo: "/" }, { prompt: "login" });
 };
 export const linkedinlogin = async () => {
-  await signIn("linkedin", { redirectTo: "/" });
+  await signIn("linkedin", { redirectTo: "/" }, { prompt: "login" });
 };
 
 export const logout = async () => {

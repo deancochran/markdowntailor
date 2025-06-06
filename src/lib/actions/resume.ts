@@ -7,7 +7,6 @@ import {
   resume,
   resumeVersions,
   UpdateResumeSchema,
-  updateResumeSchema,
 } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -82,29 +81,34 @@ export async function getResumes() {
 /**
  * Save a resume and create a new version
  */
-export async function saveResume(values: z.infer<UpdateResumeSchema>) {
+const resumeUpdateSchema = z.object({
+  title: z.string().min(1).max(100),
+  markdown: z.string().min(1).max(10000),
+  css: z.string().min(1).max(10000),
+});
+
+export async function saveResume(
+  resumeId: string,
+  values: z.infer<UpdateResumeSchema>,
+) {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
-  const validatedFields = updateResumeSchema.safeParse(values);
+  const validatedFields = resumeUpdateSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return `Failed to create Resume`;
+    // Handle validation errors, e.g., return early
+    throw new Error("Resume not valid");
   }
 
   // Check if user owns this resume
   const [existingResume] = await db
     .select()
     .from(resume)
-    .where(
-      and(
-        eq(resume.id, validatedFields.data.id),
-        eq(resume.userId, session.user.id),
-      ),
-    );
+    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
   if (!existingResume) {
     throw new Error("Resume not found or you don't have permission to edit it");
@@ -114,7 +118,7 @@ export async function saveResume(values: z.infer<UpdateResumeSchema>) {
   const latestVersions = await db
     .select()
     .from(resumeVersions)
-    .where(eq(resumeVersions.resumeId, validatedFields.data.id))
+    .where(eq(resumeVersions.resumeId, resumeId))
     .orderBy(desc(resumeVersions.version))
     .limit(1);
 
@@ -123,31 +127,24 @@ export async function saveResume(values: z.infer<UpdateResumeSchema>) {
   const newVersion = currentVersion + 1;
 
   // Update resume
-  await db
+  const [updated_resume] = await db
     .update(resume)
     .set({
       title: validatedFields.data.title,
       markdown: validatedFields.data.markdown,
       css: validatedFields.data.css,
-      content: validatedFields.data.content,
     })
-    .where(eq(resume.id, validatedFields.data.id));
-
-  // Create new version
-  const [updated_resume] = await db
-    .insert(resumeVersions)
-    .values({
-      title: validatedFields.data.title,
-      markdown: validatedFields.data.markdown,
-      css: validatedFields.data.css,
-      content: validatedFields.data.content,
-      version: newVersion,
-      resumeId: validatedFields.data.id,
-    })
+    .where(eq(resume.id, resumeId))
     .returning();
 
-  revalidatePath(`/resumes/${updated_resume.id}`);
-  return { success: true };
+  // Create new version
+  await db.insert(resumeVersions).values({
+    ...validatedFields.data,
+    version: newVersion,
+    resumeId: resumeId,
+  });
+
+  return updated_resume;
 }
 
 /**
@@ -245,6 +242,18 @@ export async function restoreVersion(formData: FormData) {
     throw new Error("Version not found");
   }
 
+  // Get current version number for creating new version
+  const latestVersions = await db
+    .select()
+    .from(resumeVersions)
+    .where(eq(resumeVersions.resumeId, resumeId))
+    .orderBy(desc(resumeVersions.version))
+    .limit(1);
+
+  const currentVersion =
+    latestVersions.length > 0 ? latestVersions[0].version : 0;
+  const newVersion = currentVersion + 1;
+
   // Update resume with version data
   await db
     .update(resume)
@@ -257,6 +266,84 @@ export async function restoreVersion(formData: FormData) {
     })
     .where(eq(resume.id, resumeId));
 
+  // Create new version with restored content
+  await db.insert(resumeVersions).values({
+    title: versionToRestore.title,
+    markdown: versionToRestore.markdown,
+    css: versionToRestore.css,
+    content: versionToRestore.content,
+    version: newVersion,
+    resumeId: resumeId,
+  });
+
   revalidatePath(`/resumes/${resumeId}`);
   return { success: true };
+}
+
+/**
+ * Create a new resume from a version
+ */
+export async function createResumeFromVersion(resumeId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  // Check if user owns the original resume
+  const [existingResume] = await db
+    .select()
+    .from(resume)
+    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+
+  if (!existingResume) {
+    throw new Error("Resume not found or you don't have permission");
+  }
+
+  // Create new resume with version content
+  const [newResume] = await db
+    .insert(resume)
+    .values({
+      userId: session.user.id,
+      title: `${existingResume.title} (Copy)`,
+      markdown: existingResume.markdown,
+      css: existingResume.css,
+      content: existingResume.content,
+    })
+    .returning();
+
+  return { success: true, resumeId: newResume.id };
+}
+
+/**
+ * Get a specific version by ID
+ */
+export async function getResumeVersion(versionId: string, resumeId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  // Check if user owns this resume
+  const [existingResume] = await db
+    .select()
+    .from(resume)
+    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+
+  if (!existingResume) {
+    throw new Error("Resume not found or you don't have permission");
+  }
+
+  const [version] = await db
+    .select()
+    .from(resumeVersions)
+    .where(
+      and(
+        eq(resumeVersions.id, versionId),
+        eq(resumeVersions.resumeId, resumeId),
+      ),
+    );
+
+  return version;
 }

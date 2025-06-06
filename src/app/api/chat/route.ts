@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { resume as Resume } from "@/db/schema";
+import { openai } from "@ai-sdk/openai";
 import {
   InvalidToolArgumentsError,
   Message,
@@ -10,13 +11,16 @@ import {
   streamText,
   tool,
 } from "ai";
+
 import { z } from "zod";
 
 import { createOllama } from "ollama-ai-provider";
-
-const ollama = createOllama({
-  baseURL: "http://192.168.0.73:11434/api",
-}).languageModel("qwen3:0.6b");
+const model =
+  process.env.NODE_ENV === "production"
+    ? openai("gpt-4.1-nano")
+    : createOllama({
+        baseURL: process.env.OLLAMA_API_URL,
+      }).languageModel("qwen3:0.6b");
 
 // --- 1. Content Generation Tool ---
 const generateContentTool = tool({
@@ -52,7 +56,7 @@ const generateContentTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: generatedContent } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           generatedSnippet: z
             .string()
@@ -107,7 +111,7 @@ const proofreadTextTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: proofreadingResult } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           correctedText: z
             .string()
@@ -177,7 +181,7 @@ const improveToneClarityTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: improvedTextResult } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           improvedText: z
             .string()
@@ -234,7 +238,7 @@ const optimizeKeywordsTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: keywordSuggestions } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           suggestedKeywords: z
             .array(z.string())
@@ -329,7 +333,7 @@ const applyFormattingTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: formattingSuggestion } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           suggestedMarkdownSnippet: z
             .string()
@@ -467,7 +471,7 @@ const analyzeResumeTool = tool({
   execute: async (args, { toolCallId }) => {
     try {
       const { object: analysisResult } = await generateObject({
-        model: ollama,
+        model: model,
         schema: z.object({
           overallScore: z
             .number()
@@ -546,7 +550,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: ollama,
+    model: model,
     tools: resumeToolSet,
     messages: messages,
     system: `
