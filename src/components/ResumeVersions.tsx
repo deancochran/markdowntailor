@@ -20,9 +20,9 @@ import { diffLines } from "diff";
 import { InferSelectModel } from "drizzle-orm";
 import {
   ArrowLeft,
-  Calendar,
   Clock,
   Copy,
+  Dot,
   FileText,
   Info,
   RotateCcw,
@@ -140,23 +140,6 @@ export default function ResumeVersionsComponent({
     }
   };
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const versionDate = new Date(date);
-    const isSameDay =
-      versionDate.getFullYear() === now.getFullYear() &&
-      versionDate.getMonth() === now.getMonth() &&
-      versionDate.getDate() === now.getDate();
-
-    return isSameDay
-      ? versionDate.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : versionDate.toLocaleDateString();
-  };
-
   function countDiffLines(original: string, modified: string) {
     const diff = diffLines(original, modified);
     let added = 0;
@@ -259,6 +242,7 @@ export default function ResumeVersionsComponent({
         </Card>
 
         {/* Right Side - Versions List */}
+        {/* Right Side - Versions List */}
         <Card className="relative overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -274,142 +258,152 @@ export default function ResumeVersionsComponent({
             <div className="p-4 space-y-4">
               {/* Version History */}
               {versions.length > 0 ? (
-                <div className="space-y-2">
-                  {versions.map((version) => (
+                <div className="space-y-3">
+                  {versions.map((version, index) => (
                     <Card
                       key={version.id}
-                      className="border-muted bg-background hover:bg-muted/40 transition-colors shadow-sm"
+                      className="border-muted bg-background hover:bg-muted/40 transition-colors shadow-sm w-full overflow-hidden"
                     >
-                      <CardHeader className="pb-2 px-4 pt-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex flex-col items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 truncate">
-                              <Badge variant="outline" className="px-2 py-0.5">
+                      <CardContent>
+                        {/* Main content container with flex-wrap */}
+                        <div className="flex flex-col flex-wrap items-start gap-2">
+                          {/* Version Info and Title */}
+                          <div className="flex-grow flex gap-4">
+                            <div className="flex items-center gap-2 mb-1.5 ">
+                              <Badge
+                                variant="outline"
+                                className="px-2 py-0.5 text-xs font-medium"
+                              >
                                 v{version.version}
                               </Badge>
-                              <CardTitle className="text-xs text-muted-foreground font-thin truncate">
-                                {version.title}
-                              </CardTitle>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                variant={
-                                  selectedOriginal?.id === version.id
-                                    ? "default"
-                                    : "outline"
-                                }
-                                size="sm"
-                                onClick={() => handleSelectOriginal(version)}
-                                className="text-xs"
-                              >
-                                Original
-                              </Button>
-                              <Button
-                                variant={
-                                  selectedModified?.id === version.id
-                                    ? "default"
-                                    : "outline"
-                                }
-                                size="sm"
-                                onClick={() => handleSelectModified(version)}
-                                className="text-xs"
-                              >
-                                Modified
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground whitespace-nowrap">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {formatDate(version.createdAt)}
-                            </span>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleDuplicateFromVersion(version)
-                                }
-                                disabled={isDuplicating === version.id}
-                                className="flex-1 text-xs"
-                              >
-                                <Copy className="h-3 w-3 mr-1" />
-                                {isDuplicating === version.id
-                                  ? "Duplicating..."
-                                  : "Duplicate"}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleRestoreVersion(version.id)}
-                                disabled={isRestoring === version.id}
-                                className="flex-1 text-xs"
-                              >
-                                <RotateCcw className="h-3 w-3 mr-1" />
-                                {isRestoring === version.id
-                                  ? "Restoring..."
-                                  : "Restore"}
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
+                            <CardTitle className="text-sm font-semibold w-full whitespace-nowrap">
+                              {version.title}
+                            </CardTitle>
+                            {index === 0 && (
+                              <span className="relative flex items-center justify-center ">
+                                <Dot
+                                  className="absolute inset-0 -left-4 -top-2 shadow-2xl"
+                                  style={{
+                                    color: "green",
+                                  }}
+                                />
 
-                      <CardContent>
-                        <div className="text-xs mt-1 space-y-1 font-mono">
-                          {/* Markdown Diff */}
-                          {(() => {
-                            const { added, removed } = countDiffLines(
-                              selectedOriginalMarkdown,
-                              version.markdown,
-                            );
-                            return (
-                              <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground font-sans">
-                                  Markdown:
-                                </span>
-                                <span
-                                  style={{ color: "#16a34a" }}
-                                  className="font-semibold"
-                                >
-                                  +{added}
-                                </span>
-                                <span
-                                  style={{ color: "#dc2626" }}
-                                  className="font-semibold"
-                                >
-                                  -{removed}
-                                </span>
-                              </div>
-                            );
-                          })()}
+                                <p className="text-muted-foreground text-xs text-center ">
+                                  Current
+                                </p>
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs font-mono">
+                            {/* Markdown Diff */}
+                            {(() => {
+                              const { added, removed } = countDiffLines(
+                                selectedOriginalMarkdown,
+                                version.markdown,
+                              );
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground font-sans">
+                                    Markdown:
+                                  </span>
+                                  <span
+                                    style={{ color: "#16a34a" }}
+                                    className="font-semibold"
+                                  >
+                                    +{added}
+                                  </span>
+                                  <span
+                                    style={{ color: "#dc2626" }}
+                                    className="font-semibold"
+                                  >
+                                    -{removed}
+                                  </span>
+                                </div>
+                              );
+                            })()}
 
-                          {/* CSS Diff */}
-                          {(() => {
-                            const { added, removed } = countDiffLines(
-                              selectedOriginalCss,
-                              version.css,
-                            );
-                            return (
-                              <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground font-sans">
-                                  CSS:
-                                </span>
-                                <span
-                                  style={{ color: "#16a34a" }}
-                                  className="font-semibold"
-                                >
-                                  +{added}
-                                </span>
-                                <span
-                                  style={{ color: "#dc2626" }}
-                                  className="font-semibold"
-                                >
-                                  -{removed}
-                                </span>
-                              </div>
-                            );
-                          })()}
+                            {/* CSS Diff */}
+                            {(() => {
+                              const { added, removed } = countDiffLines(
+                                selectedOriginalCss,
+                                version.css,
+                              );
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground font-sans">
+                                    CSS:
+                                  </span>
+                                  <span
+                                    style={{ color: "#16a34a" }}
+                                    className="font-semibold"
+                                  >
+                                    +{added}
+                                  </span>
+                                  <span
+                                    style={{ color: "#dc2626" }}
+                                    className="font-semibold"
+                                  >
+                                    -{removed}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Action Buttons with flex-wrap */}
+                          <div className="flex flex-wrap items-center gap-2 flex-grow sm:flex-grow-0 sm:justify-end">
+                            <Button
+                              variant={
+                                selectedOriginal?.id === version.id
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() => handleSelectOriginal(version)}
+                              className="text-xs flex-1 sm:flex-none"
+                            >
+                              Original
+                            </Button>
+                            <Button
+                              variant={
+                                selectedModified?.id === version.id
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() => handleSelectModified(version)}
+                              className="text-xs flex-1 sm:flex-none"
+                            >
+                              Modified
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDuplicateFromVersion(version)
+                              }
+                              disabled={isDuplicating === version.id}
+                              className="text-xs flex-1 sm:flex-none"
+                            >
+                              <Copy className="h-3 w-3 mr-1" />
+                              {isDuplicating === version.id
+                                ? "Duplicating..."
+                                : "Duplicate"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRestoreVersion(version.id)}
+                              disabled={isRestoring === version.id}
+                              className="text-xs flex-1 sm:flex-none"
+                            >
+                              <RotateCcw className="h-3 w-3 mr-1" />
+                              {isRestoring === version.id
+                                ? "Restoring..."
+                                : "Restore"}
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

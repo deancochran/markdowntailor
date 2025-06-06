@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 export default function ModernLandingPage() {
   const [isVisible, setIsVisible] = useState(true); // Start as true to match server render
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
 
   const testimonials = [
     {

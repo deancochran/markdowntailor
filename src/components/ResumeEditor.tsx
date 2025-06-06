@@ -32,6 +32,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
+import { Input } from "./ui/input";
 
 export default function ResumeEditor({
   resume,
@@ -46,6 +47,11 @@ export default function ResumeEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // State to track the last saved version of the resume
+  const [baselineResume, setBaselineResume] = useState(resume);
+  // State to track if there are unsaved changes
+  const [isDirty, setIsDirty] = useState(false);
+
   const id = watch("id");
   const title = watch("title");
   const markdown = watch("markdown");
@@ -53,6 +59,31 @@ export default function ResumeEditor({
   const updatedAt = watch("updatedAt");
   const [modifiedMarkdown, modifyMarkdown] = useState(markdown);
   const [modifiedCss, modifyCss] = useState(css);
+
+  // Effect to detect if there are any changes compared to the baseline
+  useEffect(() => {
+    const hasChanges =
+      baselineResume.title !== title ||
+      baselineResume.markdown !== modifiedMarkdown ||
+      baselineResume.css !== modifiedCss;
+    setIsDirty(hasChanges);
+  }, [title, modifiedMarkdown, modifiedCss, baselineResume]);
+
+  // Effect to warn user before closing tab with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty) {
+        event.preventDefault();
+        event.returnValue = ""; // Required for modern browsers
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isDirty]);
 
   // Refs to store editor instances for proper cleanup
   const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
@@ -95,6 +126,8 @@ export default function ResumeEditor({
         content: generateHTMLContent(markdown, css),
       });
       toast.success("Resume saved successfully");
+      // Update the baseline to the newly saved resume
+      setBaselineResume(updatedResume);
       // On successful save, update original values to reflect the saved content
       setValue("markdown", updatedResume.markdown);
       setValue("css", updatedResume.css);
@@ -301,10 +334,10 @@ export default function ResumeEditor({
               <span className="sr-only">Back to Resumes</span>
             </Button>
           </Link>
-          <input
-            {...register("title")}
-            placeholder="Resume Title"
+
+          <Input
             className="text-xl font-semibold bg-transparent focus:outline-none"
+            {...register("title")}
           />
         </div>
 
@@ -338,9 +371,9 @@ export default function ResumeEditor({
 
           <Button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !isDirty}
             variant="outline"
-            className="gap-2"
+            className={`relative gap-2`}
           >
             <Save className="h-4 w-4" />
             {isSaving ? "Saving..." : "Save"}
