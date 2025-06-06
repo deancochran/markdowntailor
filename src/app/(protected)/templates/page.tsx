@@ -285,7 +285,7 @@ export default function Templates() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-start justify-center gap-4 p-4">
+    <div className="w-full h-full flex flex-col items-start gap-4 p-4">
       <div className="w-full  flex flex-col items-start justify-center gap-4">
         <div>
           <h2 className="text-2xl flex items-center gap-1">
@@ -353,7 +353,7 @@ export default function Templates() {
                       );
 
                       return (
-                        <div key={key} className="flex items-center space-x-3">
+                        <div key={key} className="flex items-center gap-2">
                           <Checkbox
                             id={key}
                             checked={isSelected}
@@ -485,7 +485,7 @@ function TemplateCard({
       whileTap="tap"
       className="h-full"
     >
-      <Card className="group transition-all duration-200 border bg-card hover:shadow-lg hover:border-primary/20 flex-1 flex flex-col">
+      <Card className="group transition-all duration-200 border bg-card hover:shadow-lg hover:border-primary/20 h-full flex flex-col justify-start gap-2">
         <CardHeader className="flex flex-col items-center justify-between">
           <div className="w-full flex justify-between flex-nowrap">
             <CardTitle className="text-lg group-hover:text-primary transition-colors w-fit">
@@ -522,30 +522,26 @@ function TemplateCard({
               </Button>
             </div>
           </div>
+        </CardHeader>
+
+        <CardContent className="h-full flex flex-col items-start justify-between">
+          {/* Description */}
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+            {template.description}
+          </p>
           {/* Tags */}
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             {template.tags.map((tag) => {
-              const TagIcon = tagMetadata[tag].icon;
               return (
                 <Badge
                   key={tag}
-                  variant="secondary"
-                  className={`text-xs ${tagMetadata[tag].color} flex items-center gap-1`}
+                  variant={"outline"}
+                  className={`p-1 text-xs ${tagMetadata[tag].color} flex items-center`}
                 >
-                  <TagIcon className="h-3 w-3" />
                   {tagMetadata[tag].label}
                 </Badge>
               );
             })}
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-0 flex-1 flex flex-col">
-          <div className="space-y-4 flex-1">
-            {/* Description */}
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {template.description}
-            </p>
           </div>
         </CardContent>
       </Card>
