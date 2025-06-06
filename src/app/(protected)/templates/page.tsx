@@ -2,25 +2,25 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Briefcase,
+  ChevronDown,
   Code,
   FileText,
   Filter,
   GraduationCap,
   Heart,
   Palette,
-  Plus,
   Search,
   Users,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useState } from "react";
@@ -203,7 +203,7 @@ const mockTemplates: Template[] = [
 
 export default function Templates() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTag, setSelectedTag] = useState<string>("all");
+  const [selectedTags, setSelectedTags] = useState<TemplateTag[]>([]);
   const [isCreating, setIsCreating] = useState<string | null>(null);
 
   // Filter and search templates
@@ -218,13 +218,23 @@ export default function Templates() {
             .includes(searchTerm.toLowerCase()),
         );
 
-      const matchesTag =
-        selectedTag === "all" ||
-        template.tags.includes(selectedTag as TemplateTag);
+      const matchesTags =
+        selectedTags.length === 0 ||
+        selectedTags.some((selectedTag) => template.tags.includes(selectedTag));
 
-      return matchesSearch && matchesTag;
+      return matchesSearch && matchesTags;
     });
-  }, [searchTerm, selectedTag]);
+  }, [searchTerm, selectedTags]);
+
+  const toggleTag = (tag: TemplateTag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
+  const clearAllTags = () => {
+    setSelectedTags([]);
+  };
 
   const handleCreateFromTemplate = async (templateId: string) => {
     setIsCreating(templateId);
@@ -238,7 +248,7 @@ export default function Templates() {
 
       toast.success("Resume created from template!");
       // router.push(`/resumes/${newResumeId}`);
-    } catch {
+    } catch (error) {
       toast.error("Failed to create resume from template");
     } finally {
       setIsCreating(null);
@@ -275,87 +285,168 @@ export default function Templates() {
   };
 
   return (
-    <div className="w-full h-full">
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-6">
-          <CardTitle className="text-2xl flex items-center gap-2">
+    <div className="w-full h-full flex flex-col items-start justify-center gap-4 p-4">
+      <div className="w-full  flex flex-col items-start justify-center gap-4">
+        <div>
+          <h2 className="text-2xl flex items-center gap-1">
             <FileText className="h-6 w-6" />
             Resume Templates
-          </CardTitle>
+          </h2>
           <p className="text-muted-foreground">
             Choose from our professionally designed templates to get started
             quickly.
           </p>
+        </div>
 
-          {/* Search and Filter Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search templates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={selectedTag} onValueChange={setSelectedTag}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by tag" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Templates</SelectItem>
-                  {Object.entries(tagMetadata).map(([key, meta]) => (
-                    <SelectItem key={key} value={key}>
-                      {meta.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Search and Filter Controls */}
+        <div className="w-full flex flex-col items-center sm:flex-row gap-4 pt-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 text-muted-foreground h-9 w-4" />
+            <Input
+              placeholder="Search templates..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: "24px" }}
+            />
           </div>
-        </CardHeader>
 
-        <CardContent className="p-6">
-          {filteredTemplates.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center justify-center py-16 px-6"
-            >
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <Search size={48} className="text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No Templates Found</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Try adjusting your search term or filter to find the perfect
-                template for your needs.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <AnimatePresence mode="popLayout">
-                {filteredTemplates.map((template) => (
-                  <motion.div key={template.id} variants={itemVariants} layout>
-                    <TemplateCard
-                      template={template}
-                      onCreateFromTemplate={handleCreateFromTemplate}
-                      isCreating={isCreating === template.id}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </CardContent>
-      </Card>
+          {/* Multi-select Tag Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="min-w-[200px] justify-between"
+                >
+                  <span className="truncate">
+                    {selectedTags.length === 0
+                      ? "Filter by tags"
+                      : selectedTags.length === 1
+                        ? tagMetadata[selectedTags[0]].label
+                        : `${selectedTags.length} tags selected`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Filter by Tags</h4>
+                    {selectedTags.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllTags}
+                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {Object.entries(tagMetadata).map(([key, meta]) => {
+                      const TagIcon = meta.icon;
+                      const isSelected = selectedTags.includes(
+                        key as TemplateTag,
+                      );
+
+                      return (
+                        <div key={key} className="flex items-center space-x-3">
+                          <Checkbox
+                            id={key}
+                            checked={isSelected}
+                            onCheckedChange={() =>
+                              toggleTag(key as TemplateTag)
+                            }
+                          />
+                          <label
+                            htmlFor={key}
+                            className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
+                          >
+                            <TagIcon className="h-4 w-4" />
+                            {meta.label}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        {/* Selected Tags Display */}
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="text-sm text-muted-foreground">
+              Active filters:
+            </span>
+            {selectedTags.map((tag) => {
+              const TagIcon = tagMetadata[tag].icon;
+              return (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className={`${tagMetadata[tag].color} flex items-center gap-1 pr-1`}
+                >
+                  <TagIcon className="h-3 w-3" />
+                  {tagMetadata[tag].label}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto w-auto p-0 ml-1 hover:bg-transparent"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <hr />
+      <div>
+        {filteredTemplates.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col items-center justify-center py-16 px-6"
+          >
+            <div className="rounded-full bg-muted p-6 mb-4">
+              <Search size={48} className="text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Templates Found</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Try adjusting your search term or filter to find the perfect
+              template for your needs.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <AnimatePresence mode="popLayout">
+              {filteredTemplates.map((template) => (
+                <motion.div key={template.id} variants={itemVariants} layout>
+                  <TemplateCard
+                    template={template}
+                    onCreateFromTemplate={handleCreateFromTemplate}
+                    isCreating={isCreating === template.id}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
@@ -388,30 +479,64 @@ function TemplateCard({
   };
 
   return (
-    <motion.div variants={cardVariants} whileHover="hover" whileTap="tap">
-      <Card className="group transition-all duration-200 border bg-card hover:shadow-lg hover:border-primary/20 h-full flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="space-y-3">
-            <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+    <motion.div
+      variants={cardVariants}
+      whileHover="hover"
+      whileTap="tap"
+      className="h-full"
+    >
+      <Card className="group transition-all duration-200 border bg-card hover:shadow-lg hover:border-primary/20 flex-1 flex flex-col">
+        <CardHeader className="flex flex-col items-center justify-between">
+          <div className="w-full flex justify-between flex-nowrap">
+            <CardTitle className="text-lg group-hover:text-primary transition-colors w-fit">
               {template.title}
             </CardTitle>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1">
-              {template.tags.map((tag) => {
-                const TagIcon = tagMetadata[tag].icon;
-                return (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className={`text-xs ${tagMetadata[tag].color} flex items-center gap-1`}
-                  >
-                    <TagIcon className="h-3 w-3" />
-                    {tagMetadata[tag].label}
-                  </Badge>
-                );
-              })}
+            {/* Action Button */}
+            <div className="pt-4">
+              <Button
+                onClick={() => onCreateFromTemplate(template.id)}
+                disabled={isCreating}
+                size="sm"
+              >
+                {isCreating ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
+                      className="h-4 w-4 mr-2"
+                    >
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    </motion.div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    {/* <Plus className="h-4 w-4 mr-2" /> */}
+                    Use Template
+                  </>
+                )}
+              </Button>
             </div>
+          </div>
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1">
+            {template.tags.map((tag) => {
+              const TagIcon = tagMetadata[tag].icon;
+              return (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className={`text-xs ${tagMetadata[tag].color} flex items-center gap-1`}
+                >
+                  <TagIcon className="h-3 w-3" />
+                  {tagMetadata[tag].label}
+                </Badge>
+              );
+            })}
           </div>
         </CardHeader>
 
@@ -421,38 +546,6 @@ function TemplateCard({
             <p className="text-sm text-muted-foreground leading-relaxed">
               {template.description}
             </p>
-          </div>
-
-          {/* Action Button */}
-          <div className="pt-4">
-            <Button
-              onClick={() => onCreateFromTemplate(template.id)}
-              disabled={isCreating}
-              className="w-full"
-              size="sm"
-            >
-              {isCreating ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="h-4 w-4 mr-2"
-                  >
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                  </motion.div>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Use Template
-                </>
-              )}
-            </Button>
           </div>
         </CardContent>
       </Card>
