@@ -160,6 +160,25 @@ export default async function ResumeVersionsPage({
       );
     }
 
+    if (versions.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-screen">
+          <Card className="w-96">
+            <CardHeader>
+              <h2 className="text-2xl font-bold text-center">
+                No versions found
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-center">
+                There are no versions for the resume you&apos;re looking for.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <Suspense fallback={<ResumeVersionsLoadingSkeleton />}>
         <ResumeVersionsComponent resume={resume} versions={versions} />

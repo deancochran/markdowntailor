@@ -41,6 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
+    "diff": "^8.0.2",
     "dompurify": "^3.2.6",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",

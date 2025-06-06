@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   resume as Resume,
@@ -17,11 +16,11 @@ import {
 } from "@/db/schema";
 import { createResumeFromVersion, restoreVersion } from "@/lib/actions/resume";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
+import { diffLines } from "diff";
 import { InferSelectModel } from "drizzle-orm";
 import {
   ArrowLeft,
   Calendar,
-  Check,
   Clock,
   Copy,
   FileText,
@@ -50,9 +49,19 @@ export default function ResumeVersionsComponent({
   const { theme } = useTheme();
 
   const [selectedOriginal, setSelectedOriginal] =
-    useState<ResumeVersion | null>(null);
+    useState<ResumeVersion | null>(versions[0]);
   const [selectedModified, setSelectedModified] =
-    useState<ResumeVersion | null>(null);
+    useState<ResumeVersion | null>(versions[0]);
+  const [selectedOriginalCss, setSelectedOriginalCss] = useState<string>(
+    versions[0].css,
+  );
+  const [selectedModifiedCss, setSelectedModifiedCss] = useState<string>(
+    versions[0].css,
+  );
+  const [selectedOriginalMarkdown, setSelectedOriginalMarkdown] =
+    useState<string>(versions[0].markdown);
+  const [selectedModifiedMarkdown, setSelectedModifiedMarkdown] =
+    useState<string>(versions[0].markdown);
   const [editorsTab, setEditorsTab] = useState("markdown");
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
@@ -61,41 +70,32 @@ export default function ResumeVersionsComponent({
   const markdownEditorRef = useRef<editor.IStandaloneDiffEditor>(null);
   const cssEditorRef = useRef<editor.IStandaloneDiffEditor>(null);
 
-  // Get original and modified content based on selected versions
-  const getOriginalContent = (type: "markdown" | "css") => {
-    if (selectedOriginal) {
-      return type === "markdown"
-        ? selectedOriginal.markdown
-        : selectedOriginal.css;
-    }
-    return type === "markdown" ? resume.markdown : resume.css;
-  };
-
-  const getModifiedContent = (type: "markdown" | "css") => {
-    if (selectedModified) {
-      return type === "markdown"
-        ? selectedModified.markdown
-        : selectedModified.css;
-    }
-    return type === "markdown" ? resume.markdown : resume.css;
-  };
-
   // Handle editor mount
   const handleMarkdownEditorMount: DiffOnMount = useCallback((editor) => {
     markdownEditorRef.current = editor;
+    // You can add console.log here to confirm editor instance is received
+    console.log("Markdown DiffEditor Mounted:", editor);
   }, []);
 
   const handleCssEditorMount: DiffOnMount = useCallback((editor) => {
     cssEditorRef.current = editor;
+    // You can add console.log here to confirm editor instance is received
+    console.log("CSS DiffEditor Mounted:", editor);
   }, []);
 
   // Handle version selection
-  const handleSelectOriginal = (version: ResumeVersion | null) => {
+  const handleSelectOriginal = (version: ResumeVersion) => {
+    console.log("Selected Original Version:", version);
     setSelectedOriginal(version);
+    setSelectedOriginalCss(version.css);
+    setSelectedOriginalMarkdown(version.markdown);
   };
 
-  const handleSelectModified = (version: ResumeVersion | null) => {
+  const handleSelectModified = (version: ResumeVersion) => {
+    console.log("Selected Modified Version:", version);
     setSelectedModified(version);
+    setSelectedModifiedCss(version.css);
+    setSelectedModifiedMarkdown(version.markdown);
   };
 
   // Handle restore version
@@ -157,6 +157,20 @@ export default function ResumeVersionsComponent({
       : versionDate.toLocaleDateString();
   };
 
+  function countDiffLines(original: string, modified: string) {
+    const diff = diffLines(original, modified);
+    let added = 0;
+    let removed = 0;
+
+    for (const part of diff) {
+      if (part.added) added += part.count || part.value.split("\n").length - 1;
+      if (part.removed)
+        removed += part.count || part.value.split("\n").length - 1;
+    }
+
+    return { added, removed };
+  }
+
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
       {/* Header */}
@@ -187,9 +201,11 @@ export default function ResumeVersionsComponent({
       </header>
 
       {/* Main Content */}
+      {/* Added 'h-full' and 'min-h-0' to ensure main content area takes full height and allows flex children to shrink */}
       <div className="relative grid grid-cols-2 min-h-0 p-4 h-full bg-muted/20 gap-4">
         {/* Left Side - Diff Editor */}
         <Card className="relative overflow-hidden">
+          {/* Ensure Tabs component takes full height of its parent Card */}
           <Tabs
             value={editorsTab}
             onValueChange={setEditorsTab}
@@ -211,61 +227,30 @@ export default function ResumeVersionsComponent({
               </TabsList>
             </CardHeader>
 
+            {/* CardContent and TabsContent must allow DiffEditor to fill available space */}
             <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
               <TabsContent
                 value="markdown"
-                className="flex-1 min-h-0 overflow-hidden mt-0"
+                className="flex-1 min-h-0 h-[100%] overflow-hidden mt-0"
               >
                 <DiffEditor
                   language="markdown"
-                  original={getOriginalContent("markdown")}
-                  modified={getModifiedContent("markdown")}
+                  original={selectedOriginalMarkdown}
+                  modified={selectedModifiedMarkdown}
                   onMount={handleMarkdownEditorMount}
-                  options={{
-                    automaticLayout: true,
-                    readOnly: true,
-                    renderSideBySide: true,
-                    cursorSmoothCaretAnimation: "on",
-                    smoothScrolling: true,
-                    scrollBeyondLastLine: false,
-                    lineNumbers: "on",
-                    renderGutterMenu: false,
-                    renderOverviewRuler: true,
-                    minimap: {
-                      enabled: true,
-                    },
-                    diffWordWrap: "on",
-                    ignoreTrimWhitespace: false,
-                  }}
                   theme={theme === "dark" ? "vs-dark" : "light"}
                 />
               </TabsContent>
 
               <TabsContent
                 value="css"
-                className="flex-1 min-h-0 overflow-hidden mt-0"
+                className="flex-1 min-h-0 h-[100%] overflow-hidden mt-0"
               >
                 <DiffEditor
                   language="css"
-                  original={getOriginalContent("css")}
-                  modified={getModifiedContent("css")}
+                  original={selectedOriginalCss}
+                  modified={selectedModifiedCss}
                   onMount={handleCssEditorMount}
-                  options={{
-                    automaticLayout: true,
-                    readOnly: true,
-                    renderSideBySide: true,
-                    cursorSmoothCaretAnimation: "on",
-                    smoothScrolling: true,
-                    scrollBeyondLastLine: false,
-                    lineNumbers: "on",
-                    renderGutterMenu: false,
-                    renderOverviewRuler: true,
-                    minimap: {
-                      enabled: true,
-                    },
-                    diffWordWrap: "on",
-                    ignoreTrimWhitespace: false,
-                  }}
                   theme={theme === "dark" ? "vs-dark" : "light"}
                 />
               </TabsContent>
@@ -287,157 +272,151 @@ export default function ResumeVersionsComponent({
 
           <CardContent className="flex-1 overflow-y-auto p-0">
             <div className="p-4 space-y-4">
-              {/* Current Version */}
-              <Card className="border-2 border-primary/20 bg-primary/5">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-primary text-primary-foreground">
-                        CURRENT
-                      </Badge>
-                      <CardTitle className="text-base">
-                        Latest Version
-                      </CardTitle>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(resume.updatedAt)}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Button
-                      variant={
-                        selectedOriginal === null ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => handleSelectOriginal(null)}
-                    >
-                      {selectedOriginal === null && (
-                        <Check className="h-3 w-3 mr-1" />
-                      )}
-                      Set as Original
-                    </Button>
-                    <Button
-                      variant={
-                        selectedModified === null ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => handleSelectModified(null)}
-                    >
-                      {selectedModified === null && (
-                        <Check className="h-3 w-3 mr-1" />
-                      )}
-                      Set as Modified
-                    </Button>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="font-medium">{resume.title}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {resume.markdown.length} chars markdown,{" "}
-                      {resume.css.length} chars CSS
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Version History */}
               {versions.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {versions.map((version) => (
                     <Card
                       key={version.id}
-                      className="hover:bg-muted/50 transition-colors"
+                      className="border-muted bg-background hover:bg-muted/40 transition-colors shadow-sm"
                     >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">v{version.version}</Badge>
-                            <CardTitle className="text-sm font-medium">
-                              {version.title}
-                            </CardTitle>
+                      <CardHeader className="pb-2 px-4 pt-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-col items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 truncate">
+                              <Badge variant="outline" className="px-2 py-0.5">
+                                v{version.version}
+                              </Badge>
+                              <CardTitle className="text-xs text-muted-foreground font-thin truncate">
+                                {version.title}
+                              </CardTitle>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                variant={
+                                  selectedOriginal?.id === version.id
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() => handleSelectOriginal(version)}
+                                className="text-xs"
+                              >
+                                Original
+                              </Button>
+                              <Button
+                                variant={
+                                  selectedModified?.id === version.id
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() => handleSelectModified(version)}
+                                className="text-xs"
+                              >
+                                Modified
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(version.createdAt)}
+                          <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(version.createdAt)}
+                            </span>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDuplicateFromVersion(version)
+                                }
+                                disabled={isDuplicating === version.id}
+                                className="flex-1 text-xs"
+                              >
+                                <Copy className="h-3 w-3 mr-1" />
+                                {isDuplicating === version.id
+                                  ? "Duplicating..."
+                                  : "Duplicate"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRestoreVersion(version.id)}
+                                disabled={isRestoring === version.id}
+                                className="flex-1 text-xs"
+                              >
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                {isRestoring === version.id
+                                  ? "Restoring..."
+                                  : "Restore"}
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardHeader>
 
-                      <CardContent className="pt-0 space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant={
-                              selectedOriginal?.id === version.id
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => handleSelectOriginal(version)}
-                          >
-                            {selectedOriginal?.id === version.id && (
-                              <Check className="h-3 w-3 mr-1" />
-                            )}
-                            Set as Original
-                          </Button>
-                          <Button
-                            variant={
-                              selectedModified?.id === version.id
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => handleSelectModified(version)}
-                          >
-                            {selectedModified?.id === version.id && (
-                              <Check className="h-3 w-3 mr-1" />
-                            )}
-                            Set as Modified
-                          </Button>
-                        </div>
+                      <CardContent>
+                        <div className="text-xs mt-1 space-y-1 font-mono">
+                          {/* Markdown Diff */}
+                          {(() => {
+                            const { added, removed } = countDiffLines(
+                              selectedOriginalMarkdown,
+                              version.markdown,
+                            );
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground font-sans">
+                                  Markdown:
+                                </span>
+                                <span
+                                  style={{ color: "#16a34a" }}
+                                  className="font-semibold"
+                                >
+                                  +{added}
+                                </span>
+                                <span
+                                  style={{ color: "#dc2626" }}
+                                  className="font-semibold"
+                                >
+                                  -{removed}
+                                </span>
+                              </div>
+                            );
+                          })()}
 
-                        <Separator />
-
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDuplicateFromVersion(version)}
-                            disabled={isDuplicating === version.id}
-                            className="flex-1"
-                          >
-                            <Copy className="h-3 w-3 mr-1" />
-                            {isDuplicating === version.id
-                              ? "Duplicating..."
-                              : "Duplicate"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRestoreVersion(version.id)}
-                            disabled={isRestoring === version.id}
-                            className="flex-1"
-                          >
-                            <RotateCcw className="h-3 w-3 mr-1" />
-                            {isRestoring === version.id
-                              ? "Restoring..."
-                              : "Restore"}
-                          </Button>
-                        </div>
-
-                        <div className="text-xs text-muted-foreground">
-                          {version.markdown.length} chars markdown,{" "}
-                          {version.css.length} chars CSS
+                          {/* CSS Diff */}
+                          {(() => {
+                            const { added, removed } = countDiffLines(
+                              selectedOriginalCss,
+                              version.css,
+                            );
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground font-sans">
+                                  CSS:
+                                </span>
+                                <span
+                                  style={{ color: "#16a34a" }}
+                                  className="font-semibold"
+                                >
+                                  +{added}
+                                </span>
+                                <span
+                                  style={{ color: "#dc2626" }}
+                                  className="font-semibold"
+                                >
+                                  -{removed}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
               ) : (
-                <Alert>
+                <Alert className="text-sm">
                   <Info className="h-4 w-4" />
                   <AlertDescription>
                     No versions found. Versions will appear here when you save
