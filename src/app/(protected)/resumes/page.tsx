@@ -1,8 +1,18 @@
 import { auth } from "@/auth";
 import { CreateResumeForm } from "@/components/forms/CreateResumeForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ResumeListing from "@/components/ResumeListing";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getResumes } from "@/lib/actions/resume";
-import { FileText } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -28,53 +38,64 @@ export default async function ResumesPage() {
             </div>
           </div>
         </header>
-        <br />
 
-        <CreateResumeForm session={session} />
-        <br />
+        {/* Two Cards Section */}
+        <div className="flex flex-row flex-wrap gap-6 mb-8">
+          {/* Create Resume Card */}
+          <div className="flex-1 min-w-[300px]">
+            <Card className="h-full border-2 hover:border-primary/20 transition-colors">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Create New Resume
+                </CardTitle>
+                <CardDescription>
+                  Start from scratch and build your resume step by step
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CreateResumeForm session={session} />
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card className="border">
-          <CardHeader>
-            <CardTitle className="text-2xl">My Resumes</CardTitle>
-          </CardHeader>
-          {resumes.length === 0 ? (
-            <CardContent className="flex flex-col items-center justify-center py-16 px-6">
-              <FileText size={40} className="text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Resumes Yet</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Get started by creating your first resume using the form above.
-              </p>
-            </CardContent>
-          ) : (
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resumes.map((resume) => (
-                <Link
-                  key={resume.id}
-                  href={`/resumes/${resume.id}`}
-                  className="group overflow-hidden flex flex-col hover:shadow-xl shadow-accent rounded-xl"
-                >
-                  <Card className="">
-                    <CardHeader className="px-6 py-4">
-                      <CardTitle className="text-lg line-clamp-2">
-                        {resume.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-6 pb-4 pt-0">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-muted-foreground">
-                          Last modified:{" "}
-                          {new Date(
-                            resume.updatedAt || Date.now(),
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+          {/* Templates Card */}
+          <div className="flex-1 min-w-[300px]">
+            <Card className="h-full border-2 hover:border-primary/20 transition-colors justify-between">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Start with a Template
+                </CardTitle>
+                {/* <CardDescription>
+                  Choose from professionally designed templates to get started
+                  quickly
+                </CardDescription> */}
+              </CardHeader>
+              <CardContent className="flex flex-col justify-center items-center py-8">
+                <div className="w-full text-center mb-6">
+                  <h3 className="text-lg font-semibold mb-2">
+                    Professional Templates
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Browse our collection of modern, ATS-friendly resume
+                    templates
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="w-full flex items-end">
+                <Link href="/templates" className="w-full">
+                  <Button className="w-full group" size="lg">
+                    View Templates
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </Link>
-              ))}
-            </CardContent>
-          )}
-        </Card>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+
+        <ResumeListing resumes={resumes} />
       </div>
     </Suspense>
   );
@@ -84,13 +105,76 @@ function LoadingSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="animate-pulse">
-        <div className="h-8 w-1/4 bg-muted rounded mb-4"></div>
-        <div className="h-4 w-1/2 bg-muted rounded mb-8"></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 bg-muted rounded-lg"></div>
-          ))}
+        {/* Header skeleton */}
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-96" />
         </div>
+
+        {/* Two Cards skeleton */}
+        <div className="flex flex-row flex-wrap gap-6 mb-8">
+          {/* Create Resume Card Skeleton */}
+          <div className="flex-1 min-w-[300px]">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-6 w-40" />
+                </div>
+                <Skeleton className="h-4 w-64" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-10 w-32" />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Templates Card Skeleton */}
+          <div className="flex-1 min-w-[300px]">
+            <Card className="h-full">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-6 w-48" />
+                </div>
+                <Skeleton className="h-4 w-72" />
+              </CardHeader>
+              <CardContent className="flex flex-col justify-center items-center py-8">
+                <Skeleton className="h-16 w-16 rounded-full mb-4" />
+                <Skeleton className="h-6 w-48 mb-2" />
+                <Skeleton className="h-4 w-64 mb-6" />
+                <Skeleton className="h-11 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Resume Listing skeleton */}
+        <Card className="border">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="p-4">
+                  <div className="flex justify-between items-start mb-4">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                  <div className="space-y-2 mb-4">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-8 w-full" />
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

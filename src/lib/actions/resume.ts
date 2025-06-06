@@ -171,6 +171,7 @@ export async function deleteResume(resumeId: string) {
 
   // Delete resume (cascades to versions due to foreign key constraint)
   await db.delete(resume).where(eq(resume.id, resumeId));
+  // Invalidate the listing page
 }
 
 /**

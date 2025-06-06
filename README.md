@@ -1,38 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+ResumeForge
+Tailor your resume with AI, templates, and versioning — built for technical professionals.
 
-![image](/Users/deancochran/Dev/resume-builder/coverphoto.webp)
+ResumeForge is a modern resume management tool designed for developers and technical job seekers. It streamlines the tedious resume tailoring process, allowing you to focus on applying for jobs rather than rewriting your resume.
 
-## Getting Started
+✨ Features
+Resume Builder — Create structured resumes using premade templates.
 
-First, run the development server:
+AI-Powered Suggestions — Utilize agentic AI within a Monaco Editor to generate tailored content.
 
-```bash
+Version History — Save, duplicate, and restore previous versions of your resume.
+
+Live Editor — Write in Markdown and CSS with Monaco for real-time previews.
+
+Templates System — Base new resumes on pre-styled or role-specific templates.
+
+Private by Default — Resumes are versioned and scoped to each user, ensuring privacy.
+
+Developer Stack — Built with Next.js, Drizzle ORM, Shadcn UI, and GitHub CI.
+
+📸 Preview
+(Add screenshots or a Loom link here showing template selection, Monaco AI, versioning, etc. This section is crucial for showcasing the product visually.)
+
+🧰 Tech Stack
+Layer
+
+Tech
+
+Frontend
+
+Next.js (App Router) + Shadcn/UI
+
+Editor
+
+Monaco Editor
+
+State Mgmt
+
+SWR, React Hook Form
+
+Backend DB
+
+Drizzle ORM + PostgreSQL
+
+Auth
+
+(TBD or Lucia if used)
+
+DevOps
+
+GitHub Actions CI/CD + Docker + Terraform IaC
+
+🚀 Getting Started
+Follow these steps to get ResumeForge up and running locally:
+
+1. Clone the repository
+git clone https://github.com/yourusername/resumeforge.git
+cd resumeforge
+
+2. Install dependencies
+npm install
+
+3. Set up local PostgreSQL (via Docker)
+Ensure you have Docker installed and running.
+
+docker-compose up -d
+
+4. Configure environment variables
+Create a .env.local file in the root directory. Refer to .env.example for required variables.
+
+5. Run the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will be accessible at http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🧪 Development Scripts
+Command
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Description
 
-## Learn More
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+Starts the development server.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm run lint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Runs ESLint for code linting.
 
-## Deploy on Vercel
+npm run build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Creates a production-ready build.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm run typecheck
+
+Performs TypeScript type checking.
+
+✅ CI/CD
+This project leverages GitHub Actions for automated workflows:
+
+Linting, type checking, and build checks on each push.
+
+Pre-push hooks via Husky to prevent broken builds locally.
+
+(Planned) Docker image build and push.
+
+(Planned) Terraform Infrastructure as Code (IaC) deployment steps.
+
+See .github/workflows/ci.yml for more details.
+
+🌐 Roadmap
+Here's what's planned for future development:
+
+
+Monaco + Markdown live editor enhancements.
+
+Template-based resume creation improvements.
+
+Page split in Iframe preview for standardized A4 paper size.
+
+Integration of GitHub Actions CI.
+
+Monaco AI agent with job description context for highly tailored suggestions.
+
+Template marketplace for various roles (developer, product, design, etc.).
+
+Resume comparison and diff tools.
+
+Chrome Extension for one-click tailoring.
+
+📦 Infrastructure
+This application is containerized using Docker and deployed using:
+
+GitHub Actions for CI/CD.
+
+Terraform for managing AWS ECS + Fargate infrastructure.
+
+PostgreSQL provisioned with AWS RDS.
+
+Optional: Vercel/Fly.io preview links for pull requests.
+
+👨‍💻 Contributing
+Contributions are welcome! The app is currently in active private development. If you'd like to contribute, please open an issue to discuss your ideas or contact Dean Cochran directly.
+
+📝 License
+This project is licensed under the MIT License. See the LICENSE file for details.

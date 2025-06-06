@@ -14,6 +14,7 @@
     "test:components": "jest src/components/__tests__",
     "test:changed": "jest --onlyChanged",
     "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate:pg",
     "db:studio": "drizzle-kit studio",
     "prepare": "husky"
