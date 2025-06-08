@@ -544,7 +544,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           Preview
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-full h-full">
+      <DialogContent className="max-h-full h-full flex flex-col items-start">
         <DialogHeader>
           <div className="w-full flex flex-row flex-nowrap items-center justify-between">
             <div className="flex flex-col items-start justify-between">
@@ -581,9 +581,9 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="flex-1 flex flex-col items-start justify-between overflow-hidden gap-0"
+            className="w-full h-full flex flex-col items-start justify-between gap-0 overflow-hidden"
           >
-            <div className="flex-shrink-0 w-full">
+            <div className="flex-shrink-0 w-full overflow-hidden">
               <TabsList className="flex flex-row gap-4 w-full">
                 <TabsTrigger value="preview">Preview</TabsTrigger>
                 <TabsTrigger value="markdown">Markdown</TabsTrigger>
@@ -592,10 +592,13 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
             </div>
 
             <TabsContent
+              className="w-full flex flex-col items-start justify-between h-full "
               value="preview"
-              className="flex-1 flex flex-col w-fit overflow-hidden"
+              style={{
+                height: "90%",
+              }}
             >
-              <div className="relative flex-1 w-full overflow-scroll">
+              <div className="relative w-full h-full overflow-hidden">
                 <iframe
                   ref={iframeRef}
                   title="Resume Preview"
