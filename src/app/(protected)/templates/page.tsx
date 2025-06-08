@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -44,13 +45,11 @@ enum TemplateTag {
 interface Template {
   id: string;
   title: string;
+  slug: string;
   description: string;
   tags: TemplateTag[];
   markdown: string;
   css: string;
-  html: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 // Tag metadata for display
@@ -486,31 +485,31 @@ function TemplateCard({
       className="h-full"
     >
       <Card className="group transition-all duration-200 border bg-card hover:shadow-lg hover:border-primary/20 h-full flex flex-col justify-start gap-2">
-        <CardHeader className="flex flex-col items-center justify-between">
-          <div className="w-full flex justify-between flex-nowrap">
+        <CardHeader className="flex flex-col items-center justify-between p-4">
+          {" "}
+          {/* Added padding */}
+          <div className="w-full flex justify-between flex-nowrap mb-4">
+            {" "}
+            {/* Added margin-bottom */}
             <CardTitle className="text-lg group-hover:text-primary transition-colors w-fit">
               {template.title}
             </CardTitle>
             {/* Action Button */}
-            <div className="pt-4">
+            <div className="pt-0">
+              {" "}
+              {/* Removed pt-4 as padding is on CardHeader */}
               <Button
-                onClick={() => onCreateFromTemplate(template.id)}
+                onClick={() => onCreateFromTemplate(template)} // Pass the entire template object
                 disabled={isCreating}
                 size="sm"
               >
                 {isCreating ? (
                   <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                      className="h-4 w-4 mr-2"
+                    <div // Removed motion.div
+                      className="h-4 w-4 mr-2 animate-spin" // Added animate-spin for loading effect
                     >
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                    </motion.div>
+                    </div>
                     Creating...
                   </>
                 ) : (
@@ -522,11 +521,25 @@ function TemplateCard({
               </Button>
             </div>
           </div>
+          {/* Template Image Preview */}
+          <div className="w-full aspect-[3/4] bg-gray-100 rounded-md overflow-hidden relative border border-gray-200">
+            <Image // Changed from Image to img
+              height={1}
+              width={1}
+              src={template.imagePath}
+              alt={`${template.title} preview`}
+              className="w-full h-full object-contain rounded-md" // Adjusted styling for img tag
+            />
+          </div>
         </CardHeader>
 
-        <CardContent className="h-full flex flex-col items-start justify-between">
+        <CardContent className="h-full flex flex-col items-start justify-between p-4 pt-0">
+          {" "}
+          {/* Added padding, removed pt-0 */}
           {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+            {" "}
+            {/* Added margin-bottom */}
             {template.description}
           </p>
           {/* Tags */}
