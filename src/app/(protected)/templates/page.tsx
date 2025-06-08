@@ -76,6 +76,15 @@ const templates: Template[] = [
     markdownUrl: "/templates/software-engineer/template.md",
     cssUrl: "/templates/software-engineer/styles.css",
   },
+  {
+    slug: "ui-ux-designer",
+    title: "UI/UX Designer",
+    description: "A professional resume template for UI/UX designers.",
+    tags: [TemplateTag.PROFESSIONAL, TemplateTag.TECHNICAL],
+    imagePath: "/templates/ui-ux-designer/preview.webp",
+    markdownUrl: "/templates/ui-ux-designer/template.md",
+    cssUrl: "/templates/ui-ux-designer/styles.css",
+  },
 ];
 
 const tagMetadata = {
@@ -598,7 +607,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                 height: "90%",
               }}
             >
-              <div className="relative w-full h-full overflow-hidden">
+              <div className="relative w-full h-full overflow-visible">
                 <iframe
                   ref={iframeRef}
                   title="Resume Preview"
@@ -610,6 +619,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     transform: `scale(${zoomLevel})`,
                     transition: "transform 0.3s ease-in-out",
                     transformOrigin: "top left",
+                    overflow: "visible",
                   }}
                   onLoad={() => {
                     // Ensure content is loaded when iframe loads

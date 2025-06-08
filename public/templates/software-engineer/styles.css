@@ -1,20 +1,12 @@
 body {
-    font-family: "Inter", sans-serif;
-    line-height: 1.6;
-    color: #333;
-    margin: 0;
-    padding: 0;
+    background-color: white;
+    font-family: Arial, sans-serif;
     box-sizing: border-box;
-}
-
-.resume-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 30px;
-    border: 1px solid #ddd;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-    background-color: #fff;
-    border-radius: 8px; /* Rounded corners */
+    width: 210mm;
+    min-height: 297mm;
+    padding: 10mm;
+    margin: 0 auto;
+    line-height: 1.6;
 }
 
 h1 {
