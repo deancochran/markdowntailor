@@ -198,7 +198,7 @@ export default function ResumeEditor({
   const { theme } = useTheme();
 
   const [previewTab, setPreviewTab] = useState("preview");
-  const [zoomLevel, setZoomLevel] = useState(0.8);
+  const [zoomLevel, setZoomLevel] = useState(0.6);
 
   const onZoomIn = () => {
     setZoomLevel((prev) => Math.min(prev + 0.1, 2.0));
@@ -507,9 +507,9 @@ export default function ResumeEditor({
 
             <TabsContent
               value="preview"
-              className="flex-1 flex flex-col w-full overflow-hidden"
+              className="flex-1 flex flex-col h-full w-full overflow-hidden"
             >
-              <div className="relative flex-1 w-full">
+              <div className="relative flex-1  overflow-hidden">
                 <iframe
                   ref={iframeRef}
                   title="Resume Preview"
@@ -519,9 +519,8 @@ export default function ResumeEditor({
                     border: "1px solid #ccc",
                     background: "white",
                     transform: `scale(${zoomLevel})`,
-                    transformOrigin: "20% 50% 0%",
+                    transformOrigin: "top center",
                     transition: "transform 0.3s ease-in-out",
-                    overflow: "hidden",
                   }}
                 />
               </div>
