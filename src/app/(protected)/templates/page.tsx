@@ -434,7 +434,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     html: "",
   });
   const [activeTab, setActiveTab] = useState("preview");
-  const [zoomLevel, setZoomLevel] = useState(0.4);
+  const [zoomLevel, setZoomLevel] = useState(0.6);
   const [isCreating, setIsCreating] = useState(false);
 
   const { theme } = useTheme();
@@ -442,8 +442,6 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   const router = useRouter();
 
   const loadTemplateContent = async () => {
-    if (templateContent.markdown) return;
-
     setIsLoading(true);
     try {
       const [markdownResponse, cssResponse] = await Promise.all([
@@ -460,6 +458,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
         cssResponse.text(),
       ]);
 
+      setZoomLevel(0.6);
       const html = generateHTMLContent(markdown, css);
       setTemplateContent({ markdown, css, html });
     } catch (error) {
@@ -601,13 +600,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
             </div>
 
             <TabsContent
-              className="w-full flex flex-col items-start justify-between h-full "
+              className="flex-1 flex flex-col max-h-40 h-40 w-full overflow-scroll"
               value="preview"
-              style={{
-                height: "90%",
-              }}
             >
-              <div className="relative w-full h-full overflow-visible">
+              <div className="relative h-full grow overflow-hidden">
                 <iframe
                   ref={iframeRef}
                   title="Resume Preview"
@@ -617,9 +613,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     border: "1px solid #ccc",
                     background: "white",
                     transform: `scale(${zoomLevel})`,
-                    transition: "transform 0.3s ease-in-out",
                     transformOrigin: "top left",
-                    overflow: "visible",
+                    transition: "transform 0.3s ease-in-out",
+                    overflow: "hidden",
+                    position: "absolute",
                   }}
                   onLoad={() => {
                     // Ensure content is loaded when iframe loads
@@ -641,7 +638,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                   }}
                 />
               </div>
-              <div className="bg-muted text-muted-foreground h-10 items-center w-full flex justify-between border-t px-2">
+              <div className="grow-0 bg-muted text-muted-foreground  items-center w-full flex justify-between border-t px-2">
                 <div className="text-sm text-muted-foreground">A4 Preview</div>
                 <div className="flex items-center gap-2">
                   <Button
