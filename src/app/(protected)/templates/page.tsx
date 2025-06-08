@@ -145,8 +145,6 @@ const tagMetadata = {
 export default function Templates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<TemplateTag[]>([]);
-  const [isCreating, setIsCreating] = useState<string | null>(null);
-  const router = useRouter();
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
@@ -168,40 +166,6 @@ export default function Templates() {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
-  };
-
-  const handleCreateFromTemplate = async (template: Template) => {
-    setIsCreating(template.slug);
-
-    try {
-      const [markdownResponse, cssResponse] = await Promise.all([
-        fetch(template.markdownUrl),
-        fetch(template.cssUrl),
-      ]);
-
-      if (!markdownResponse.ok || !cssResponse.ok) {
-        throw new Error("Failed to fetch template content");
-      }
-
-      const [markdownContent, cssContent] = await Promise.all([
-        markdownResponse.text(),
-        cssResponse.text(),
-      ]);
-
-      const newResumeId = await addResume({
-        title: `${template.title} (Copy)`,
-        markdown: markdownContent,
-        css: cssContent,
-      });
-
-      toast.success(`Resume "${template.title} (Copy)" created successfully!`);
-      router.push(`/resumes/${newResumeId}`);
-    } catch (error) {
-      console.error("Failed to create resume from template:", error);
-      toast.error("Failed to create resume from template");
-    } finally {
-      setIsCreating(null);
-    }
   };
 
   return (
@@ -344,12 +308,7 @@ export default function Templates() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates.map((template) => (
-                <TemplateCard
-                  key={template.slug}
-                  template={template}
-                  onCreateFromTemplate={handleCreateFromTemplate}
-                  isCreating={isCreating === template.slug}
-                />
+                <TemplateCard key={template.slug} template={template} />
               ))}
             </div>
           )}
@@ -359,15 +318,7 @@ export default function Templates() {
   );
 }
 
-function TemplateCard({
-  template,
-  onCreateFromTemplate,
-  isCreating,
-}: {
-  template: Template;
-  onCreateFromTemplate: (template: Template) => void;
-  isCreating: boolean;
-}) {
+function TemplateCard({ template }: { template: Template }) {
   return (
     <Card className="group transition-all duration-200 hover:shadow-lg hover:border-primary/20 h-full flex flex-col">
       <CardHeader className="flex-shrink-0">
