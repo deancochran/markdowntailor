@@ -242,88 +242,98 @@ export default function ResumeEditor({
   }, [previewTab, modifiedMarkdown, modifiedCss]);
 
   // Function to apply modifications directly to editors
-  const applyModification = useCallback((modification: unknown) => {
-    if (!modification.applyDirectly) return;
+  const applyModification = useCallback(
+    (modification: {
+      applyDirectly?: unknown;
+      contentType?: unknown;
+      operation?: unknown;
+      targetContent?: unknown;
+      newContent?: unknown;
+      position?: unknown;
+    }) => {
+      if (!modification.applyDirectly) return;
 
-    const { contentType, operation, targetContent, newContent, position } =
-      modification;
+      const { contentType, operation, targetContent, newContent, position } =
+        modification;
 
-    if (contentType === "markdown" && modifiedMarkdownEditorRef.current) {
-      const editor = modifiedMarkdownEditorRef.current;
-      const model = editor.getModel();
-      if (!model) return;
+      if (contentType === "markdown" && modifiedMarkdownEditorRef.current) {
+        const editor = modifiedMarkdownEditorRef.current;
+        const model = editor.getModel();
+        if (!model) return;
 
-      switch (operation) {
-        case "replace":
-          if (targetContent) {
-            const fullText = model.getValue();
-            const newText = fullText.replace(targetContent, newContent);
-            model.setValue(newText);
-          }
-          break;
-        case "insert":
-          if (position) {
-            editor.executeEdits("ai-modification", [
-              {
-                range:
-                  (position.startLineNumber,
-                  position.startColumn,
-                  position.endLineNumber,
-                  position.endColumn),
-                text: newContent,
-              },
-            ]);
-          }
-          break;
-        case "append":
-          const currentText = model.getValue();
-          model.setValue(currentText + "\n" + newContent);
-          break;
-        case "prepend":
-          const existingText = model.getValue();
-          model.setValue(newContent + "\n" + existingText);
-          break;
+        switch (operation) {
+          case "replace":
+            if (targetContent) {
+              const fullText = model.getValue();
+              const newText = fullText.replace(targetContent, newContent);
+              model.setValue(newText);
+            }
+            break;
+          case "insert":
+            if (position) {
+              editor.executeEdits("ai-modification", [
+                {
+                  range:
+                    (position.startLineNumber,
+                    position.startColumn,
+                    position.endLineNumber,
+                    position.endColumn),
+                  text: newContent,
+                },
+              ]);
+            }
+            break;
+          case "append":
+            const currentText = model.getValue();
+            model.setValue(currentText + "\n" + newContent);
+            break;
+          case "prepend":
+            const existingText = model.getValue();
+            model.setValue(newContent + "\n" + existingText);
+            break;
+        }
+      } else if (contentType === "css" && modifiedCssEditorRef.current) {
+        const editor = modifiedCssEditorRef.current;
+        const model = editor.getModel();
+        if (!model) return;
+
+        switch (operation) {
+          case "replace":
+            if (targetContent) {
+              const fullText = model.getValue();
+              const newText = fullText.replace(targetContent, newContent);
+              model.setValue(newText);
+            }
+            break;
+          case "insert":
+            if (position) {
+              editor.executeEdits("ai-modification", [
+                {
+                  range:
+                    (position.line,
+                    position.column,
+                    position.line,
+                    position.column),
+                  text: newContent,
+                },
+              ]);
+            }
+            break;
+          case "append":
+            const currentText = model.getValue();
+            model.setValue(currentText + "\n" + newContent);
+            break;
+          case "prepend":
+            const existingText = model.getValue();
+            model.setValue(newContent + "\n" + existingText);
+            break;
+        }
       }
-    } else if (contentType === "css" && modifiedCssEditorRef.current) {
-      const editor = modifiedCssEditorRef.current;
-      const model = editor.getModel();
-      if (!model) return;
 
-      switch (operation) {
-        case "replace":
-          if (targetContent) {
-            const fullText = model.getValue();
-            const newText = fullText.replace(targetContent, newContent);
-            model.setValue(newText);
-          }
-          break;
-        case "insert":
-          if (position) {
-            editor.executeEdits("ai-modification", [
-              {
-                range:
-                  (position.line,
-                  position.column,
-                  position.line,
-                  position.column),
-                text: newContent,
-              },
-            ]);
-          }
-          break;
-        case "append":
-          const currentText = model.getValue();
-          model.setValue(currentText + "\n" + newContent);
-          break;
-        case "prepend":
-          const existingText = model.getValue();
-          model.setValue(newContent + "\n" + existingText);
-          break;
-      }
-    }
-
-    toast.success(`Applied Modification`);
-  }, []);
+      toast.success(`Applied Modification`);
+    },
+    [],
+  );
 
   // Process tool invocations and apply modifications
   const processToolInvocations = useCallback(
