@@ -471,18 +471,46 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   };
 
   useEffect(() => {
-    if (iframeRef.current && templateContent.html && activeTab === "preview") {
+    if (iframeRef.current && templateContent.html) {
       const iframe = iframeRef.current;
       const iframeDoc =
         iframe.contentDocument || iframe.contentWindow?.document;
 
       if (iframeDoc) {
-        iframeDoc.open();
-        iframeDoc.write(templateContent.html);
-        iframeDoc.close();
+        // Check if iframe is empty or needs refresh
+        const isEmpty =
+          !iframeDoc.body || iframeDoc.body.innerHTML.trim() === "";
+
+        if (isEmpty || activeTab === "preview") {
+          iframeDoc.open();
+          iframeDoc.write(templateContent.html);
+          iframeDoc.close();
+        }
       }
     }
   }, [templateContent.html, activeTab]);
+
+  // Additional effect to handle iframe load event
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (iframe && templateContent.html) {
+      const handleLoad = () => {
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow?.document;
+        if (
+          iframeDoc &&
+          (!iframeDoc.body || iframeDoc.body.innerHTML.trim() === "")
+        ) {
+          iframeDoc.open();
+          iframeDoc.write(templateContent.html);
+          iframeDoc.close();
+        }
+      };
+
+      iframe.addEventListener("load", handleLoad);
+      return () => iframe.removeEventListener("load", handleLoad);
+    }
+  }, [templateContent.html]);
 
   const handleCreateFromTemplate = async () => {
     setIsCreating(true);
@@ -579,6 +607,24 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     transform: `scale(${zoomLevel})`,
                     transition: "transform 0.3s ease-in-out",
                     transformOrigin: "top left",
+                  }}
+                  onLoad={() => {
+                    // Ensure content is loaded when iframe loads
+                    if (templateContent.html) {
+                      const iframe = iframeRef.current;
+                      const iframeDoc =
+                        iframe?.contentDocument ||
+                        iframe?.contentWindow?.document;
+                      if (
+                        iframeDoc &&
+                        (!iframeDoc.body ||
+                          iframeDoc.body.innerHTML.trim() === "")
+                      ) {
+                        iframeDoc.open();
+                        iframeDoc.write(templateContent.html);
+                        iframeDoc.close();
+                      }
+                    }
                   }}
                 />
               </div>
