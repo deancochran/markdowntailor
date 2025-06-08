@@ -74,7 +74,7 @@ const templates: Template[] = [
     title: "Software Engineer",
     description: "A professional resume template for software engineers.",
     tags: [TemplateTag.PROFESSIONAL, TemplateTag.TECHNICAL],
-    imagePath: "/templates/software-engineer/preview.png",
+    imagePath: "/templates/software-engineer/preview.webp",
     markdownUrl: "/templates/software-engineer/template.md",
     cssUrl: "/templates/software-engineer/styles.css",
   },
@@ -229,12 +229,12 @@ export default function Templates() {
           {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute text-muted-foreground h-9 p-1" />
               <Input
                 placeholder="Search templates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                style={{ paddingLeft: "24px" }}
               />
             </div>
 
@@ -380,28 +380,15 @@ function TemplateCard({
   return (
     <Card className="group transition-all duration-200 hover:shadow-lg hover:border-primary/20 h-full flex flex-col">
       <CardHeader className="flex-shrink-0">
-        <div className="w-full aspect-[3/4] bg-muted rounded-md overflow-hidden relative border">
-          <Image
-            src={template.imagePath}
-            alt={`${template.title} preview`}
-            fill
-            className="object-contain"
-          />
+        <div className="flex flex-col items-start justify-between gap-1">
+          <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
+            {template.title}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {template.description}
+          </p>
         </div>
-        <div className="flex items-start justify-between gap-4 mt-4">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
-              {template.title}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {template.description}
-            </p>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col justify-between pt-0">
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2">
           {template.tags.map((tag) => (
             <Badge
               key={tag}
@@ -412,13 +399,24 @@ function TemplateCard({
             </Badge>
           ))}
         </div>
+      </CardHeader>
 
-        <div className="flex gap-2">
+      <CardContent className="flex-1 flex flex-wrap flex-col items-center justify-between gap-2 overflow-hidden">
+        <div className="w-fit bg-muted rounded-md overflow-hidden relative border">
+          <Image
+            width={250} // Smaller width
+            height={250} // Smaller height
+            src={template.imagePath}
+            alt={`${template.title} preview`}
+            className="object-contain"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 overflow-hidden">
           <TemplatePreviewDialog template={template} />
           <Button
             onClick={() => onCreateFromTemplate(template)}
             disabled={isCreating}
-            className="flex-1"
           >
             {isCreating ? (
               <>
@@ -538,10 +536,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           Preview
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-screen h-full overflow-scroll">
+      <DialogContent className="max-h-full h-full">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="w-full flex flex-row flex-nowrap items-center justify-between">
+            <div className="flex flex-col items-start justify-between">
               <DialogTitle className="text-xl">{template.title}</DialogTitle>
               <p className="text-muted-foreground mt-1">
                 {template.description}
@@ -575,7 +573,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="max-h-[80vh] flex-1 flex flex-col items-center justify-between overflow-hidden gap-0"
+            className="flex-1 flex flex-col items-start justify-between overflow-hidden gap-0"
           >
             <div className="flex-shrink-0 w-full">
               <TabsList className="flex flex-row gap-4 w-full">
@@ -600,7 +598,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     background: "white",
                     transform: `scale(${zoomLevel})`,
                     transition: "transform 0.3s ease-in-out",
-                    transformOrigin: "top center",
+                    transformOrigin: "top left",
                   }}
                 />
               </div>

@@ -27,7 +27,9 @@ export async function addResume(values: addResumeType) {
   if (!session?.user?.id) {
     throw new Error("You must be logged in to create a resume");
   }
-  const validatedFields = insertResumeSchema.safeParse(values);
+  const validatedFields = insertResumeSchema
+    .omit({ userId: true })
+    .safeParse(values);
 
   if (!validatedFields.success) {
     throw new Error("Failed to create Resume");
