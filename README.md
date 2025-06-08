@@ -110,18 +110,13 @@ See .github/workflows/ci.yml for more details.
 🌐 Roadmap
 Here's what's planned for future development:
 
-
 Monaco + Markdown live editor enhancements.
-
-Template-based resume creation improvements.
 
 Page split in Iframe preview for standardized A4 paper size.
 
 Integration of GitHub Actions CI.
 
 Monaco AI agent with job description context for highly tailored suggestions.
-
-Template marketplace for various roles (developer, product, design, etc.).
 
 Resume comparison and diff tools.
 

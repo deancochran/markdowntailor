@@ -69,7 +69,7 @@ export function CreateResumeForm({ session }: { session: Session }) {
 
   return (
     <Form {...form}>
-      <Card>
+      <Card className="gap-0">
         <CardHeader>
           <CardTitle className="text-2xl">Create a Resume</CardTitle>
         </CardHeader>

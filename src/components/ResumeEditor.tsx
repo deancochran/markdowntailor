@@ -123,7 +123,7 @@ export default function ResumeEditor({
         title,
         markdown: modifiedMarkdown,
         css: modifiedCss,
-        content: generateHTMLContent(markdown, css),
+        content: generateHTMLContent(modifiedMarkdown, modifiedCss),
       });
       toast.success("Resume saved successfully");
       // Update the baseline to the newly saved resume
@@ -137,16 +137,7 @@ export default function ResumeEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [
-    id,
-    title,
-    markdown,
-    css,
-    isSaving,
-    setValue,
-    modifiedMarkdown,
-    modifiedCss,
-  ]);
+  }, [id, title, isSaving, setValue, modifiedMarkdown, modifiedCss]);
 
   const handleDownloadHTML = () => {
     try {
@@ -160,14 +151,14 @@ export default function ResumeEditor({
 
   const handleGeneratePdf = useCallback(() => {
     try {
-      const htmlContent = generateHTMLContent(markdown, css);
+      const htmlContent = generateHTMLContent(modifiedMarkdown, modifiedCss);
       printDocument(htmlContent);
       toast.success("PDF generation started");
     } catch (error) {
       console.error("PDF generation error:", error);
       toast.error("Failed to generate PDF");
     }
-  }, [markdown, css]);
+  }, [modifiedMarkdown, modifiedCss]);
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -241,29 +232,108 @@ export default function ResumeEditor({
 
       return () => clearTimeout(handle);
     }
-  }, [previewTab, resume, css, markdown, modifiedMarkdown, modifiedCss]);
+  }, [previewTab, modifiedMarkdown, modifiedCss]);
 
-  const processToolInvocations = (message: Message) => {
-    if (!message.toolInvocations) return;
+  // Function to apply modifications directly to editors
+  const applyModification = useCallback((modification: unknown) => {
+    if (!modification.applyDirectly) return;
 
-    message.toolInvocations.forEach((invocation: ToolInvocation) => {
-      if (invocation.state === "result" && invocation.result) {
-        const result = invocation.result;
+    const { contentType, operation, targetContent, newContent, position } =
+      modification;
 
-        if (result.changeId && result.changeType) {
-          switch (result.changeType) {
-            case "formatting":
-            case "direct_modification":
-            case "content_generation":
-            case "proofreading":
-            case "tone_improvement":
-              toast.success("Changes pending");
-              break;
+    if (contentType === "markdown" && modifiedMarkdownEditorRef.current) {
+      const editor = modifiedMarkdownEditorRef.current;
+      const model = editor.getModel();
+      if (!model) return;
+
+      switch (operation) {
+        case "replace":
+          if (targetContent) {
+            const fullText = model.getValue();
+            const newText = fullText.replace(targetContent, newContent);
+            model.setValue(newText);
+          }
+          break;
+        case "insert":
+          if (position) {
+            editor.executeEdits("ai-modification", [
+              {
+                range:
+                  (position.startLineNumber,
+                  position.startColumn,
+                  position.endLineNumber,
+                  position.endColumn),
+                text: newContent,
+              },
+            ]);
+          }
+          break;
+        case "append":
+          const currentText = model.getValue();
+          model.setValue(currentText + "\n" + newContent);
+          break;
+        case "prepend":
+          const existingText = model.getValue();
+          model.setValue(newContent + "\n" + existingText);
+          break;
+      }
+    } else if (contentType === "css" && modifiedCssEditorRef.current) {
+      const editor = modifiedCssEditorRef.current;
+      const model = editor.getModel();
+      if (!model) return;
+
+      switch (operation) {
+        case "replace":
+          if (targetContent) {
+            const fullText = model.getValue();
+            const newText = fullText.replace(targetContent, newContent);
+            model.setValue(newText);
+          }
+          break;
+        case "insert":
+          if (position) {
+            editor.executeEdits("ai-modification", [
+              {
+                range:
+                  (position.line,
+                  position.column,
+                  position.line,
+                  position.column),
+                text: newContent,
+              },
+            ]);
+          }
+          break;
+        case "append":
+          const currentText = model.getValue();
+          model.setValue(currentText + "\n" + newContent);
+          break;
+        case "prepend":
+          const existingText = model.getValue();
+          model.setValue(newContent + "\n" + existingText);
+          break;
+      }
+    }
+
+    toast.success(`Applied Modification`);
+  }, []);
+
+  // Process tool invocations and apply modifications
+  const processToolInvocations = useCallback(
+    (message: Message) => {
+      if (!message.toolInvocations) return;
+
+      message.toolInvocations.forEach((invocation: ToolInvocation) => {
+        if (invocation.state === "result" && invocation.result) {
+          const result = invocation.result;
+          if (result.applyDirectly) {
+            applyModification(result);
           }
         }
-      }
-    });
-  };
+      });
+    },
+    [applyModification],
+  );
 
   const {
     append,
@@ -277,7 +347,11 @@ export default function ResumeEditor({
     reload,
   } = useChat({
     body: {
-      resume: resume,
+      resume: {
+        markdown: modifiedMarkdown,
+        css: modifiedCss,
+        title,
+      },
     },
     experimental_throttle: 100,
     onError: (e) => {
@@ -298,13 +372,11 @@ export default function ResumeEditor({
   // Handler for editor mount
   const handleMarkdownEditorMount: DiffOnMount = useCallback(
     (editor) => {
-      const modifiedEditor = editor.getModifiedEditor(); // This returns editor.IStandaloneCodeEditor
+      const modifiedEditor = editor.getModifiedEditor();
       if (modifiedEditor) {
-        // Correctly assign the editor instance to the .current property of the ref
         modifiedMarkdownEditorRef.current = modifiedEditor;
       }
       modifiedMarkdownEditorRef.current?.onDidChangeModelContent(() => {
-        // console.log(modifiedMarkdownEditorRef.current?.getValue());
         modifyMarkdown(
           modifiedMarkdownEditorRef.current?.getValue() || markdown,
         );
@@ -317,7 +389,6 @@ export default function ResumeEditor({
     (editor) => {
       modifiedCssEditorRef.current = editor.getModifiedEditor();
       modifiedCssEditorRef.current?.onDidChangeModelContent(() => {
-        // console.log(modifiedCssEditorRef.current?.getValue());
         modifyCss(modifiedCssEditorRef.current?.getValue() || css);
       });
     },
@@ -399,12 +470,7 @@ export default function ResumeEditor({
             Download HTML
           </Button>
 
-          <Button
-            onClick={handleDuplicate}
-            variant="outline"
-            className="gap-2"
-            data-testid="download-html-button"
-          >
+          <Button onClick={handleDuplicate} variant="outline" className="gap-2">
             <Copy className="h-4 w-4" />
             Duplicate
           </Button>
@@ -444,7 +510,7 @@ export default function ResumeEditor({
               <DiffEditor
                 language="markdown"
                 original={markdown}
-                modified={markdown}
+                modified={modifiedMarkdown}
                 onMount={handleMarkdownEditorMount}
                 options={{
                   automaticLayout: true,
@@ -468,7 +534,7 @@ export default function ResumeEditor({
               <DiffEditor
                 language="css"
                 original={css}
-                modified={css}
+                modified={modifiedCss}
                 onMount={handleCssEditorMount}
                 options={{
                   automaticLayout: true,
@@ -521,6 +587,7 @@ export default function ResumeEditor({
                     transform: `scale(${zoomLevel})`,
                     transformOrigin: "top center",
                     transition: "transform 0.3s ease-in-out",
+                    overflow: "hidden",
                   }}
                 />
               </div>

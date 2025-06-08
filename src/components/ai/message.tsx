@@ -150,25 +150,6 @@ const PurePreviewMessage = ({
                   );
                 }
               }
-
-              // if (type === "tool-invocation") {
-              //   const { toolInvocation } = part;
-              //   const { toolName, toolCallId, state } = toolInvocation;
-
-              //   if (state === "call") {
-              //     return <div key={toolCallId}>{toolName} tool call!</div>;
-              //   }
-
-              //   if (state === "result") {
-              //     const { result } = toolInvocation;
-
-              //     return (
-              //       <div key={toolCallId}>
-              //         <pre>{JSON.stringify(result, null, 2)}</pre>
-              //       </div>
-              //     );
-              //   }
-              // }
             })}
 
             <TooltipProvider delayDuration={0}>
