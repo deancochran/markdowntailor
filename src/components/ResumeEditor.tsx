@@ -509,7 +509,7 @@ export default function ResumeEditor({
               value="preview"
               className="flex-1 flex flex-col w-full overflow-hidden"
             >
-              <div className="relative flex-1 w-full overflow-auto">
+              <div className="relative flex-1 w-full">
                 <iframe
                   ref={iframeRef}
                   title="Resume Preview"
@@ -521,6 +521,7 @@ export default function ResumeEditor({
                     transform: `scale(${zoomLevel})`,
                     transformOrigin: "20% 50% 0%",
                     transition: "transform 0.3s ease-in-out",
+                    overflow: "hidden",
                   }}
                 />
               </div>
