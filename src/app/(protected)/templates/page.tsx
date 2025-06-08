@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { addResume } from "@/lib/actions/resume";
 import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
 import { Editor } from "@monaco-editor/react";
 import {
@@ -38,6 +39,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -139,6 +141,7 @@ export default function Templates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTags, setSelectedTags] = useState<TemplateTag[]>([]);
   const [isCreating, setIsCreating] = useState<string | null>(null);
+  const router = useRouter();
 
   // Filter and search templates
   const filteredTemplates = useMemo(() => {
@@ -174,21 +177,32 @@ export default function Templates() {
     setIsCreating(template.slug);
 
     try {
+      // Fetch template content
       const [markdownResponse, cssResponse] = await Promise.all([
         fetch(template.markdownUrl),
         fetch(template.cssUrl),
       ]);
+
+      if (!markdownResponse.ok || !cssResponse.ok) {
+        throw new Error("Failed to fetch template content");
+      }
 
       const [markdownContent, cssContent] = await Promise.all([
         markdownResponse.text(),
         cssResponse.text(),
       ]);
 
-      // Simulate API call - replace with actual implementation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Create new resume using the actual addResume action
+      const newResumeId = await addResume({
+        title: `${template.title} (Copy)`,
+        markdown: markdownContent,
+        css: cssContent,
+      });
 
-      toast.success(`Resume "${template.title}" created successfully!`);
-      // router.push(`/resumes/${newResumeId}`);
+      toast.success(`Resume "${template.title} (Copy)" created successfully!`);
+
+      // Redirect to the new resume editor
+      router.push(`/resumes/${newResumeId}`);
     } catch (error) {
       console.error("Failed to create resume from template:", error);
       toast.error("Failed to create resume from template");
@@ -433,6 +447,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
 
   const { theme } = useTheme();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const router = useRouter();
 
   const loadTemplateContent = async () => {
     if (markdownContent && cssContent) return; // Already loaded
@@ -444,6 +459,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
         fetch(template.cssUrl),
       ]);
 
+      if (!markdownResponse.ok || !cssResponse.ok) {
+        throw new Error("Failed to fetch template content");
+      }
+
       const [markdown, css] = await Promise.all([
         markdownResponse.text(),
         cssResponse.text(),
@@ -451,7 +470,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
 
       setMarkdownContent(markdown);
       setCssContent(css);
-      setPreviewHtml(generateHTMLContent(markdown, css));
+
+      // Generate HTML immediately after loading content
+      const html = generateHTMLContent(markdown, css);
+      setPreviewHtml(html);
     } catch (error) {
       console.error("Failed to load template content:", error);
       toast.error("Failed to load template content");
@@ -464,11 +486,15 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     setIsOpen(open);
     if (open) {
       loadTemplateContent();
+    } else {
+      // Reset state when closing
+      setActiveTab("preview");
     }
   };
 
+  // Update iframe content when HTML changes or tab switches
   useEffect(() => {
-    if (iframeRef.current && previewHtml) {
+    if (iframeRef.current && previewHtml && activeTab === "preview") {
       const iframe = iframeRef.current;
       const iframeDoc =
         iframe.contentDocument || iframe.contentWindow?.document;
@@ -479,15 +505,23 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
         iframeDoc.close();
       }
     }
-  }, [previewHtml]);
+  }, [previewHtml, activeTab]);
 
   const handleCreateFromTemplate = async () => {
     setIsCreating(true);
     try {
-      // Simulate API call - replace with actual implementation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success(`Resume "${template.title}" created successfully!`);
+      // Create new resume using the actual addResume action
+      const newResumeId = await addResume({
+        title: `${template.title} (Copy)`,
+        markdown: markdownContent,
+        css: cssContent,
+      });
+
+      toast.success(`Resume "${template.title} (Copy)" created successfully!`);
       setIsOpen(false);
+
+      // Redirect to the new resume editor
+      router.push(`/resumes/${newResumeId}`);
     } catch (error) {
       console.error("Failed to create resume:", error);
       toast.error("Failed to create resume from template");
@@ -581,7 +615,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                   >
                     <ZoomOut className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm">
+                  <span className="text-sm min-w-[50px] text-center">
                     {Math.round(zoomLevel * 100)}%
                   </span>
                   <Button
