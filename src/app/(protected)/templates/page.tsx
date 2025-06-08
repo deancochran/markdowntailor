@@ -43,7 +43,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-// Template type enum
 enum TemplateTag {
   PROFESSIONAL = "professional",
   CREATIVE = "creative",
@@ -57,7 +56,6 @@ enum TemplateTag {
   TRADITIONAL = "traditional",
 }
 
-// Template interface
 interface Template {
   slug: string;
   title: string;
@@ -80,7 +78,6 @@ const templates: Template[] = [
   },
 ];
 
-// Tag metadata for display
 const tagMetadata = {
   [TemplateTag.PROFESSIONAL]: {
     label: "Professional",
@@ -143,21 +140,17 @@ export default function Templates() {
   const [isCreating, setIsCreating] = useState<string | null>(null);
   const router = useRouter();
 
-  // Filter and search templates
   const filteredTemplates = useMemo(() => {
     return templates.filter((template) => {
-      const matchesSearch =
-        template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.tags.some((tag) =>
-          tagMetadata[tag].label
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()),
-        );
+      const matchesSearch = [
+        template.title,
+        template.description,
+        ...template.tags.map((tag) => tagMetadata[tag].label),
+      ].some((text) => text.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesTags =
         selectedTags.length === 0 ||
-        selectedTags.some((selectedTag) => template.tags.includes(selectedTag));
+        selectedTags.some((tag) => template.tags.includes(tag));
 
       return matchesSearch && matchesTags;
     });
@@ -169,15 +162,10 @@ export default function Templates() {
     );
   };
 
-  const clearAllTags = () => {
-    setSelectedTags([]);
-  };
-
   const handleCreateFromTemplate = async (template: Template) => {
     setIsCreating(template.slug);
 
     try {
-      // Fetch template content
       const [markdownResponse, cssResponse] = await Promise.all([
         fetch(template.markdownUrl),
         fetch(template.cssUrl),
@@ -192,7 +180,6 @@ export default function Templates() {
         cssResponse.text(),
       ]);
 
-      // Create new resume using the actual addResume action
       const newResumeId = await addResume({
         title: `${template.title} (Copy)`,
         markdown: markdownContent,
@@ -200,8 +187,6 @@ export default function Templates() {
       });
 
       toast.success(`Resume "${template.title} (Copy)" created successfully!`);
-
-      // Redirect to the new resume editor
       router.push(`/resumes/${newResumeId}`);
     } catch (error) {
       console.error("Failed to create resume from template:", error);
@@ -226,7 +211,6 @@ export default function Templates() {
             </p>
           </div>
 
-          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute text-muted-foreground h-9 p-1" />
@@ -265,7 +249,7 @@ export default function Templates() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={clearAllTags}
+                        onClick={() => setSelectedTags([])}
                         className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                       >
                         Clear all
@@ -305,7 +289,6 @@ export default function Templates() {
             </Popover>
           </div>
 
-          {/* Selected Tags Display */}
           {selectedTags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 mt-4">
               <span className="text-sm text-muted-foreground">
@@ -404,8 +387,8 @@ function TemplateCard({
       <CardContent className="flex-1 flex flex-wrap flex-col items-center justify-between gap-2 overflow-hidden">
         <div className="w-fit bg-muted rounded-md overflow-hidden relative border">
           <Image
-            width={250} // Smaller width
-            height={250} // Smaller height
+            width={250}
+            height={250}
             src={template.imagePath}
             alt={`${template.title} preview`}
             className="object-contain"
@@ -436,9 +419,11 @@ function TemplateCard({
 function TemplatePreviewDialog({ template }: { template: Template }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [markdownContent, setMarkdownContent] = useState("");
-  const [cssContent, setCssContent] = useState("");
-  const [previewHtml, setPreviewHtml] = useState("");
+  const [templateContent, setTemplateContent] = useState({
+    markdown: "",
+    css: "",
+    html: "",
+  });
   const [activeTab, setActiveTab] = useState("preview");
   const [zoomLevel, setZoomLevel] = useState(0.4);
   const [isCreating, setIsCreating] = useState(false);
@@ -448,7 +433,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   const router = useRouter();
 
   const loadTemplateContent = async () => {
-    if (markdownContent && cssContent) return; // Already loaded
+    if (templateContent.markdown) return;
 
     setIsLoading(true);
     try {
@@ -466,12 +451,8 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
         cssResponse.text(),
       ]);
 
-      setMarkdownContent(markdown);
-      setCssContent(css);
-
-      // Generate HTML immediately after loading content
       const html = generateHTMLContent(markdown, css);
-      setPreviewHtml(html);
+      setTemplateContent({ markdown, css, html });
     } catch (error) {
       console.error("Failed to load template content:", error);
       toast.error("Failed to load template content");
@@ -485,40 +466,35 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     if (open) {
       loadTemplateContent();
     } else {
-      // Reset state when closing
       setActiveTab("preview");
     }
   };
 
-  // Update iframe content when HTML changes or tab switches
   useEffect(() => {
-    if (iframeRef.current && previewHtml && activeTab === "preview") {
+    if (iframeRef.current && templateContent.html && activeTab === "preview") {
       const iframe = iframeRef.current;
       const iframeDoc =
         iframe.contentDocument || iframe.contentWindow?.document;
 
       if (iframeDoc) {
         iframeDoc.open();
-        iframeDoc.write(previewHtml);
+        iframeDoc.write(templateContent.html);
         iframeDoc.close();
       }
     }
-  }, [previewHtml, activeTab]);
+  }, [templateContent.html, activeTab]);
 
   const handleCreateFromTemplate = async () => {
     setIsCreating(true);
     try {
-      // Create new resume using the actual addResume action
       const newResumeId = await addResume({
         title: `${template.title} (Copy)`,
-        markdown: markdownContent,
-        css: cssContent,
+        markdown: templateContent.markdown,
+        css: templateContent.css,
       });
 
       toast.success(`Resume "${template.title} (Copy)" created successfully!`);
       setIsOpen(false);
-
-      // Redirect to the new resume editor
       router.push(`/resumes/${newResumeId}`);
     } catch (error) {
       console.error("Failed to create resume:", error);
@@ -526,6 +502,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const adjustZoom = (delta: number) => {
+    setZoomLevel((prev) => Math.max(0.1, Math.min(2.0, prev + delta)));
   };
 
   return (
@@ -608,7 +588,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setZoomLevel(Math.max(zoomLevel - 0.1, 0.1))}
+                    onClick={() => adjustZoom(-0.1)}
                     disabled={zoomLevel <= 0.2}
                   >
                     <ZoomOut className="h-4 w-4" />
@@ -619,7 +599,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setZoomLevel(Math.min(zoomLevel + 0.1, 2.0))}
+                    onClick={() => adjustZoom(0.1)}
                     disabled={zoomLevel >= 2.0}
                   >
                     <ZoomIn className="h-4 w-4" />
@@ -636,7 +616,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                 height="100%"
                 width="100%"
                 language="markdown"
-                value={markdownContent}
+                value={templateContent.markdown}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>
@@ -649,7 +629,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                 height="100%"
                 width="100%"
                 language="css"
-                value={cssContent}
+                value={templateContent.css}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>
