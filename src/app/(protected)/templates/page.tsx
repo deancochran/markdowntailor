@@ -553,7 +553,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
 
             <TabsContent
               value="preview"
-              className="flex-1 flex flex-col w-fit  overflow-hidden"
+              className="flex-1 flex flex-col w-fit overflow-hidden"
             >
               <div className="relative flex-1 w-full overflow-scroll">
                 <iframe

@@ -19,7 +19,9 @@ export type Toast = {
 /**
  * Create a new resume
  */
-export async function addResume(values: z.infer<InsertResumeSchema>) {
+export type addResumeType = Omit<z.infer<InsertResumeSchema>, "userId">;
+
+export async function addResume(values: addResumeType) {
   const session = await auth();
 
   if (!session?.user?.id) {
