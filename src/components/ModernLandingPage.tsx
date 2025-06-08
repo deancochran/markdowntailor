@@ -98,19 +98,11 @@ export default function ModernLandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Link
-              href="/resumes"
-              className="bg-primary text-primary-foreground rounded text-center flex items-center justify-center hover:bg-primary/90 m-px py-3 px-8 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
-            >
-              Create Your Resume
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="px-8 py-6 text-lg font-semibold border-2 hover:bg-accent"
-            >
-              View Examples
+            <Button variant="outline" size={"lg"} asChild>
+              <Link href="/resumes">
+                Create Your Resume
+                <ArrowRight className="h-5 w-5" />
+              </Link>
             </Button>
           </div>
 
@@ -300,30 +292,6 @@ export default function ModernLandingPage() {
               </p>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="py-20 bg-primary text-primary-foreground text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Land Your Dream Job?
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of successful job seekers who trust our resume
-            builder
-          </p>
-          <Button
-            size="lg"
-            variant="secondary"
-            className="px-12 py-6 text-lg font-semibold hover:shadow-xl transition-all duration-300 group"
-          >
-            Start Building Now - It&apos;s Free
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
-          <p className="text-sm mt-4 opacity-75">
-            No signup required • Start creating immediately
-          </p>
         </div>
       </div>
     </div>

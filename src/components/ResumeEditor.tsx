@@ -46,6 +46,7 @@ export default function ResumeEditor({
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   // State to track the last saved version of the resume
   const [baselineResume, setBaselineResume] = useState(resume);
@@ -104,13 +105,19 @@ export default function ResumeEditor({
   };
 
   const handleDuplicate = async () => {
-    setIsDeleting(true);
+    setIsDuplicating(true);
+    let response;
     try {
-      const response = await createResumeFromVersion(resume.id);
+      response = await createResumeFromVersion(resume.id);
       toast.success("Resume duplicated successfully");
-      redirect(`/resumes/${response.resumeId}`);
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to duplicate resume");
+    } finally {
+      setIsDuplicating(false);
+    }
+    if (response) {
+      redirect(`/resumes/${response.resumeId}`);
     }
   };
 
@@ -470,9 +477,14 @@ export default function ResumeEditor({
             Download HTML
           </Button>
 
-          <Button onClick={handleDuplicate} variant="outline" className="gap-2">
+          <Button
+            onClick={handleDuplicate}
+            disabled={isDuplicating || isDirty}
+            variant="outline"
+            className="gap-2"
+          >
             <Copy className="h-4 w-4" />
-            Duplicate
+            {isDuplicating ? "Duplicating..." : "Duplicate"}
           </Button>
 
           <Button
