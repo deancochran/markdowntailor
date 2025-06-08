@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -38,7 +38,6 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -373,9 +372,13 @@ function TemplateCard({
     <Card className="group transition-all duration-200 hover:shadow-lg hover:border-primary/20 h-full flex flex-col">
       <CardHeader className="flex-shrink-0">
         <div className="flex flex-col items-start justify-between gap-1">
-          <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-1">
-            {template.title}
-          </CardTitle>
+          <div className="flex flex-wrap w-full gap-6 items-center justify-between">
+            <CardTitle className="grow text-lg group-hover:text-primary transition-colors line-clamp-1 ">
+              {template.title}
+            </CardTitle>
+            <TemplatePreviewDialog template={template} />
+          </div>
+
           <p className="text-sm text-muted-foreground line-clamp-2">
             {template.description}
           </p>
@@ -392,35 +395,6 @@ function TemplateCard({
           ))}
         </div>
       </CardHeader>
-
-      <CardContent className="flex-1 flex flex-wrap flex-col items-center justify-between gap-2 overflow-hidden">
-        <div className="w-fit bg-muted rounded-md overflow-hidden relative border">
-          <Image
-            width={250}
-            height={250}
-            src={template.imagePath}
-            alt={`${template.title} preview`}
-            className="object-contain"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 overflow-hidden">
-          <TemplatePreviewDialog template={template} />
-          <Button
-            onClick={() => onCreateFromTemplate(template)}
-            disabled={isCreating}
-          >
-            {isCreating ? (
-              <>
-                <div className="h-4 w-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full" />
-                Creating...
-              </>
-            ) : (
-              "Use Template"
-            )}
-          </Button>
-        </div>
-      </CardContent>
     </Card>
   );
 }
@@ -547,7 +521,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button>
           <Eye className="h-4 w-4 mr-2" />
           Preview
         </Button>
