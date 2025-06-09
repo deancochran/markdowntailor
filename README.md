@@ -1,140 +1,345 @@
-ResumeForge
-Tailor your resume with AI, templates, and versioning — built for technical professionals.
+# ResumeForge
 
-ResumeForge is a modern resume management tool designed for developers and technical job seekers. It streamlines the tedious resume tailoring process, allowing you to focus on applying for jobs rather than rewriting your resume.
+AI-powered resume management platform for technical professionals.
 
-✨ Features
-Resume Builder — Create structured resumes using premade templates.
+## 🛠️ Tech Stack
 
-AI-Powered Suggestions — Utilize agentic AI within a Monaco Editor to generate tailored content.
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 15, Shadcn/UI, Tailwind CSS 4 |
+| **Editor** | Monaco Editor, Markdown Editor |
+| **AI** | Vercel AI SDK, OpenAI, Ollama |
+| **Database** | Drizzle ORM + Neon PostgreSQL |
+| **Auth** | NextAuth.js v5 |
+| **Testing** | Playwright, Jest, MSW |
+| **Package Manager** | pnpm |
+| **Code Quality** | ESLint, Husky |
+| **CI/CD** | GitHub Actions |
 
-Version History — Save, duplicate, and restore previous versions of your resume.
+## 🚀 Development Setup
 
-Live Editor — Write in Markdown and CSS with Monaco for real-time previews.
+### Prerequisites
+- Node.js 18+
+- pnpm (enforced via preinstall hook)
+- Neon Database account
+- Git
 
-Templates System — Base new resumes on pre-styled or role-specific templates.
+### Local Development
 
-Private by Default — Resumes are versioned and scoped to each user, ensuring privacy.
-
-Developer Stack — Built with Next.js, Drizzle ORM, Shadcn UI, and GitHub CI.
-
-📸 Preview
-(Add screenshots or a Loom link here showing template selection, Monaco AI, versioning, etc. This section is crucial for showcasing the product visually.)
-
-🧰 Tech Stack
-Layer
-
-Tech
-
-Frontend
-
-Next.js (App Router) + Shadcn/UI
-
-Editor
-
-Monaco Editor
-
-State Mgmt
-
-SWR, React Hook Form
-
-Backend DB
-
-Drizzle ORM + PostgreSQL
-
-Auth
-
-(TBD or Lucia if used)
-
-DevOps
-
-GitHub Actions CI/CD + Docker + Terraform IaC
-
-🚀 Getting Started
-Follow these steps to get ResumeForge up and running locally:
-
-1. Clone the repository
+```bash
+# Clone and install
 git clone https://github.com/yourusername/resumeforge.git
 cd resumeforge
+pnpm install
 
-2. Install dependencies
-npm install
+# Setup environment
+cp .env.example .env.local
+# Configure your Neon database URL and other variables
 
-3. Set up local PostgreSQL (via Docker)
-Ensure you have Docker installed and running.
+# Generate database schema
+pnpm run db:generate
 
-docker-compose up -d
+# Start development server (with Turbopack)
+pnpm run dev
+```
 
-4. Configure environment variables
-Create a .env.local file in the root directory. Refer to .env.example for required variables.
+## 📋 Available Scripts
 
-5. Run the development server
-npm run dev
+| Command | Description |
+|---------|-------------|
+| `pnpm run dev` | Start development server with Turbopack |
+| `pnpm run build` | Build for production |
+| `pnpm run start` | Start production server |
+| `pnpm run lint` | Run ESLint |
+| `pnpm run typecheck` | TypeScript type checking |
+| `pnpm run db:generate` | Generate Drizzle schema |
+| `pnpm run db:studio` | Open Drizzle Studio |
+| `pnpm run test` | Run Playwright tests |
+| `pnpm run test:ui` | Run Playwright tests with UI |
+| `pnpm run test:failed` | Re-run only failed tests |
+| `pnpm run show-report` | Show Playwright test report |
 
-The application will be accessible at http://localhost:3000.
+## 🧪 Testing
 
-🧪 Development Scripts
-Command
+### Playwright Configuration
 
-Description
+Tests are located in the `/tests` directory and use Playwright for end-to-end testing.
 
-npm run dev
+```bash
+# Run all tests
+pnpm run test
 
-Starts the development server.
+# Run tests with UI mode
+pnpm run test:ui
 
-npm run lint
+# Re-run only failed tests
+pnpm run test:failed
 
-Runs ESLint for code linting.
+# Show test report
+pnpm run show-report
 
-npm run build
+# Run specific test file
+pnpm exec playwright test auth.spec.ts
+```
 
-Creates a production-ready build.
+### Test Structure
+```
+tests/
+├── auth.spec.ts          # Authentication flows
+├── resume-builder.spec.ts # Resume creation/editing
+├── ai-suggestions.spec.ts # AI integration tests
+└── fixtures/            # Test data and utilities
+```
 
-npm run typecheck
+### Writing Tests
+```typescript
+// Example test structure
+import { test, expect } from '@playwright/test';
 
-Performs TypeScript type checking.
+test.describe('Resume Builder', () => {
+  test('should create a new resume', async ({ page }) => {
+    // Test implementation
+  });
+});
+```
 
-✅ CI/CD
-This project leverages GitHub Actions for automated workflows:
+## 🔧 Code Quality
 
-Linting, type checking, and build checks on each push.
+### Husky Git Hooks
 
-Pre-push hooks via Husky to prevent broken builds locally.
+Pre-commit hooks are configured to run:
+- ESLint validation
+- TypeScript type checking
+- Staged file linting
 
-(Planned) Docker image build and push.
+```bash
+# Hooks are automatically installed after pnpm install
+# Husky is initialized via the prepare script
+```
 
-(Planned) Terraform Infrastructure as Code (IaC) deployment steps.
+### ESLint Configuration
 
-See .github/workflows/ci.yml for more details.
+ESLint is configured with:
+- Next.js 15 recommended rules
+- TypeScript support
+- Tailwind CSS class ordering
+- Custom rules for project conventions
 
-🌐 Roadmap
-Here's what's planned for future development:
+```bash
+# Run linting
+pnpm run lint
 
-Monaco + Markdown live editor enhancements.
+# TypeScript checking
+pnpm run typecheck
+```
 
-Page split in Iframe preview for standardized A4 paper size.
+## 🚀 CI/CD Pipeline
 
-Integration of GitHub Actions CI.
+### GitHub Actions Workflow
 
-Monaco AI agent with job description context for highly tailored suggestions.
+Located in `.github/workflows/ci.yml`:
 
-Resume comparison and diff tools.
+```yaml
+# Workflow triggers
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+```
 
-Chrome Extension for one-click tailoring.
+### CI Pipeline Steps
 
-📦 Infrastructure
-This application is containerized using Docker and deployed using:
+1. **Setup & Dependencies**
+   - Node.js 18 setup
+   - Cache npm dependencies
+   - Install dependencies
 
-GitHub Actions for CI/CD.
+2. **Code Quality Checks**
+   - ESLint validation
+   - TypeScript type checking
 
-Terraform for managing AWS ECS + Fargate infrastructure.
+3. **Build Verification**
+   - Next.js production build
+   - Build artifact validation
 
-PostgreSQL provisioned with AWS RDS.
+4. **Testing**
+   - Playwright test execution
+   - Jest unit tests
+   - Test result reporting
+   - Screenshot/video artifacts on failure
 
-Optional: Vercel/Fly.io preview links for pull requests.
+5. **Security Scanning**
+   - Dependency vulnerability check
+   - SAST scanning (planned)
 
-👨‍💻 Contributing
-Contributions are welcome! The app is currently in active private development. If you'd like to contribute, please open an issue to discuss your ideas or contact Dean Cochran directly.
+### Environment Variables
 
-📝 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+Required environment variables for CI:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/resumeforge
+
+# AI Integration
+OPENAI_API_KEY=sk-...
+OLLAMA_BASE_URL=http://localhost:11434 # Optional
+
+# Authentication
+NEXTAUTH_SECRET=your-secret-key
+NEXTAUTH_URL=http://localhost:3000
+```
+
+## 📦 Database Management
+
+### Drizzle ORM with Neon
+
+Schema definitions are in `/src/lib/db/schema.ts`:
+
+```bash
+# Generate schema changes
+pnpm run db:generate
+
+# Open Drizzle Studio
+pnpm run db:studio
+```
+
+### Working with Neon Database
+
+```bash
+# Generate migrations after schema changes
+pnpm run db:generate
+
+# Push schema to database (development)
+# Note: Use migrations for production
+```
+
+## 🔧 Development Workflow
+
+### Branch Strategy
+- `main` - Production-ready code
+- `develop` - Integration branch
+- `feature/*` - Feature development
+- `hotfix/*` - Production hotfixes
+
+### Commit Convention
+Using conventional commits:
+```bash
+feat: add AI suggestion endpoint
+fix: resolve Monaco editor crash
+docs: update deployment guide
+test: add resume builder e2e tests
+```
+
+### Pull Request Process
+1. Create feature branch from `develop`
+2. Implement changes with tests
+3. Ensure all CI checks pass
+4. Request code review
+5. Merge to `develop` after approval
+
+## 🚀 Deployment
+
+### Environment Setup
+
+**Development**
+```bash
+# Local development with Neon database
+pnpm run dev
+```
+
+**Staging**
+- Deployed via GitHub Actions on push to `develop`
+- Uses Neon branch database
+- Environment: `staging`
+
+**Production**
+- Deployed via GitHub Actions on push to `main`
+- Uses Neon main database
+- Environment: `production`
+
+### Build Configuration
+
+Next.js build settings in `next.config.js`:
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'standalone', // For Docker deployment
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client']
+  }
+}
+```
+
+### Docker Configuration
+
+```dockerfile
+# Multi-stage build for production
+FROM node:18-alpine AS builder
+# Build steps...
+
+FROM node:18-alpine AS runner
+# Runtime configuration...
+```
+
+## 🔍 Monitoring & Debugging
+
+### Local Development
+```bash
+# Type checking
+pnpm run typecheck
+
+# Debug Playwright tests
+pnpm run test:ui
+
+# Database debugging
+pnpm run db:studio
+
+# Show test reports
+pnpm run show-report
+```
+
+### Error Handling
+- Client-side errors: Error boundaries
+- Server-side errors: Centralized error handling
+- API errors: Standardized error responses
+
+## 📚 Project Structure
+
+```
+src/
+├── app/                 # Next.js App Router pages
+├── components/          # React components
+│   ├── ui/             # Shadcn/UI components
+│   └── features/       # Feature-specific components
+├── lib/                # Utilities and configurations
+│   ├── db/             # Database schema and utilities
+│   ├── ai/             # AI SDK integration
+│   └── utils/          # Helper functions
+├── hooks/              # Custom React hooks
+└── types/              # TypeScript type definitions
+
+tests/                  # Playwright tests
+docs/                   # Additional documentation
+```
+
+## 🤝 Contributing
+
+### Prerequisites
+- Familiarity with Next.js App Router
+- Experience with TypeScript
+- Understanding of Playwright testing
+
+### Development Setup
+1. Fork the repository
+2. Follow local development setup
+3. Create feature branch
+4. Implement changes with tests
+5. Ensure all CI checks pass
+6. Submit pull request
+
+### Code Standards
+- TypeScript strict mode
+- ESLint + Prettier configuration
+- Conventional commit messages
+- Test coverage for new features

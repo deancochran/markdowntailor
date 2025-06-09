@@ -61,7 +61,7 @@ function LoginContent() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-xs text-muted-foreground animate-in fade-in duration-700 delay-500">
-          <p>
+          <p data-testid="policy-agreement">
             By signing in, you agree to our{" "}
             <a
               href="#"
