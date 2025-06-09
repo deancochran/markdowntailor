@@ -79,6 +79,8 @@ export default function ResumeEditor({
     estimatePageCount(baselineResume.markdown),
   );
   const [isExceeding, setIsExceeding] = useState(estimatedPages > 3);
+  const [editorsTab, setEditorsTab] = useState("markdown");
+  const { theme } = useTheme();
 
   const id = watch("id");
   const title = watch("title");
@@ -97,6 +99,34 @@ export default function ResumeEditor({
     setIsDirty(hasChanges);
   }, [title, modifiedMarkdown, modifiedCss, baselineResume]);
 
+  // Effect to cleanup editors when tab changes
+  useEffect(() => {
+    // Cleanup previous editor when tab changes
+    return () => {
+      if (editorsTab === "markdown") {
+        try {
+          // Store value before cleanup
+          if (modifiedMarkdownEditorRef.current) {
+            const value = modifiedMarkdownEditorRef.current.getValue();
+            if (value) modifyMarkdown(value);
+          }
+        } catch (e) {
+          console.error("Error during markdown editor cleanup:", e);
+        }
+      } else if (editorsTab === "css") {
+        try {
+          // Store value before cleanup
+          if (modifiedCssEditorRef.current) {
+            const value = modifiedCssEditorRef.current.getValue();
+            if (value) modifyCss(value);
+          }
+        } catch (e) {
+          console.error("Error during CSS editor cleanup:", e);
+        }
+      }
+    };
+  }, [editorsTab, modifyMarkdown, modifyCss]);
+
   // Effect to warn user before closing tab with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -114,9 +144,38 @@ export default function ResumeEditor({
     };
   }, [isDirty]);
 
+  // Cleanup editors on component unmount
+  useEffect(() => {
+    return () => {
+      // Dispose of editors on unmount
+      if (modifiedMarkdownEditorRef.current) {
+        // Explicitly set to null to avoid errors during unmount
+        modifiedMarkdownEditorRef.current = null;
+      }
+      if (modifiedCssEditorRef.current) {
+        // Explicitly set to null to avoid errors during unmount
+        modifiedCssEditorRef.current = null;
+      }
+    };
+  }, []);
+
   // Refs to store editor instances for proper cleanup
-  const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
-  const modifiedMarkdownEditorRef = useRef<editor.IStandaloneCodeEditor>(null);
+  const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
+    null,
+  );
+  const modifiedMarkdownEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
+    null,
+  );
+  // Add references to track if editors are mounted
+  const isMountedRef = useRef(true);
+
+  // Track when component is mounted/unmounted
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this resume?")) {
@@ -228,9 +287,6 @@ export default function ResumeEditor({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleSave, handleGeneratePdf]);
-
-  const [editorsTab, setEditorsTab] = useState("markdown");
-  const { theme } = useTheme();
 
   const [previewTab, setPreviewTab] = useState("preview");
   const [zoomLevel, setZoomLevel] = useState(0.6);
@@ -478,30 +534,53 @@ export default function ResumeEditor({
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
 
-  // Handler for editor mount
+  // Handler for editor mount with proper disposal
   const handleMarkdownEditorMount: DiffOnMount = useCallback(
     (editor) => {
+      if (!isMountedRef.current) return;
+
       const modifiedEditor = editor.getModifiedEditor();
       if (modifiedEditor) {
         modifiedMarkdownEditorRef.current = modifiedEditor;
+
+        // Use a safer approach to handle content changes
+        const changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+          if (isMountedRef.current && modifiedEditor.getValue) {
+            try {
+              const value = modifiedEditor.getValue() || markdown;
+              modifyMarkdown(value);
+            } catch (e) {
+              console.error("Error getting editor value:", e);
+            }
+          }
+        });
       }
-      modifiedMarkdownEditorRef.current?.onDidChangeModelContent(() => {
-        modifyMarkdown(
-          modifiedMarkdownEditorRef.current?.getValue() || markdown,
-        );
-      });
     },
-    [markdown],
+    [markdown, modifyMarkdown],
   );
 
   const handleCssEditorMount: DiffOnMount = useCallback(
     (editor) => {
-      modifiedCssEditorRef.current = editor.getModifiedEditor();
-      modifiedCssEditorRef.current?.onDidChangeModelContent(() => {
-        modifyCss(modifiedCssEditorRef.current?.getValue() || css);
-      });
+      if (!isMountedRef.current) return;
+
+      const modifiedEditor = editor.getModifiedEditor();
+      if (modifiedEditor) {
+        modifiedCssEditorRef.current = modifiedEditor;
+
+        // Use a safer approach to handle content changes
+        const changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+          if (isMountedRef.current && modifiedEditor.getValue) {
+            try {
+              const value = modifiedEditor.getValue() || css;
+              modifyCss(value);
+            } catch (e) {
+              console.error("Error getting editor value:", e);
+            }
+          }
+        });
+      }
     },
-    [css],
+    [css, modifyCss],
   );
 
   return (
@@ -605,7 +684,41 @@ export default function ResumeEditor({
         <div className="relative overflow-hidden">
           <Tabs
             value={editorsTab}
-            onValueChange={setEditorsTab}
+            onValueChange={(value) => {
+              // Use a more controlled approach to tab switching
+              if (value !== editorsTab) {
+                // Save current content before switching
+                try {
+                  if (
+                    editorsTab === "markdown" &&
+                    modifiedMarkdownEditorRef.current
+                  ) {
+                    const currentValue =
+                      modifiedMarkdownEditorRef.current.getValue();
+                    if (currentValue) modifyMarkdown(currentValue);
+                  } else if (
+                    editorsTab === "css" &&
+                    modifiedCssEditorRef.current
+                  ) {
+                    const currentValue =
+                      modifiedCssEditorRef.current.getValue();
+                    if (currentValue) modifyCss(currentValue);
+                  }
+                } catch (e) {
+                  console.error("Error during tab switch:", e);
+                }
+
+                // Important: Set refs to null before changing tabs
+                if (value === "css") {
+                  modifiedMarkdownEditorRef.current = null;
+                } else {
+                  modifiedCssEditorRef.current = null;
+                }
+
+                // Now it's safe to switch tabs
+                setEditorsTab(value);
+              }
+            }}
             className="flex flex-col gap-0 h-full border overflow-hidden"
           >
             <TabsList className="w-full flex justify-start border-b rounded-none px-4 flex-shrink-0">
@@ -621,24 +734,42 @@ export default function ResumeEditor({
               value="markdown"
               className="flex-1 min-h-0 overflow-hidden"
             >
-              <DiffEditor
-                language="markdown"
-                original={markdown}
-                modified={modifiedMarkdown}
-                onMount={handleMarkdownEditorMount}
-                options={diffEditorOptions}
-                theme={theme === "dark" ? "vs-dark" : "light"}
-              />
+              {/* Only render the editor when its tab is active to avoid disposal issues */}
+              {editorsTab === "markdown" ? (
+                <DiffEditor
+                  key="markdown-editor" // Add a key to force re-creation when needed
+                  language="markdown"
+                  original={markdown}
+                  modified={modifiedMarkdown}
+                  onMount={handleMarkdownEditorMount}
+                  keepCurrentOriginalModel={true}
+                  keepCurrentModifiedModel={true}
+                  options={{
+                    ...diffEditorOptions,
+                    fixedOverflowWidgets: true, // Add this to help with disposal issues
+                  }}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                />
+              ) : null}
             </TabsContent>
             <TabsContent value="css" className="flex-1 min-h-0 overflow-hidden">
-              <DiffEditor
-                language="css"
-                original={css}
-                modified={modifiedCss}
-                onMount={handleCssEditorMount}
-                options={diffEditorOptions}
-                theme={theme === "dark" ? "vs-dark" : "light"}
-              />
+              {/* Only render the editor when its tab is active to avoid disposal issues */}
+              {editorsTab === "css" ? (
+                <DiffEditor
+                  key="css-editor" // Add a key to force re-creation when needed
+                  language="css"
+                  original={css}
+                  modified={modifiedCss}
+                  onMount={handleCssEditorMount}
+                  keepCurrentOriginalModel={true}
+                  keepCurrentModifiedModel={true}
+                  options={{
+                    ...diffEditorOptions,
+                    fixedOverflowWidgets: true, // Add this to help with disposal issues
+                  }}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                />
+              ) : null}
             </TabsContent>
           </Tabs>
         </div>
