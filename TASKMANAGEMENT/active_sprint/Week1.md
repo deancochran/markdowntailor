@@ -1,80 +1,32 @@
 ### Week 1 (June 9-15)
 - [x] Implement resume size limit (2-3 pages) (Low Complexity)
   - *Rationale: Enforces resume best practices and ensures application performance*
-  - [x] Create size calculation logic
-    - [x] Implement page count estimation
-    - [x] Add content length tracking
-    - [x] Create size validation functions
-  - [x] Add size validation UI
-    - [x] Create size indicator component
-    - [x] Add real-time size updates
-    - [x] Implement size warnings
-    - [x] Create size optimization tips
-  - [x] Implement size enforcement
-    - [x] Add save prevention for oversized resumes
-    - [x] Create size error messages
-    - [x] Implement graceful degradation
-  - [x] Add size optimization features
-    - [x] Create content trimming suggestions
-    - [x] Add formatting optimization
-    - [x] Implement section prioritization
 ---
+
 - [ ] Add user account deletion capability (Medium Complexity)
   - *Rationale: Basic user right and standard platform feature*
-  - [ ] Create account deletion UI
-    - [ ] Design deletion confirmation flow
-    - [ ] Add deletion warnings
-    - [ ] Implement cooling-off period UI
-    - [ ] Create deletion reason collection
-  - [ ] Implement deletion backend logic
-    - [ ] Create deletion API endpoint
-    - [ ] Implement data archival before deletion
-    - [ ] Add deletion audit logging
-    - [ ] Create deletion notifications
-  - [ ] Add deletion confirmation system
-    - [ ] Implement email confirmation
-    - [ ] Add two-factor verification
-    - [ ] Create confirmation token system
-    - [ ] Set confirmation expiration
-  - [ ] Create data export before deletion
-    - [ ] Implement data export API
-    - [ ] Create export format options
-    - [ ] Add export validation
-    - [ ] Implement secure download links
-  - [ ] Implement cooling-off period
-    - [ ] Create scheduled deletion system
-    - [ ] Add cancellation mechanism
-    - [ ] Implement reminder emails
-    - [ ] Create restoration procedures
+  - [ ] Create user account page
+    - [ ] Create account deletion UI
+    - [ ] Create data export UI (backlogged)
+    - [ ] Create account theme mode toggle
+  - [ ] Create user NavBar Avatar with Dropdown
+    - [ ] Dropdown links to settings, signout
+
 ---
 
 - [ ] Database cascade deletion for user content (Medium Complexity)
   - *Rationale: Core data privacy feature ensuring complete user data removal upon request*
   - [ ] Map user content relationships in the drizzle schema
-    - [ ] Document all user-owned entities
-    - [ ] Identify foreign key relationships
-    - [ ] Create entity relationship diagram
-    - [ ] Review for orphaned data risks
   - [ ] Implement cascade deletion in the drizzle schema
     - [ ] Add cascade rules to foreign keys
     - [ ] Create deletion order documentation
     - [ ] Implement soft delete where appropriate
     - [ ] Add deletion timestamps
-  - [ ] Create database triggers for cleanup
-    - [ ] Design cleanup trigger logic
-    - [ ] Implement user data cleanup triggers
-    - [ ] Create orphaned data cleanup
-    - [ ] Add audit trail for deletions
   - [ ] Write unit tests for data removal
     - [ ] Test complete user deletion
     - [ ] Test partial data deletion
     - [ ] Test cascade behavior
     - [ ] Test data recovery prevention
-  - [ ] Document deletion process
-    - [ ] Create deletion flow diagram
-    - [ ] Document recovery procedures
-    - [ ] Add compliance notes
-    - [ ] Create deletion checklist
 ---
 
 - [ ] Implement AI protection (rate limiting, malicious input) (High Complexity)

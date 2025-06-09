@@ -815,7 +815,7 @@ export default function ResumeEditor({
                     <span className={"inline rounded font-mono"}>
                       {isExceeding
                         ? `Reduce content.`
-                        : `Pages:${estimatedPages}/{3}`}
+                        : `Pages:${estimatedPages}/3`}
                     </span>
                   </div>
                 </div>

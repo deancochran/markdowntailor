@@ -3,7 +3,15 @@ import { Toaster } from "@/components/ui/sonner";
 import { auth } from "@/auth";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { logout } from "@/lib/actions/auth";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -35,21 +43,59 @@ export default async function RootLayout({
 
                 <div className="flex items-center">
                   <nav className="flex items-center space-x-2">
+                    {/* DARK MODE SWITCH */}
+                    <ModeToggle />
+                    {/* AVATAR DropdownMenu */}
                     {session ? (
                       <div className="flex items-center gap-4">
-                        <Link href="/resumes">
-                          <Button type="button">My Resumes</Button>
-                        </Link>
-                        <form action={logout}>
-                          <Button type="submit">Sign Out</Button>
-                        </form>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Avatar className="cursor-pointer">
+                              <AvatarImage
+                                src={session.user?.image || undefined}
+                                alt={session.user?.name || "User"}
+                              />
+                              <AvatarFallback>
+                                {session.user?.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-center w-full cursor-pointer"
+                              asChild
+                            >
+                              <Link href="/resumes">Resumes</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-center w-full cursor-pointer"
+                              asChild
+                            >
+                              <Link href="/settings">Settings</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <form action={logout}>
+                                <button
+                                  type="submit"
+                                  className="w-full text-left cursor-pointer"
+                                >
+                                  Sign Out
+                                </button>
+                              </form>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     ) : (
                       <Link href="/login">
                         <Button type="button">Sign In</Button>
                       </Link>
                     )}
-                    <ModeToggle />
                   </nav>
                 </div>
               </div>
