@@ -34,6 +34,24 @@ import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
 import { Input } from "./ui/input";
 
+class IRange {
+  endColumn: number;
+  endLineNumber: number;
+  startColumn: number;
+  startLineNumber: number;
+  constructor(
+    endColumn: number,
+    endLineNumber: number,
+    startColumn: number,
+    startLineNumber: number,
+  ) {
+    this.endColumn = endColumn;
+    this.endLineNumber = endLineNumber;
+    this.startColumn = startColumn;
+    this.startLineNumber = startLineNumber;
+  }
+}
+
 export default function ResumeEditor({
   resume,
 }: {
@@ -122,10 +140,10 @@ export default function ResumeEditor({
   };
 
   const handleSave = useCallback(async () => {
-    if (isSaving) return;
+    if (isSaving || !isDirty) return;
 
-    setIsSaving(true);
     try {
+      setIsSaving(true);
       const updatedResume = await saveResume(id, {
         title,
         markdown: modifiedMarkdown,
@@ -144,7 +162,7 @@ export default function ResumeEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [id, title, isSaving, setValue, modifiedMarkdown, modifiedCss]);
+  }, [id, title, isSaving, setValue, modifiedMarkdown, modifiedCss, isDirty]);
 
   const handleDownloadHTML = () => {
     try {
@@ -241,61 +259,47 @@ export default function ResumeEditor({
     }
   }, [previewTab, modifiedMarkdown, modifiedCss]);
 
-  // Function to apply modifications directly to editors
   const applyModification = useCallback(
     (modification: {
-      applyDirectly?: unknown;
-      contentType?: unknown;
-      operation?: unknown;
-      targetContent?: unknown;
-      newContent?: unknown;
-      position?: unknown;
+      success: boolean;
+      applyDirectly?: boolean;
+      contentType?: "markdown" | "css";
+      operation?: "replace" | "insert" | "append" | "prepend";
+      targetContent?: string; // Made optional and string-only to match API
+      newContent: string;
+      position?: {
+        line?: number;
+        column?: number;
+      };
+      description?: string;
     }) => {
-      if (!modification.applyDirectly) return;
+      if (!modification.applyDirectly || !modification.success) return;
 
-      const { contentType, operation, targetContent, newContent, position } =
-        modification;
+      const {
+        contentType,
+        operation,
+        targetContent,
+        newContent,
+        position,
+        description,
+      } = modification;
 
-      if (contentType === "markdown" && modifiedMarkdownEditorRef.current) {
-        const editor = modifiedMarkdownEditorRef.current;
-        const model = editor.getModel();
-        if (!model) return;
+      try {
+        const editor =
+          contentType === "markdown"
+            ? modifiedMarkdownEditorRef.current
+            : modifiedCssEditorRef.current;
 
-        switch (operation) {
-          case "replace":
-            if (targetContent) {
-              const fullText = model.getValue();
-              const newText = fullText.replace(targetContent, newContent);
-              model.setValue(newText);
-            }
-            break;
-          case "insert":
-            if (position) {
-              editor.executeEdits("ai-modification", [
-                {
-                  range:
-                    (position.startLineNumber,
-                    position.startColumn,
-                    position.endLineNumber,
-                    position.endColumn),
-                  text: newContent,
-                },
-              ]);
-            }
-            break;
-          case "append":
-            const currentText = model.getValue();
-            model.setValue(currentText + "\n" + newContent);
-            break;
-          case "prepend":
-            const existingText = model.getValue();
-            model.setValue(newContent + "\n" + existingText);
-            break;
+        if (!editor) {
+          console.error(`${contentType} editor not available`);
+          return;
         }
-      } else if (contentType === "css" && modifiedCssEditorRef.current) {
-        const editor = modifiedCssEditorRef.current;
+
         const model = editor.getModel();
-        if (!model) return;
+        if (!model) {
+          console.error(`${contentType} editor model not available`);
+          return;
+        }
 
         switch (operation) {
           case "replace":
@@ -305,32 +309,62 @@ export default function ResumeEditor({
               model.setValue(newText);
             }
             break;
+
           case "insert":
-            if (position) {
+            if (
+              position &&
+              position.line !== undefined &&
+              position.column !== undefined
+            ) {
               editor.executeEdits("ai-modification", [
                 {
-                  range:
-                    (position.line,
+                  range: new IRange(
                     position.column,
                     position.line,
-                    position.column),
+                    position.column,
+                    position.line,
+                  ),
                   text: newContent,
                 },
               ]);
+            } else {
+              // Insert at current cursor position if no position specified
+              const selection = editor.getSelection();
+              if (selection) {
+                editor.executeEdits("ai-modification", [
+                  {
+                    range: selection,
+                    text: newContent,
+                  },
+                ]);
+              }
             }
             break;
+
           case "append":
             const currentText = model.getValue();
-            model.setValue(currentText + "\n" + newContent);
+            model.setValue(
+              currentText + (currentText ? "\n" : "") + newContent,
+            );
             break;
+
           case "prepend":
             const existingText = model.getValue();
-            model.setValue(newContent + "\n" + existingText);
+            model.setValue(
+              newContent + (existingText ? "\n" : "") + existingText,
+            );
             break;
-        }
-      }
 
-      toast.success(`Applied Modification`);
+          default:
+            console.warn(`Unknown operation: ${operation}`);
+            return;
+        }
+
+        toast.success(`Applied modification to the ${contentType} document`);
+      } catch (error) {
+        console.error("Error applying modification:", error);
+        toast.error("Failed to apply modification");
+      }
     },
     [],
   );

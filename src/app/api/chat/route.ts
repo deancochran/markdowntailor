@@ -21,7 +21,8 @@ import { z } from "zod";
 
 const model = openai("gpt-4.1-nano");
 
-// Direct modification tool for streaming changes to editors
+// In route.ts, update the modifyContentTool parameters:
+
 const modifyContentTool = tool({
   description: `Directly modifies the resume markdown or CSS content with streaming updates.`,
   parameters: z.object({
@@ -35,7 +36,18 @@ const modifyContentTool = tool({
       .string()
       .optional()
       .describe(
-        "The exact content to find and replace (for 'replace' operation).",
+        "The exact content to find and replace (for 'replace' operation). Can be a string or regex pattern.",
+      ),
+    isRegex: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("Whether targetContent should be treated as a regex pattern."),
+    regexFlags: z
+      .string()
+      .optional()
+      .describe(
+        "Regex flags if isRegex is true (e.g., 'gi' for global, case-insensitive).",
       ),
     newContent: z.string().describe("The new content to apply."),
     position: z
@@ -50,11 +62,28 @@ const modifyContentTool = tool({
       .describe("A description of what this modification does."),
   }),
   execute: async (args) => {
+    // Convert string to RegExp if needed
+    let processedTargetContent: string | RegExp | undefined =
+      args.targetContent;
+
+    if (args.targetContent && args.isRegex) {
+      try {
+        processedTargetContent = new RegExp(
+          args.targetContent,
+          args.regexFlags || "",
+        );
+      } catch (error) {
+        console.error("Invalid regex pattern:", args.targetContent);
+        // Fall back to string matching
+        processedTargetContent = args.targetContent;
+      }
+    }
+
     return {
       success: true,
       contentType: args.contentType,
       operation: args.operation,
-      targetContent: args.targetContent,
+      targetContent: processedTargetContent,
       newContent: args.newContent,
       position: args.position,
       description: args.description,
@@ -63,7 +92,6 @@ const modifyContentTool = tool({
     };
   },
 });
-
 export async function POST(req: Request) {
   const { messages, resume }: { messages: Message[]; resume: typeof Resume } =
     await req.json();
