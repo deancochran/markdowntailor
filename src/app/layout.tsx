@@ -28,7 +28,7 @@ export default async function RootLayout({
             <header className="sticky h-16 top-0 z-50 border-b shadow-xl">
               <div className="flex w-full px-8 h-14 items-center justify-between">
                 <div className="flex items-center">
-                  <Link href="/" className="mr-6 flex items-center space-x-2">
+                  <Link href="/" className="flex items-center ">
                     <span className="font-bold">Resume Builder</span>
                   </Link>
                 </div>

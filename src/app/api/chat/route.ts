@@ -72,7 +72,7 @@ const modifyContentTool = tool({
           args.targetContent,
           args.regexFlags || "",
         );
-      } catch (error) {
+      } catch {
         console.error("Invalid regex pattern:", args.targetContent);
         // Fall back to string matching
         processedTargetContent = args.targetContent;

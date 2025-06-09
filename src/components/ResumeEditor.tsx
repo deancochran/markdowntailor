@@ -281,7 +281,7 @@ export default function ResumeEditor({
         targetContent,
         newContent,
         position,
-        description,
+        // description,
       } = modification;
 
       try {
