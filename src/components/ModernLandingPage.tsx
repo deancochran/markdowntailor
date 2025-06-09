@@ -74,31 +74,26 @@ export default function ModernLandingPage() {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-ring/10 blur-3xl"></div>
         <div
-          className={`relative flex flex-col items-center justify-center min-h-[80vh] text-center px-4 transition-all duration-1000 ${
+          className={`relative flex flex-col items-center align-middle justify-evenly gap-8 px-16 py-8 transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-          <div className="flex items-center gap-2 mb-6 px-4 py-2 bg-muted/50 rounded-full text-muted-foreground text-sm font-medium border border-border/50">
+          <div className="flex items-center px-4 py-2 bg-muted/50 rounded-full text-muted-foreground text-sm font-medium border border-border/50">
             <Sparkles className="h-4 w-4" />
             <span>Trusted by 50,000+ job seekers</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold bg-foreground bg-clip-text text-transparent mb-6 leading-tight">
-            Land Your Dream Job
-            <br />
-            <span className="text-4xl md:text-6xl">with Perfect Resumes</span>
-          </h1>
+          <div className="flex flex-col items-center justify-center text-center ">
+            <h1 className="text-5xl md:text-7xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
+              Land Your Dream Job
+            </h1>
+            <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground  leading-relaxed">
+              Create ATS-optimized, professional resumes using Markdown.
+            </p>
+          </div>
 
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8 leading-relaxed">
-            Create ATS-optimized, professional resumes using Markdown.
-            <br className="hidden md:block" />
-            <span className="text-primary font-semibold">
-              Built by hiring managers, loved by job seekers.
-            </span>
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 mb-12">
-            <Button variant="outline" size={"lg"} asChild>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button className="px-8 w-full" size={"lg"} asChild>
               <Link href="/resumes">
                 Create Your Resume
                 <ArrowRight className="h-5 w-5" />
@@ -107,7 +102,7 @@ export default function ModernLandingPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-foreground mb-1">

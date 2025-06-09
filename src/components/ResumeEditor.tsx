@@ -8,6 +8,7 @@ import {
   saveResume,
 } from "@/lib/actions/resume";
 import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
+import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { printDocument } from "@/lib/utils/printUtils";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
@@ -568,21 +569,7 @@ export default function ResumeEditor({
                 original={markdown}
                 modified={modifiedMarkdown}
                 onMount={handleMarkdownEditorMount}
-                options={{
-                  automaticLayout: true,
-                  formatOnPaste: true,
-                  formatOnType: true,
-                  renderSideBySide: false,
-                  cursorSmoothCaretAnimation: "on",
-                  smoothScrolling: true,
-                  scrollBeyondLastLine: true,
-                  lineNumbers: "off",
-                  renderGutterMenu: false,
-                  renderOverviewRuler: false,
-                  minimap: {
-                    enabled: false,
-                  },
-                }}
+                options={diffEditorOptions}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>
@@ -592,21 +579,7 @@ export default function ResumeEditor({
                 original={css}
                 modified={modifiedCss}
                 onMount={handleCssEditorMount}
-                options={{
-                  automaticLayout: true,
-                  formatOnPaste: true,
-                  formatOnType: true,
-                  renderSideBySide: false,
-                  cursorSmoothCaretAnimation: "on",
-                  smoothScrolling: true,
-                  scrollBeyondLastLine: true,
-                  lineNumbers: "off",
-                  renderGutterMenu: false,
-                  renderOverviewRuler: false,
-                  minimap: {
-                    enabled: false,
-                  },
-                }}
+                options={diffEditorOptions}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>

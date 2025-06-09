@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addResume } from "@/lib/actions/resume";
 import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
+import { templatePreviewOptions } from "@/lib/utils/monacoOptions";
 import { Editor } from "@monaco-editor/react";
 import {
   Briefcase,
@@ -514,7 +515,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="w-full h-full flex flex-col items-start justify-between gap-0 overflow-hidden"
+            className="w-full h-full flex flex-col items-start justify-start gap-0 overflow-hidden"
           >
             <div className="flex-shrink-0 w-full overflow-hidden">
               <TabsList className="flex flex-row gap-4 w-full">
@@ -525,7 +526,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
             </div>
 
             <TabsContent
-              className="flex-1 flex flex-col max-h-40 h-40 w-full overflow-scroll"
+              className="flex-1 flex flex-col w-full overflow-hidden"
               value="preview"
             >
               <div className="relative h-full grow overflow-hidden">
@@ -541,7 +542,6 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     transformOrigin: "top left",
                     transition: "transform 0.3s ease-in-out",
                     overflow: "hidden",
-                    position: "absolute",
                   }}
                   onLoad={() => {
                     // Ensure content is loaded when iframe loads
@@ -598,6 +598,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                 width="100%"
                 language="markdown"
                 value={templateContent.markdown}
+                options={templatePreviewOptions}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>
@@ -611,6 +612,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                 width="100%"
                 language="css"
                 value={templateContent.css}
+                options={templatePreviewOptions}
                 theme={theme === "dark" ? "vs-dark" : "light"}
               />
             </TabsContent>

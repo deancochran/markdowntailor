@@ -15,6 +15,7 @@ import {
   resumeVersions as ResumeVersions,
 } from "@/db/schema";
 import { createResumeFromVersion, restoreVersion } from "@/lib/actions/resume";
+import { versionDiffEditorOptions } from "@/lib/utils/monacoOptions";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { diffLines } from "diff";
 import { InferSelectModel } from "drizzle-orm";
@@ -221,6 +222,7 @@ export default function ResumeVersionsComponent({
                   original={selectedOriginalMarkdown}
                   modified={selectedModifiedMarkdown}
                   onMount={handleMarkdownEditorMount}
+                  options={versionDiffEditorOptions}
                   theme={theme === "dark" ? "vs-dark" : "light"}
                 />
               </TabsContent>
@@ -234,6 +236,7 @@ export default function ResumeVersionsComponent({
                   original={selectedOriginalCss}
                   modified={selectedModifiedCss}
                   onMount={handleCssEditorMount}
+                  options={versionDiffEditorOptions}
                   theme={theme === "dark" ? "vs-dark" : "light"}
                 />
               </TabsContent>
@@ -395,7 +398,9 @@ export default function ResumeVersionsComponent({
                               variant="outline"
                               size="sm"
                               onClick={() => handleRestoreVersion(version.id)}
-                              disabled={isRestoring === version.id}
+                              disabled={
+                                isRestoring === version.id || index === 0
+                              }
                               className="text-xs flex-1 sm:flex-none"
                             >
                               <RotateCcw className="h-3 w-3 mr-1" />
