@@ -69,7 +69,7 @@ export default function ModernLandingPage() {
   }, [testimonials.length]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
+    <div className="flex flex-col gap-20 py-10 min-h-screen bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-ring/10 blur-3xl"></div>
@@ -120,7 +120,7 @@ export default function ModernLandingPage() {
       {/* Why Choose Us Section */}
       <section
         id="features"
-        className="py-20 px-4 max-w-6xl mx-auto space-y-20 scroll-mt-20 flex flex-col items-center justify-center"
+        className="px-4 max-w-6xl mx-auto space-y-20 scroll-mt-20 flex flex-col items-center justify-center"
       >
         <div className="text-center space-y-2">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
@@ -213,7 +213,7 @@ export default function ModernLandingPage() {
       </section>
 
       {/* Testimonials */}
-      <div className="py-20 bg-gradient-to-br from-muted to-accent">
+      <div className="bg-gradient-to-br from-muted to-accent">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-foreground mb-12">
             Loved by Job Seekers Everywhere
@@ -244,7 +244,7 @@ export default function ModernLandingPage() {
       </div>
 
       {/* How It Works */}
-      <div className="py-20 px-4 max-w-6xl mx-auto">
+      <div className="px-4 max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-foreground mb-4">
             Get Started in Minutes
@@ -288,6 +288,18 @@ export default function ModernLandingPage() {
             </div>
           ))}
         </div>
+      </div>
+      {/* Final Call to Action */}
+      <div className="px-4 text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+          Ready to Land Your Dream Job?
+        </h2>
+        <Button className="px-8 py-4 text-lg" size={"lg"} asChild>
+          <Link href="/resumes">
+            Start Building Your Resume Now
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Link>
+        </Button>
       </div>
     </div>
   );
