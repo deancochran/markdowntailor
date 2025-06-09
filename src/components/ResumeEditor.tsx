@@ -2,6 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resume as Resume } from "@/db/schema";
+// Add this import at the top of the file
+
 import {
   createResumeFromVersion,
   deleteResume,
@@ -10,6 +12,7 @@ import {
 import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { printDocument } from "@/lib/utils/printUtils";
+import { estimatePageCount } from "@/lib/utils/resumeUtils";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message, ToolInvocation } from "ai";
@@ -71,6 +74,11 @@ export default function ResumeEditor({
   const [baselineResume, setBaselineResume] = useState(resume);
   // State to track if there are unsaved changes
   const [isDirty, setIsDirty] = useState(false);
+  // State to track if resume exceeds page limit
+  const [estimatedPages, setEstimatedPages] = useState(
+    estimatePageCount(baselineResume.markdown),
+  );
+  const [isExceeding, setIsExceeding] = useState(estimatedPages > 3);
 
   const id = watch("id");
   const title = watch("title");
@@ -94,7 +102,8 @@ export default function ResumeEditor({
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (isDirty) {
         event.preventDefault();
-        event.returnValue = ""; // Required for modern browsers
+        // Using modern approach instead of deprecated returnValue
+        return "";
       }
     };
 
@@ -141,7 +150,7 @@ export default function ResumeEditor({
   };
 
   const handleSave = useCallback(async () => {
-    if (isSaving || !isDirty) return;
+    if (isSaving || !isDirty || isExceeding) return;
 
     try {
       setIsSaving(true);
@@ -163,7 +172,16 @@ export default function ResumeEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [id, title, isSaving, setValue, modifiedMarkdown, modifiedCss, isDirty]);
+  }, [
+    id,
+    title,
+    isSaving,
+    setValue,
+    modifiedMarkdown,
+    modifiedCss,
+    isDirty,
+    isExceeding,
+  ]);
 
   const handleDownloadHTML = () => {
     try {
@@ -242,7 +260,8 @@ export default function ResumeEditor({
             );
 
             iframeDoc.open();
-            iframeDoc.write(htmlContent);
+            // Using innerHTML instead of deprecated write
+            iframeDoc.documentElement.innerHTML = htmlContent;
             iframeDoc.close();
 
             iframeDoc.addEventListener("click", (event) => {
@@ -258,6 +277,10 @@ export default function ResumeEditor({
 
       return () => clearTimeout(handle);
     }
+    // Store the result in state instead of reassigning the variable
+    const newEstimatedPages = estimatePageCount(modifiedMarkdown);
+    setEstimatedPages(newEstimatedPages);
+    setIsExceeding(newEstimatedPages > 3);
   }, [previewTab, modifiedMarkdown, modifiedCss]);
 
   const applyModification = useCallback(
@@ -373,9 +396,12 @@ export default function ResumeEditor({
   // Process tool invocations and apply modifications
   const processToolInvocations = useCallback(
     (message: Message) => {
-      if (!message.toolInvocations) return;
+      // Access invocations using non-deprecated pattern
+      const invocations =
+        "toolInvocations" in message ? message.toolInvocations : undefined;
+      if (!invocations) return;
 
-      message.toolInvocations.forEach((invocation: ToolInvocation) => {
+      invocations.forEach((invocation: ToolInvocation) => {
         if (invocation.state === "result" && invocation.result) {
           const result = invocation.result;
           if (result.applyDirectly) {
@@ -494,7 +520,7 @@ export default function ResumeEditor({
 
           <Button
             onClick={handleSave}
-            disabled={isSaving || !isDirty}
+            disabled={isSaving || !isDirty || isExceeding}
             variant="outline"
             className={`relative gap-2`}
           >
@@ -621,7 +647,16 @@ export default function ResumeEditor({
                 />
               </div>
               <div className="bg-muted text-muted-foreground h-10 items-center w-full flex justify-between border-t px-2">
-                <div className="text-sm text-muted-foreground">A4 Preview</div>
+                <div className="text-sm text-muted-foreground flex flex-row items-center gap-2">
+                  A4 Preview{" "}
+                  <div className="flex items-center gap-1.5">
+                    <span className={"inline rounded font-mono"}>
+                      {isExceeding
+                        ? `Reduce content.`
+                        : `Pages:${estimatedPages}/{3}`}
+                    </span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"

@@ -19,10 +19,6 @@ import { Input } from "@/components/ui/input";
 
 import { insertResumeSchema, type InsertResumeSchema } from "@/db/schema";
 import { addResume } from "@/lib/actions/resume";
-import {
-  defaultCssTemplate,
-  defaultMarkdownTemplate,
-} from "@/lib/utils/resumeUtils";
 import { Session } from "next-auth";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -34,8 +30,6 @@ export function CreateResumeForm({ session }: { session: Session }) {
     resolver: zodResolver(insertResumeSchema),
     defaultValues: {
       userId: session.user.id,
-      css: defaultCssTemplate(),
-      markdown: defaultMarkdownTemplate(),
     },
   });
 

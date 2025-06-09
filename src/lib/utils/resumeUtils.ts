@@ -1,202 +1,50 @@
-import { z } from "zod";
+/**
+ * Simple resume size validation utility
+ * Focuses on enforcing 3-page maximum limit
+ */
 
-export const AIResumeOutput = z.object({
-  markdown: z
-    .string()
-    .describe("The entire resume content formatted in Markdown."),
-  css: z
-    .string()
-    .describe(
-      "CSS rules to style the resume. This should be a valid CSS string.",
-    ),
-});
+// Constants for size estimation
+const CHARS_PER_PAGE = 3000; // Approximate characters per page
+const MAX_PAGES = 3;
+const MAX_CONTENT_LENGTH = CHARS_PER_PAGE * MAX_PAGES;
 
-export function defaultCssTemplate(): string {
-  return `
-  /* Resume styling */
+/**
+ * Estimates the number of pages based on content length
+ * This is a simplified approach based on character count
+ */
+export function estimatePageCount(markdown: string): number {
+  // Count only the visible content (not markdown syntax)
+  const cleanContent = markdown
+    .replace(/#+\s+/g, "") // Remove headers
+    .replace(/\*\*/g, "") // Remove bold markers
+    .replace(/\*/g, "") // Remove italic markers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); // Replace links with just their text
 
-  body {
-    background-color: white;
-    font-family: Arial, sans-serif;
-    box-sizing: border-box;
-    width: 210mm;
-    min-height: 297mm;
-    padding: 10mm;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-
-  /* Headings */
-  h1 {
-    font-size: 24px;
-    margin-bottom: 4px;
-    font-weight: bold;
-    color: black;
-  }
-
-  h2 {
-    font-size: 18px;
-    border-bottom: 1px solid #000;
-    padding-top: 8px;
-    margin-bottom: 4px;
-    font-weight: bold;
-    color: black;
-  }
-
-  h3 {
-    margin-bottom: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    color: black;
-  }
-
-    h4 {
-    padding-top: 8px;
-    margin-bottom: 4px;
-    font-size: 14px;
-    font-weight: bold;
-    color: black;
-  }
-
-  /* Links */
-  a {
-    color: blue;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  /* text */
-  p {
-    font-size: small;
-  }
-
-  /* Lists */
-  ul {
-    padding-left: 13px;
-
-  }
-
-  li {
-    font-size:small;
-  }
-
-  strong {
-    font-weight: bold;
-  }
-
-  em {
-    font-style: italic;
-  }
-
-  /* Custom */
-  .section {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 8px;
-    margin-bottom: 4px;
-
-  }
-
-  .section-content {
-    display: flex;
-    align-items:  center;
-    gap: 4px;
-  }
-`;
-}
-
-export function defaultMarkdownTemplate(): string {
-  return `# John Doe
-
-## Software Engineer
-
-Email: john.doe@example.com | Phone: (123) 456-7890 | [LinkedIn](https://linkedin.com/in/johndoe) | [GitHub](https://github.com/johndoe)
-
----
-
-## Summary
-
-Experienced software engineer with over 5 years of expertise in full-stack development, cloud architecture, and DevOps. Passionate about building scalable web applications and solving complex problems with elegant solutions.
-
----
-
-## Experience
-
-### Senior Software Engineer - Tech Innovations Inc.
-*January 2021 - Present*
-
-- Led a team of 5 developers to rebuild the company's core platform, resulting in a 40% increase in performance
-- Implemented CI/CD pipelines using GitHub Actions, reducing deployment time by 60%
-- Architected and developed microservices using Node.js and Docker that process over 1M transactions daily
-- Mentored junior developers through code reviews and pair programming sessions
-
-### Software Developer - Digital Solutions Ltd.
-*June 2018 - December 2020*
-
-- Developed and maintained RESTful APIs for mobile and web applications
-- Collaborated with UX designers to implement responsive front-end interfaces using React
-- Optimized database queries, resulting in a 30% reduction in load times
-- Participated in Agile development processes, including daily stand-ups and sprint planning
-
----
-
-## Skills
-
-- **Languages**: JavaScript/TypeScript, Python, Java, SQL
-- **Frontend**: React, Next.js, HTML5, CSS3, Tailwind CSS
-- **Backend**: Node.js, Express, Django, Spring Boot
-- **Database**: PostgreSQL, MongoDB, Redis
-- **DevOps**: Docker, Kubernetes, AWS, GitHub Actions, Terraform
-- **Other**: RESTful APIs, GraphQL, WebSockets, Microservices, Agile methodologies
-
----
-
-## Education
-
-### Bachelor of Science in Computer Science
-*University of Technology, 2014-2018*
-
-- GPA: 3.8/4.0
-- Relevant coursework: Data Structures, Algorithms, Web Development, Database Systems
-- Senior Project: Developed an AI-powered task management system
-
----
-
-## Projects
-
-### Personal Finance Tracker
-- Built a full-stack application using MERN stack with authentication and data visualization
-- Implemented OAuth 2.0 for secure third-party integrations
-- [github.com/johndoe/finance-tracker](https://github.com/johndoe/finance-tracker)
-
-### Open Source Contribution - DevTools Extension
-- Contributed to a popular browser extension for developers with over 50k users
-- Added new features for network traffic analysis and implemented performance improvements
-
----
-
-## Certifications
-
-- AWS Certified Solutions Architect, 2022
-- Certified Kubernetes Administrator (CKA), 2021
-- MongoDB Certified Developer, 2020`;
+  return Math.ceil(cleanContent.length / CHARS_PER_PAGE);
 }
 
 /**
- * Gets the file extension from a resume name
- * @param filename The resume filename
- * @returns The appropriate file extension (.md by default)
+ * Validates if a resume exceeds the maximum allowed size
+ * @returns Object with validation results
  */
-export function getResumeFileExtension(filename: string): string {
-  return filename.endsWith(".md") ? "" : ".md";
-}
+export function validateResumeSize(markdown: string): {
+  isValid: boolean;
+  estimatedPages: number;
+  message: string;
+} {
+  const estimatedPages = estimatePageCount(markdown);
+  const isValid = estimatedPages <= MAX_PAGES;
 
-/**
- * Validates a resume name
- * @param name The resume name to validate
- * @returns True if the name is valid, false otherwise
- */
-export function isValidResumeName(name: string): boolean {
-  return name.trim().length > 0 && name.length <= 255;
+  let message = "";
+  if (!isValid) {
+    message = `Resume exceeds the ${MAX_PAGES}-page limit (estimated ${estimatedPages} pages). Please reduce content.`;
+  } else if (estimatedPages === MAX_PAGES) {
+    message = `Resume is at the ${MAX_PAGES}-page limit. Consider reviewing for conciseness.`;
+  }
+
+  return {
+    isValid,
+    estimatedPages,
+    message,
+  };
 }
