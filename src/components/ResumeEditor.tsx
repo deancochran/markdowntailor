@@ -259,11 +259,12 @@ export default function ResumeEditor({
               modifiedCss,
             );
 
+            // Use write method instead of innerHTML
             iframeDoc.open();
-            // Using innerHTML instead of deprecated write
-            iframeDoc.documentElement.innerHTML = htmlContent;
+            iframeDoc.write(htmlContent);
             iframeDoc.close();
 
+            // Add click handler for links
             iframeDoc.addEventListener("click", (event) => {
               const target = event.target as HTMLAnchorElement;
               if (target.tagName === "A") {
@@ -277,11 +278,41 @@ export default function ResumeEditor({
 
       return () => clearTimeout(handle);
     }
-    // Store the result in state instead of reassigning the variable
+  }, [previewTab, modifiedMarkdown, modifiedCss]);
+
+  // Add an additional useEffect for handling iframe load events
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (iframe && previewTab === "preview") {
+      const handleLoad = () => {
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow?.document;
+
+        if (
+          iframeDoc &&
+          (!iframeDoc.body || iframeDoc.body.innerHTML.trim() === "")
+        ) {
+          const htmlContent = generateHTMLContent(
+            modifiedMarkdown,
+            modifiedCss,
+          );
+          iframeDoc.open();
+          iframeDoc.write(htmlContent);
+          iframeDoc.close();
+        }
+      };
+
+      iframe.addEventListener("load", handleLoad);
+      return () => iframe.removeEventListener("load", handleLoad);
+    }
+  }, [previewTab, modifiedMarkdown, modifiedCss]);
+
+  // Separate useEffect for page estimation
+  useEffect(() => {
     const newEstimatedPages = estimatePageCount(modifiedMarkdown);
     setEstimatedPages(newEstimatedPages);
     setIsExceeding(newEstimatedPages > 3);
-  }, [previewTab, modifiedMarkdown, modifiedCss]);
+  }, [modifiedMarkdown]);
 
   const applyModification = useCallback(
     (modification: {

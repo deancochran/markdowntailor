@@ -1,23 +1,23 @@
 ### Week 1 (June 9-15)
-- [ ] Implement resume size limit (2-3 pages) (Low Complexity)
+- [x] Implement resume size limit (2-3 pages) (Low Complexity)
   - *Rationale: Enforces resume best practices and ensures application performance*
-  - [ ] Create size calculation logic
-    - [ ] Implement page count estimation
-    - [ ] Add content length tracking
-    - [ ] Create size validation functions
-  - [ ] Add size validation UI
-    - [ ] Create size indicator component
-    - [ ] Add real-time size updates
-    - [ ] Implement size warnings
-    - [ ] Create size optimization tips
-  - [ ] Implement size enforcement
-    - [ ] Add save prevention for oversized resumes
-    - [ ] Create size error messages
-    - [ ] Implement graceful degradation
-  - [ ] Add size optimization features
-    - [ ] Create content trimming suggestions
-    - [ ] Add formatting optimization
-    - [ ] Implement section prioritization
+  - [x] Create size calculation logic
+    - [x] Implement page count estimation
+    - [x] Add content length tracking
+    - [x] Create size validation functions
+  - [x] Add size validation UI
+    - [x] Create size indicator component
+    - [x] Add real-time size updates
+    - [x] Implement size warnings
+    - [x] Create size optimization tips
+  - [x] Implement size enforcement
+    - [x] Add save prevention for oversized resumes
+    - [x] Create size error messages
+    - [x] Implement graceful degradation
+  - [x] Add size optimization features
+    - [x] Create content trimming suggestions
+    - [x] Add formatting optimization
+    - [x] Implement section prioritization
 ---
 - [ ] Add user account deletion capability (Medium Complexity)
   - *Rationale: Basic user right and standard platform feature*

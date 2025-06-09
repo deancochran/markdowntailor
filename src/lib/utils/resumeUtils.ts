@@ -6,7 +6,6 @@
 // Constants for size estimation
 const CHARS_PER_PAGE = 3000; // Approximate characters per page
 const MAX_PAGES = 3;
-const MAX_CONTENT_LENGTH = CHARS_PER_PAGE * MAX_PAGES;
 
 /**
  * Estimates the number of pages based on content length
