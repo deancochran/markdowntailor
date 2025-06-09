@@ -29,7 +29,7 @@ export default async function RootLayout({
               <div className="flex w-full px-8 h-14 items-center justify-between">
                 <div className="flex items-center">
                   <Link href="/" className="flex items-center ">
-                    <span className="font-bold">Resume Builder</span>
+                    <span className="font-bold">ResumeBuilder</span>
                   </Link>
                 </div>
 
