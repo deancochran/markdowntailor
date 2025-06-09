@@ -116,20 +116,22 @@ export default function ResumeListing({
           </CardTitle>
         </CardHeader>
         {optimisticResumes.length === 0 ? (
-          <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+          <CardContent className="flex flex-col items-center justify-center p-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="rounded-full bg-muted p-6 mb-4">
-                <FileText size={48} className="text-muted-foreground" />
+              <div className="bg-muted flex flex-col p-4">
+                <span className="flex flex-row gap-2">
+                  <FileText className="text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">No Resumes Yet</h3>
+                </span>
+                <p className="text-muted-foreground  max-w-md">
+                  Get started by creating your first resume using the form
+                  above. Build professional resumes with our easy-to-use editor.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No Resumes Yet</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Get started by creating your first resume using the form above.
-                Build professional resumes with our easy-to-use editor.
-              </p>
             </motion.div>
           </CardContent>
         ) : (
@@ -202,7 +204,6 @@ function ResumeCard({
         className={`
         group transition-all duration-200 border bg-card
         ${resume._isOptimistic ? "bg-blue-50/50 border-blue-200" : "hover:shadow-lg hover:border-primary/20"}
-        ${resume._isDeleting ? "opacity-50 bg-red-50/50 border-red-200" : ""}
       `}
       >
         <CardHeader className="pb-3">
@@ -222,7 +223,7 @@ function ResumeCard({
                 )}
                 {resume._isDeleting && (
                   <motion.span
-                    className="text-xs text-red-600 ml-2 font-normal"
+                    className="text-xs ml-2 font-normal"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}

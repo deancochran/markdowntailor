@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -69,13 +69,12 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <h4 className="text-sm font-medium">Export Your Data</h4>
+              <h4 className="text-sm font-medium">
+                Export Your Data (Coming Soon)
+              </h4>
               <p className="text-sm text-muted-foreground">
                 Download all your resumes and account data
               </p>
-              <Button variant="outline" disabled>
-                Export Data (Coming Soon)
-              </Button>
             </div>
 
             <Separator />
@@ -88,9 +87,7 @@ export default async function SettingsPage() {
                 Permanently delete your account and all associated data. This
                 action cannot be undone.
               </p>
-              <Button variant="destructive" disabled>
-                Delete Account (Coming Soon)
-              </Button>
+              <DeleteAccountDialog userEmail={session.user?.email || ""} />
             </div>
           </CardContent>
         </Card>

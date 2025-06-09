@@ -3,30 +3,20 @@
   - *Rationale: Enforces resume best practices and ensures application performance*
 ---
 
-- [ ] Add user account deletion capability (Medium Complexity)
+- [x] Add user account deletion capability (Medium Complexity)
   - *Rationale: Basic user right and standard platform feature*
-  - [ ] Create user account page
-    - [ ] Create account deletion UI
-    - [ ] Create data export UI (backlogged)
-    - [ ] Create account theme mode toggle
-  - [ ] Create user NavBar Avatar with Dropdown
-    - [ ] Dropdown links to settings, signout
+  - [x] Create user account page
+    - [x] Create account deletion UI
+    - [x] Create data export UI (backlogged)
+    - [x] Create account theme mode toggle
+  - [x] Create user NavBar Avatar with Dropdown
+    - [x] Dropdown links to settings, signout
 
 ---
 
-- [ ] Database cascade deletion for user content (Medium Complexity)
+- [x] Database cascade deletion for user content (Medium Complexity)
   - *Rationale: Core data privacy feature ensuring complete user data removal upon request*
-  - [ ] Map user content relationships in the drizzle schema
-  - [ ] Implement cascade deletion in the drizzle schema
-    - [ ] Add cascade rules to foreign keys
-    - [ ] Create deletion order documentation
-    - [ ] Implement soft delete where appropriate
-    - [ ] Add deletion timestamps
-  - [ ] Write unit tests for data removal
-    - [ ] Test complete user deletion
-    - [ ] Test partial data deletion
-    - [ ] Test cascade behavior
-    - [ ] Test data recovery prevention
+
 ---
 
 - [ ] Implement AI protection (rate limiting, malicious input) (High Complexity)

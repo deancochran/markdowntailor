@@ -12,10 +12,6 @@ import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-export type Toast = {
-  description: string;
-};
-
 /**
  * Create a new resume
  */
