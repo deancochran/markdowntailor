@@ -167,7 +167,8 @@ export const aiRequestLog = pgTable("ai_request_log", {
     .$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id")
     .notNull()
-    .references(() => user.id),
+    .references(() => user.id, { onDelete: "set null" }),
+  stripeAccountId: text("stripe_account_id"), // New field for Stripe account
   costEstimate: numeric("cost_estimate", { precision: 10, scale: 2 }).notNull(), // PostgreSQL real type
   promptTokens: integer("prompt_tokens").notNull(),
   completionTokens: integer("completion_tokens").notNull(),

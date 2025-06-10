@@ -65,34 +65,6 @@ export const account = pgTable(
   ],
 );
 
-export const aiRequestLog = pgTable(
-  "ai_request_log",
-  {
-    id: text().primaryKey().notNull(),
-    userId: text("user_id").notNull(),
-    costEstimate: numeric("cost_estimate", {
-      precision: 10,
-      scale: 2,
-    }).notNull(),
-    promptTokens: integer("prompt_tokens").notNull(),
-    completionTokens: integer("completion_tokens").notNull(),
-    totalTokens: integer("total_tokens").notNull(),
-    model: text().notNull(),
-    modelProvider: text("model_provider").notNull(),
-    status: text().default("success").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: "ai_request_log_user_id_user_id_fk",
-    }),
-  ],
-);
-
 export const authenticator = pgTable(
   "authenticator",
   {
@@ -191,5 +163,34 @@ export const session = pgTable(
       foreignColumns: [user.id],
       name: "session_userId_user_id_fk",
     }).onDelete("cascade"),
+  ],
+);
+
+export const aiRequestLog = pgTable(
+  "ai_request_log",
+  {
+    id: text().primaryKey().notNull(),
+    userId: text("user_id").notNull(),
+    costEstimate: numeric("cost_estimate", {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    promptTokens: integer("prompt_tokens").notNull(),
+    completionTokens: integer("completion_tokens").notNull(),
+    totalTokens: integer("total_tokens").notNull(),
+    model: text().notNull(),
+    modelProvider: text("model_provider").notNull(),
+    status: text().default("success").notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+    stripeAccountId: text("stripe_account_id"),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: "ai_request_log_user_id_user_id_fk",
+    }).onDelete("set null"),
   ],
 );

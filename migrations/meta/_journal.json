@@ -8,6 +8,13 @@
       "when": 1749574781528,
       "tag": "0000_pretty_yellowjacket",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1749588240100,
+      "tag": "0001_talented_beast",
+      "breakpoints": true
     }
   ]
 }
