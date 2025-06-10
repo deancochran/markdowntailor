@@ -524,11 +524,11 @@ export default function ResumeEditor({
       toast.error("An error occurred with the AI chat");
     },
     onFinish: (message) => {
-      console.log("onFinish:", message);
+      // console.log("onFinish:", message);
       processToolInvocations(message);
     },
-    onResponse(response) {
-      console.log("onResponse:", response);
+    onResponse() {
+      // console.log("onResponse:", response);
     },
   });
 
@@ -544,7 +544,7 @@ export default function ResumeEditor({
         modifiedMarkdownEditorRef.current = modifiedEditor;
 
         // Use a safer approach to handle content changes
-        const changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+        const _changeHandler = modifiedEditor.onDidChangeModelContent(() => {
           if (isMountedRef.current && modifiedEditor.getValue) {
             try {
               const value = modifiedEditor.getValue() || markdown;
@@ -568,7 +568,7 @@ export default function ResumeEditor({
         modifiedCssEditorRef.current = modifiedEditor;
 
         // Use a safer approach to handle content changes
-        const changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+        const _changeHandler = modifiedEditor.onDidChangeModelContent(() => {
           if (isMountedRef.current && modifiedEditor.getValue) {
             try {
               const value = modifiedEditor.getValue() || css;

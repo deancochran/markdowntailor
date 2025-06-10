@@ -16,46 +16,19 @@
 
 - [x] Database cascade deletion for user content (Medium Complexity)
   - *Rationale: Core data privacy feature ensuring complete user data removal upon request*
-
 ---
 
-- [ ] Implement AI protection (rate limiting, malicious input) (High Complexity)
+- [x] Implement AI protection (rate limiting, malicious input) (High Complexity)
   - *Rationale: Protects application from abuse, ensures stability, controls operational costs*
-  - [ ] Set up rate limiting for AI-generated content
-    - [ ] Implement Redis-based rate limiter
-    - [ ] Configure rate limit thresholds (per minute/hour/day)
-    - [ ] Create rate limit exceeded error responses
-    - [ ] Add rate limit headers to responses
-  - [ ] Implement input sanitization for AI prompts
-    - [ ] Create input validation schema
-    - [ ] Implement prompt length limits
-    - [ ] Add profanity/abuse detection
-    - [ ] Create injection attack prevention
-    - [ ] Implement prompt encoding/escaping
-  - [ ] Create monitoring system for API usage
-    - [ ] Set up usage tracking database tables
-    - [ ] Implement API call logging middleware
-    - [ ] Create usage aggregation queries
-    - [ ] Build usage visualization dashboard
-    - [ ] Add export functionality for usage reports
-  - [ ] Set up alerting for unusual AI request patterns
-    - [ ] Define suspicious pattern criteria
-    - [ ] Implement pattern detection algorithms
-    - [ ] Configure alert thresholds
-    - [ ] Set up email/Slack notifications
-    - [ ] Create alert management dashboard
-  - [ ] Design fallback mechanisms for AI service interruptions
-    - [ ] Implement circuit breaker pattern
-    - [ ] Create fallback response templates
-    - [ ] Add service health checking
-    - [ ] Implement retry logic with exponential backoff
-    - [ ] Create user-friendly error messages
-  - [ ] Create a usage metric that aggregates the total balance of each users AI usage
-    - [ ] Design usage tracking schema
-    - [ ] Implement cost calculation logic
-    - [ ] Create real-time usage updates
-    - [ ] Build usage history views
-    - [ ] Add usage export functionality
+  - [x] Set up rate limiting for AI-generated content
+    - [x] Integrate Upstash Redis for Maximized Developer Efficency
+    - [x] $5 limit now allows for **~10,000 requests** with GPT 4.1 Nano
+    - [x] Rate limiting becomes more important than cost limiting
+  - [x] Implement input sanitization for AI prompts
+  - [x] Create monitoring system for API usage
+    - [x] Create usage aggregation queries
+  - [x] Design fallback mechanisms for AI service interruptions
+    - [x] Create user-friendly error messages
 ---
 
 - [ ] Implement Sentry integration for security monitoring (Medium Complexity)
@@ -96,4 +69,17 @@
     - [ ] Implement PII redaction
     - [ ] Configure automatic data deletion
     - [ ] Create audit logs for data handling
+  - [ ] Set up alerting for unusual AI request patterns
+    - [ ] Define suspicious pattern criteria
+    - [ ] Implement pattern detection algorithms
+    - [ ] Configure alert thresholds
+    - [ ] Set up email/Slack notifications
+    - [ ] Create alert management dashboard
 ---
+
+- [ ] Set up environments (dev, staging, production, beta)
+  - [ ] Configure Release Strategy
+  - [ ] Configure automated builds
+  - [ ] Configure automated testing
+  - [ ] Configure automated deployment
+  - [ ] Configure AI integration for debugging

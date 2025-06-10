@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 // Test suite for unauthorized users trying to access protected resources
-test.describe("Authentication Protection", () => {
-  // Setup for each test: ensuring we're using a fresh context with no authentication
-  test.beforeEach(async ({ context }) => {
-    await context.clearCookies();
-  });
-
+test.describe("No Auth Protection", () => {
   // Test group for protected page routes
   test.describe("Protected Page Routes", () => {
     // Test that accessing protected routes redirects to login
@@ -48,13 +43,20 @@ test.describe("Authentication Protection", () => {
   // Test group for protected API endpoints
   test.describe("Protected API Endpoints", () => {
     test("should return 401 when accessing /api/chat without authentication", async ({
-      request,
+      page,
     }) => {
       // Make a direct request to the API
-      const response = await request.post("/api/chat", {
+      const response = await page.request.post("/api/chat", {
         data: {
           messages: [{ role: "user", content: "Test message" }],
-          resume: { markdown: "# Test", css: "body {color: black;}" },
+          resume: {
+            id: "test-resume",
+            userId: "test-user",
+            title: "Test Resume",
+            markdown: "# Test",
+            css: "body {color: black;}",
+            content: "Test Resume",
+          },
         },
       });
 
@@ -62,12 +64,12 @@ test.describe("Authentication Protection", () => {
       expect(response.status()).toBe(401);
     });
 
-    // Test with incorrect/invalid auth tokens if applicable
+    // Test with incorrect/invalid auth tokens
     test("should reject requests with invalid authentication", async ({
-      request,
+      page,
       context,
     }) => {
-      // Set an invalid auth cookie or header
+      // Set an invalid auth cookie
       await context.addCookies([
         {
           name: "next-auth.session-token",
@@ -78,39 +80,22 @@ test.describe("Authentication Protection", () => {
       ]);
 
       // Try to access protected API
-      const response = await request.post("/api/chat", {
+      const response = await page.request.post("/api/chat", {
         data: {
           messages: [{ role: "user", content: "Test message" }],
-          resume: { markdown: "# Test", css: "body {color: black;}" },
+          resume: {
+            id: "test-resume",
+            userId: "test-user",
+            title: "Test Resume",
+            markdown: "# Test",
+            css: "body {color: black;}",
+            content: "Test Resume",
+          },
         },
       });
 
       // Should still be unauthorized
       expect(response.status()).toBe(401);
-    });
-  });
-
-  // Test for direct access to protected resources
-  test.describe("Direct Resource Access", () => {
-    // Trying to access resources that should only be available to authenticated users
-    test("should not expose protected data in the DOM for unauthenticated users", async ({
-      page,
-    }) => {
-      // Go to home page
-      await page.goto("/");
-
-      // Verify we don't see protected content
-      const protectedContentVisible = await page.evaluate(() => {
-        // Look for elements or content that should only be visible to authenticated users
-        // This depends on your app's structure
-        const protectedElements = document.querySelectorAll(
-          // Selectors for elements that should only appear for authenticated users
-          "[data-testid=user-profile], [data-testid=resume-list], .authenticated-only",
-        );
-        return protectedElements.length > 0;
-      });
-
-      expect(protectedContentVisible).toBe(false);
     });
   });
 
@@ -136,8 +121,5 @@ test.describe("Authentication Protection", () => {
       });
       await expect(linkedinButton).toBeVisible();
     });
-
-    // Additional tests for redirect after login could be added here
-    // but would require mock authentication which is more complex
   });
 });

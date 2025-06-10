@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1747251842230,
-      "tag": "0000_stormy_valkyrie",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1747655857291,
-      "tag": "0001_keen_mastermind",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1748960574124,
-      "tag": "0002_lowly_skreet",
+      "when": 1749574781528,
+      "tag": "0000_pretty_yellowjacket",
       "breakpoints": true
     }
   ]

@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { deleteUser } from "@/lib/actions/users";
 import { Trash2 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -29,7 +28,6 @@ export function DeleteAccountDialog({ userEmail }: DeleteAccountDialogProps) {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
 
   const handleDeleteAccount = async () => {
     if (confirmEmail !== userEmail) {

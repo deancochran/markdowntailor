@@ -1,27 +1,25 @@
 import { auth } from "@/auth";
 import { resume as Resume } from "@/db/schema";
+import {
+  checkAILimits,
+  cleanMessages,
+  logAIRequest,
+  MODEL,
+} from "@/lib/actions/ai";
 import { openai } from "@ai-sdk/openai";
 import {
   InvalidToolArgumentsError,
+  LanguageModelUsage,
   Message,
   NoSuchToolError,
-  ToolExecutionError,
   streamText,
   tool,
+  ToolExecutionError,
 } from "ai";
-// import { createOllama } from "ollama-ai-provider";
+
 import { z } from "zod";
 
-// const model =
-//   process.env.NODE_ENV === "production"
-//     ? openai("gpt-4.1-nano")
-//     : createOllama({
-//         baseURL: process.env.OLLAMA_API_URL,
-//       }).languageModel("qwen3:0.6b");
-
-const model = openai("gpt-4.1-nano");
-
-// In route.ts, update the modifyContentTool parameters:
+const model = openai(MODEL);
 
 const modifyContentTool = tool({
   description: `Directly modifies the resume markdown or CSS content with streaming updates.`,
@@ -62,7 +60,6 @@ const modifyContentTool = tool({
       .describe("A description of what this modification does."),
   }),
   execute: async (args) => {
-    // Convert string to RegExp if needed
     let processedTargetContent: string | RegExp | undefined =
       args.targetContent;
 
@@ -74,7 +71,6 @@ const modifyContentTool = tool({
         );
       } catch {
         console.error("Invalid regex pattern:", args.targetContent);
-        // Fall back to string matching
         processedTargetContent = args.targetContent;
       }
     }
@@ -87,7 +83,6 @@ const modifyContentTool = tool({
       newContent: args.newContent,
       position: args.position,
       description: args.description,
-      // This flag tells the frontend to apply the change directly
       applyDirectly: true,
     };
   },
@@ -106,15 +101,37 @@ export async function POST(req: Request) {
       status: 400,
     });
   }
-  console.log(messages);
-  const result = streamText({
-    model: model,
-    tools: {
-      modify_content: modifyContentTool,
-    },
-    messages: messages,
-    maxSteps: 5,
-    system: `
+  // Check limits and clean input
+  const limitCheck = await checkAILimits(session.user.id);
+  if (!limitCheck.allowed) {
+    await logAIRequest({
+      userId: session.user.id,
+      model: model.modelId,
+      modelProvider: model.provider,
+      status: "blocked",
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    });
+    return new Response(
+      JSON.stringify({
+        error: limitCheck.error,
+        usage: limitCheck.usage,
+      }),
+      { status: 429, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  const cleanedMessages = cleanMessages(messages);
+  try {
+    let requestUsage: LanguageModelUsage;
+    const result = streamText({
+      model: model,
+      tools: {
+        modify_content: modifyContentTool,
+      },
+      messages: cleanedMessages,
+      maxSteps: 5,
+      system: `
 You are a friendly assistant with an intelligence for building resumes.
 Your primary goal is to help users improve their resume by making direct modifications to their markdown and CSS content.
 You should proactively make improvements and apply changes directly to the user's content using the modify_content tool.
@@ -141,21 +158,59 @@ Types of improvements you should be proactive about:
 - Add missing elements or sections
 - Improve visual presentation through CSS
 `,
-    experimental_continueSteps: true,
-  });
+      experimental_continueSteps: true,
+      onFinish: async ({ usage, finishReason }) => {
+        requestUsage = usage;
+        await logAIRequest({
+          userId: session.user.id,
+          model: model.modelId,
+          modelProvider: model.provider,
+          status: finishReason === "stop" ? "success" : finishReason,
+          // Pass the accurate token breakdown
+          promptTokens: requestUsage.promptTokens,
+          completionTokens: requestUsage.completionTokens,
+          totalTokens: requestUsage.totalTokens,
+        });
+      },
+    });
 
-  return result.toDataStreamResponse({
-    getErrorMessage: (error) => {
-      if (NoSuchToolError.isInstance(error)) {
-        return "The model tried to call an unknown tool.";
-      } else if (InvalidToolArgumentsError.isInstance(error)) {
-        return "The model called a tool with invalid arguments.";
-      } else if (ToolExecutionError.isInstance(error)) {
-        return "An error occurred during tool execution.";
-      } else {
-        console.error(error);
-        return "An unknown error occurred.";
-      }
-    },
-  });
+    return result.toDataStreamResponse({
+      getErrorMessage: (error) => {
+        // Log failed requests
+        logAIRequest({
+          userId: session.user.id,
+          model: model.modelId,
+          modelProvider: model.provider,
+          status: "failed",
+          // Pass the accurate token breakdown
+          promptTokens: requestUsage.promptTokens,
+          completionTokens: requestUsage.completionTokens,
+          totalTokens: requestUsage.totalTokens,
+        });
+
+        if (NoSuchToolError.isInstance(error)) {
+          return "The model tried to call an unknown tool.";
+        } else if (InvalidToolArgumentsError.isInstance(error)) {
+          return "The model called a tool with invalid arguments.";
+        } else if (ToolExecutionError.isInstance(error)) {
+          return "An error occurred during tool execution.";
+        } else {
+          console.error(error);
+          return "An unknown error occurred.";
+        }
+      },
+    });
+  } catch (error) {
+    await logAIRequest({
+      userId: session.user.id,
+      model: model.modelId,
+      modelProvider: model.provider,
+      status: "failed",
+      // Pass the accurate token breakdown
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    });
+    throw error;
+  }
 }

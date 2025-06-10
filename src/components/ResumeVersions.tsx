@@ -75,25 +75,21 @@ export default function ResumeVersionsComponent({
   const handleMarkdownEditorMount: DiffOnMount = useCallback((editor) => {
     markdownEditorRef.current = editor;
     // You can add console.log here to confirm editor instance is received
-    console.log("Markdown DiffEditor Mounted:", editor);
   }, []);
 
   const handleCssEditorMount: DiffOnMount = useCallback((editor) => {
     cssEditorRef.current = editor;
     // You can add console.log here to confirm editor instance is received
-    console.log("CSS DiffEditor Mounted:", editor);
   }, []);
 
   // Handle version selection
   const handleSelectOriginal = (version: ResumeVersion) => {
-    console.log("Selected Original Version:", version);
     setSelectedOriginal(version);
     setSelectedOriginalCss(version.css);
     setSelectedOriginalMarkdown(version.markdown);
   };
 
   const handleSelectModified = (version: ResumeVersion) => {
-    console.log("Selected Modified Version:", version);
     setSelectedModified(version);
     setSelectedModifiedCss(version.css);
     setSelectedModifiedMarkdown(version.markdown);

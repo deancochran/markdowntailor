@@ -64,9 +64,9 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 > all Critial Priority backlog tasks
 ### Week 1 (June 9-15)
 - [x] Implement resume size limit
-- [ ] Add user account deletion capability
-- [ ] Database cascade deletion for user content
-- [ ] Implement AI usage tracking infrastructure
+- [x] Add user account deletion capability
+- [x] Database cascade deletion for user content
+- [x] Implement AI usage tracking infrastructure
 - [ ] Set up monitoring and alerting systems
 
 ### Week 2 (June 16-22)

@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -158,6 +159,36 @@ export const resumeVersions = pgTable("resume_versions", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+// Single table for all AI tracking
+export const aiRequestLog = pgTable("ai_request_log", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  costEstimate: numeric("cost_estimate", { precision: 10, scale: 2 }).notNull(), // PostgreSQL real type
+  promptTokens: integer("prompt_tokens").notNull(),
+  completionTokens: integer("completion_tokens").notNull(),
+  totalTokens: integer("total_tokens").notNull(),
+  model: text("model").notNull(),
+  modelProvider: text("model_provider").notNull(),
+  status: text("status").notNull().default("success"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const selectUserSchema = createSelectSchema(user);
+export type SelectUserSchema = typeof selectUserSchema;
+
+export const insertUserSchema = createInsertSchema(user);
+export type InsertUserSchema = typeof insertUserSchema;
+
+export const insertAiRequestLogSchema = createInsertSchema(aiRequestLog);
+export type InsertAiRequestLogSchema = typeof insertAiRequestLogSchema;
+
+export const selectAiRequestLogSchema = createSelectSchema(aiRequestLog);
+export type SelectAiRequestLogSchema = typeof selectAiRequestLogSchema;
 
 export const insertResumeSchema = createInsertSchema(resume);
 export type InsertResumeSchema = typeof insertResumeSchema;
