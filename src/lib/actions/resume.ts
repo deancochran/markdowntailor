@@ -8,43 +8,41 @@ import {
   resumeVersions,
   UpdateResumeSchema,
 } from "@/db/schema";
+import { withSentry } from "@/lib/utils/sentry";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-/**
- * Create a new resume
- */
 export type addResumeType = Omit<z.infer<InsertResumeSchema>, "userId">;
 
-export async function addResume(values: addResumeType) {
-  const session = await auth();
+export const addResume = withSentry(
+  "add-resume",
+  async (values: addResumeType) => {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a resume");
-  }
-  const validatedFields = insertResumeSchema
-    .omit({ userId: true })
-    .safeParse(values);
+    if (!session?.user?.id) {
+      throw new Error("You must be logged in to create a resume");
+    }
+    const validatedFields = insertResumeSchema
+      .omit({ userId: true })
+      .safeParse(values);
 
-  if (!validatedFields.success) {
-    throw new Error("Failed to create Resume");
-  }
-  // Create new resume
-  const [newResume] = await db
-    .insert(resume)
-    .values({
-      ...values,
-      userId: session.user.id,
-    })
-    .returning();
-  return newResume.id;
-}
+    if (!validatedFields.success) {
+      throw new Error("Failed to create Resume");
+    }
 
-/**
- * Get a resume by ID
- */
-export async function getResume(resumeId: string) {
+    const [newResume] = await db
+      .insert(resume)
+      .values({
+        ...values,
+        userId: session.user.id,
+      })
+      .returning();
+    return newResume.id;
+  },
+);
+
+export const getResume = withSentry("get-resume", async (resumeId: string) => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -57,12 +55,9 @@ export async function getResume(resumeId: string) {
     .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
   return resumeData;
-}
+});
 
-/**
- * Get all resumes for the current user
- */
-export async function getResumes() {
+export const getResumes = withSentry("get-resumes", async () => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -76,275 +71,257 @@ export async function getResumes() {
     .orderBy(desc(resume.updatedAt));
 
   return resumes;
-}
+});
 
-/**
- * Save a resume and create a new version
- */
 const resumeUpdateSchema = z.object({
   title: z.string().min(1).max(100),
   markdown: z.string().min(1).max(10000),
   css: z.string().min(1).max(10000),
 });
 
-export async function saveResume(
-  resumeId: string,
-  values: z.infer<UpdateResumeSchema>,
-) {
-  const session = await auth();
+export const saveResume = withSentry(
+  "save-resume",
+  async (resumeId: string, values: z.infer<UpdateResumeSchema>) => {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  const validatedFields = resumeUpdateSchema.safeParse(values);
+    const validatedFields = resumeUpdateSchema.safeParse(values);
 
-  if (!validatedFields.success) {
-    // Handle validation errors, e.g., return early
-    throw new Error("Resume not valid");
-  }
+    if (!validatedFields.success) {
+      throw new Error("Resume not valid");
+    }
 
-  // Check if user owns this resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  if (!existingResume) {
-    throw new Error("Resume not found or you don't have permission to edit it");
-  }
+    if (!existingResume) {
+      throw new Error(
+        "Resume not found or you don't have permission to edit it",
+      );
+    }
 
-  // Get current version number
-  const latestVersions = await db
-    .select()
-    .from(resumeVersions)
-    .where(eq(resumeVersions.resumeId, resumeId))
-    .orderBy(desc(resumeVersions.version))
-    .limit(1);
+    const latestVersions = await db
+      .select()
+      .from(resumeVersions)
+      .where(eq(resumeVersions.resumeId, resumeId))
+      .orderBy(desc(resumeVersions.version))
+      .limit(1);
 
-  const currentVersion =
-    latestVersions.length > 0 ? latestVersions[0].version : 0;
-  const newVersion = currentVersion + 1;
+    const currentVersion =
+      latestVersions.length > 0 ? latestVersions[0].version : 0;
+    const newVersion = currentVersion + 1;
 
-  // Update resume
-  const [updated_resume] = await db
-    .update(resume)
-    .set({
-      title: validatedFields.data.title,
-      markdown: validatedFields.data.markdown,
-      css: validatedFields.data.css,
-    })
-    .where(eq(resume.id, resumeId))
-    .returning();
+    const [updated_resume] = await db
+      .update(resume)
+      .set({
+        title: validatedFields.data.title,
+        markdown: validatedFields.data.markdown,
+        css: validatedFields.data.css,
+      })
+      .where(eq(resume.id, resumeId))
+      .returning();
 
-  // Create new version
-  await db.insert(resumeVersions).values({
-    ...validatedFields.data,
-    version: newVersion,
-    resumeId: resumeId,
-  });
+    await db.insert(resumeVersions).values({
+      ...validatedFields.data,
+      version: newVersion,
+      resumeId: resumeId,
+    });
 
-  return updated_resume;
-}
+    return updated_resume;
+  },
+);
 
-/**
- * Delete a resume
- */
-export async function deleteResume(resumeId: string) {
-  const session = await auth();
+export const deleteResume = withSentry(
+  "delete-resume",
+  async (resumeId: string) => {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  // Check if user owns this resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  if (!existingResume) {
-    throw new Error(
-      "Resume not found or you don't have permission to delete it",
-    );
-  }
+    if (!existingResume) {
+      throw new Error(
+        "Resume not found or you don't have permission to delete it",
+      );
+    }
 
-  // Delete resume (cascades to versions due to foreign key constraint)
-  await db.delete(resume).where(eq(resume.id, resumeId));
-  // Invalidate the listing page
-}
+    await db.delete(resume).where(eq(resume.id, resumeId));
+  },
+);
 
-/**
- * Get resume versions
- */
-export async function getResumeVersions(resumeId: string) {
-  const session = await auth();
+export const getResumeVersions = withSentry(
+  "get-resume-versions",
+  async (resumeId: string) => {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  // Check if user owns this resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  if (!existingResume) {
-    throw new Error(
-      "Resume not found or you don't have permission to view versions",
-    );
-  }
+    if (!existingResume) {
+      throw new Error(
+        "Resume not found or you don't have permission to view versions",
+      );
+    }
 
-  const versions = await db
-    .select()
-    .from(resumeVersions)
-    .where(eq(resumeVersions.resumeId, resumeId))
-    .orderBy(desc(resumeVersions.version));
+    const versions = await db
+      .select()
+      .from(resumeVersions)
+      .where(eq(resumeVersions.resumeId, resumeId))
+      .orderBy(desc(resumeVersions.version));
 
-  return versions;
-}
+    return versions;
+  },
+);
 
-/**
- * Restore a resume version
- */
-export async function restoreVersion(formData: FormData) {
-  const session = await auth();
+export const restoreVersion = withSentry(
+  "restore-version",
+  async (formData: FormData) => {
+    const session = await auth();
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  const resumeId = formData.get("resumeId") as string;
-  const versionId = formData.get("versionId") as string;
+    const resumeId = formData.get("resumeId") as string;
+    const versionId = formData.get("versionId") as string;
 
-  // Check if user owns this resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  if (!existingResume) {
-    throw new Error("Resume not found or you don't have permission");
-  }
+    if (!existingResume) {
+      throw new Error("Resume not found or you don't have permission");
+    }
 
-  // Get the version to restore
-  const [versionToRestore] = await db
-    .select()
-    .from(resumeVersions)
-    .where(
-      and(
-        eq(resumeVersions.id, versionId),
-        eq(resumeVersions.resumeId, resumeId),
-      ),
-    );
+    const [versionToRestore] = await db
+      .select()
+      .from(resumeVersions)
+      .where(
+        and(
+          eq(resumeVersions.id, versionId),
+          eq(resumeVersions.resumeId, resumeId),
+        ),
+      );
 
-  if (!versionToRestore) {
-    throw new Error("Version not found");
-  }
+    if (!versionToRestore) {
+      throw new Error("Version not found");
+    }
 
-  // Get current version number for creating new version
-  const latestVersions = await db
-    .select()
-    .from(resumeVersions)
-    .where(eq(resumeVersions.resumeId, resumeId))
-    .orderBy(desc(resumeVersions.version))
-    .limit(1);
+    const latestVersions = await db
+      .select()
+      .from(resumeVersions)
+      .where(eq(resumeVersions.resumeId, resumeId))
+      .orderBy(desc(resumeVersions.version))
+      .limit(1);
 
-  const currentVersion =
-    latestVersions.length > 0 ? latestVersions[0].version : 0;
-  const newVersion = currentVersion + 1;
+    const currentVersion =
+      latestVersions.length > 0 ? latestVersions[0].version : 0;
+    const newVersion = currentVersion + 1;
 
-  // Update resume with version data
-  await db
-    .update(resume)
-    .set({
+    await db
+      .update(resume)
+      .set({
+        title: versionToRestore.title,
+        markdown: versionToRestore.markdown,
+        css: versionToRestore.css,
+        content: versionToRestore.content,
+        updatedAt: new Date(),
+      })
+      .where(eq(resume.id, resumeId));
+
+    await db.insert(resumeVersions).values({
       title: versionToRestore.title,
       markdown: versionToRestore.markdown,
       css: versionToRestore.css,
       content: versionToRestore.content,
-      updatedAt: new Date(),
-    })
-    .where(eq(resume.id, resumeId));
+      version: newVersion,
+      resumeId: resumeId,
+    });
 
-  // Create new version with restored content
-  await db.insert(resumeVersions).values({
-    title: versionToRestore.title,
-    markdown: versionToRestore.markdown,
-    css: versionToRestore.css,
-    content: versionToRestore.content,
-    version: newVersion,
-    resumeId: resumeId,
-  });
+    revalidatePath(`/resumes/${resumeId}`);
+    return { success: true };
+  },
+);
 
-  revalidatePath(`/resumes/${resumeId}`);
-  return { success: true };
-}
+export const createResumeFromVersion = withSentry(
+  "create-resume-from-version",
+  async (resumeId: string) => {
+    const session = await auth();
 
-/**
- * Create a new resume from a version
- */
-export async function createResumeFromVersion(resumeId: string) {
-  const session = await auth();
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  // Check if user owns the original resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    if (!existingResume) {
+      throw new Error("Resume not found or you don't have permission");
+    }
 
-  if (!existingResume) {
-    throw new Error("Resume not found or you don't have permission");
-  }
+    const [newResume] = await db
+      .insert(resume)
+      .values({
+        userId: session.user.id,
+        title: `${existingResume.title} (Copy)`,
+        markdown: existingResume.markdown,
+        css: existingResume.css,
+        content: existingResume.content,
+      })
+      .returning();
 
-  // Create new resume with version content
-  const [newResume] = await db
-    .insert(resume)
-    .values({
-      userId: session.user.id,
-      title: `${existingResume.title} (Copy)`,
-      markdown: existingResume.markdown,
-      css: existingResume.css,
-      content: existingResume.content,
-    })
-    .returning();
+    return { success: true, resumeId: newResume.id };
+  },
+);
 
-  return { success: true, resumeId: newResume.id };
-}
+export const getResumeVersion = withSentry(
+  "get-resume-version",
+  async (versionId: string, resumeId: string) => {
+    const session = await auth();
 
-/**
- * Get a specific version by ID
- */
-export async function getResumeVersion(versionId: string, resumeId: string) {
-  const session = await auth();
+    if (!session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
 
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized");
-  }
+    const [existingResume] = await db
+      .select()
+      .from(resume)
+      .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
 
-  // Check if user owns this resume
-  const [existingResume] = await db
-    .select()
-    .from(resume)
-    .where(and(eq(resume.id, resumeId), eq(resume.userId, session.user.id)));
+    if (!existingResume) {
+      throw new Error("Resume not found or you don't have permission");
+    }
 
-  if (!existingResume) {
-    throw new Error("Resume not found or you don't have permission");
-  }
+    const [version] = await db
+      .select()
+      .from(resumeVersions)
+      .where(
+        and(
+          eq(resumeVersions.id, versionId),
+          eq(resumeVersions.resumeId, resumeId),
+        ),
+      );
 
-  const [version] = await db
-    .select()
-    .from(resumeVersions)
-    .where(
-      and(
-        eq(resumeVersions.id, versionId),
-        eq(resumeVersions.resumeId, resumeId),
-      ),
-    );
-
-  return version;
-}
+    return version;
+  },
+);

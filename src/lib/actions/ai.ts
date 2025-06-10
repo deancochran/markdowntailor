@@ -3,6 +3,7 @@ import { aiRequestLog, InsertAiRequestLogSchema } from "@/db/schema";
 import { Message } from "ai";
 import { count, eq, sum } from "drizzle-orm";
 import z from "zod";
+import { withSentry } from "../utils/sentry";
 
 export const MODEL = "gpt-4.1-nano";
 const MODEL_LIMITS = {
@@ -55,76 +56,82 @@ function estimateCost(totalTokens: number): number {
   return calculateAccurateCost(estimatedInputTokens, estimatedOutputTokens);
 }
 
-export async function checkAILimits(userId: string) {
-  try {
-    // Rate limits still important for abuse prevention
-    if (!checkRateLimit(userId, 60000, MODEL_LIMITS.MAX_REQUESTS_PER_MINUTE)) {
-      return {
-        allowed: false,
-        error: "Too many requests per minute. Please wait.",
-      };
+export const checkAILimits = withSentry(
+  "check-ai-limits",
+  async (userId: string) => {
+    try {
+      // Rate limits still important for abuse prevention
+      if (
+        !checkRateLimit(userId, 60000, MODEL_LIMITS.MAX_REQUESTS_PER_MINUTE)
+      ) {
+        return {
+          allowed: false,
+          error: "Too many requests per minute. Please wait.",
+        };
+      }
+
+      if (
+        !checkRateLimit(userId, 3600000, MODEL_LIMITS.MAX_REQUESTS_PER_HOUR)
+      ) {
+        return { allowed: false, error: "Hourly request limit reached." };
+      }
+
+      const result = await db
+        .select({
+          totalCost: sum(aiRequestLog.costEstimate),
+        })
+        .from(aiRequestLog)
+        .where(eq(aiRequestLog.userId, userId));
+
+      const userBalance = parseFloat(result[0]?.totalCost || "0");
+
+      if (userBalance > MODEL_LIMITS.MAX_COST) {
+        return {
+          allowed: false,
+          error: `$${MODEL_LIMITS.MAX_COST} usage limit reached.`,
+          usage: { userBalance },
+        };
+      }
+
+      return { allowed: true, usage: { userBalance } };
+    } catch (error) {
+      console.error("Limit check failed:", error);
+      return { allowed: false, error: "System error. Please try again." };
     }
-
-    if (!checkRateLimit(userId, 3600000, MODEL_LIMITS.MAX_REQUESTS_PER_HOUR)) {
-      return { allowed: false, error: "Hourly request limit reached." };
-    }
-
-    // Cost check is less critical now due to low pricing
-    const result = await db
-      .select({
-        totalCost: sum(aiRequestLog.costEstimate), // Direct sum, no casting!
-      })
-      .from(aiRequestLog)
-      .where(eq(aiRequestLog.userId, userId));
-
-    const userBalance = parseFloat(result[0]?.totalCost || "0");
-
-    // With the new pricing, $5 goes much further!
-    if (userBalance > MODEL_LIMITS.MAX_COST) {
-      return {
-        allowed: false,
-        error: `$${MODEL_LIMITS.MAX_COST} usage limit reached.`,
-        usage: { userBalance },
-      };
-    }
-
-    return { allowed: true, usage: { userBalance } };
-  } catch (error) {
-    console.error("Limit check failed:", error);
-    return { allowed: false, error: "System error. Please try again." };
-  }
-}
+  },
+);
 
 type LogAIRequestValues = Omit<
   z.infer<InsertAiRequestLogSchema>,
   "costEstimate"
 >;
 
-export async function logAIRequest(values: LogAIRequestValues) {
-  let costEstimate: number;
+export const logAIRequest = withSentry(
+  "log-ai-request",
+  async (values: LogAIRequestValues) => {
+    let costEstimate: number;
 
-  // Use accurate calculation if we have the breakdown
-  if (
-    values.promptTokens !== undefined &&
-    values.completionTokens !== undefined
-  ) {
-    costEstimate = calculateAccurateCost(
-      values.promptTokens,
-      values.completionTokens,
-    );
-  } else {
-    // Fallback to estimation
-    costEstimate = estimateCost(values.totalTokens);
-  }
-  try {
-    await db.insert(aiRequestLog).values({
-      ...values,
-      costEstimate: costEstimate.toString(),
-    });
-  } catch (error) {
-    console.error("Failed to log AI request:", error);
-  }
-}
+    if (
+      values.promptTokens !== undefined &&
+      values.completionTokens !== undefined
+    ) {
+      costEstimate = calculateAccurateCost(
+        values.promptTokens,
+        values.completionTokens,
+      );
+    } else {
+      costEstimate = estimateCost(values.totalTokens);
+    }
+    try {
+      await db.insert(aiRequestLog).values({
+        ...values,
+        costEstimate: costEstimate.toString(),
+      });
+    } catch (error) {
+      console.error("Failed to log AI request:", error);
+    }
+  },
+);
 
 // Basic input cleaning
 export function cleanInput(input: string): string {
@@ -143,30 +150,32 @@ export function cleanMessages(messages: Message[]): Message[] {
   }));
 }
 
-// Get user usage stats (dynamic calculation)
-export async function getUserUsage(userId: string) {
-  try {
-    const result = await db
-      .select({
-        totalCost: sum(aiRequestLog.costEstimate), // Direct sum
-        totalRequests: count(aiRequestLog.id),
-        totalTokens: sum(aiRequestLog.totalTokens), // Also clean
-      })
-      .from(aiRequestLog)
-      .where(eq(aiRequestLog.userId, userId));
+export const getUserUsage = withSentry(
+  "get-user-usage",
+  async (userId: string) => {
+    try {
+      const result = await db
+        .select({
+          totalCost: sum(aiRequestLog.costEstimate),
+          totalRequests: count(aiRequestLog.id),
+          totalTokens: sum(aiRequestLog.totalTokens),
+        })
+        .from(aiRequestLog)
+        .where(eq(aiRequestLog.userId, userId));
 
-    const stats = result[0];
-    const totalCost = Number(stats?.totalCost || 0);
+      const stats = result[0];
+      const totalCost = Number(stats?.totalCost || 0);
 
-    return {
-      totalCost,
-      totalRequests: stats?.totalRequests || 0,
-      totalTokens: Number(stats?.totalTokens || 0),
-      remainingBudget: MODEL_LIMITS.MAX_COST - totalCost,
-      usagePercentage: (totalCost / MODEL_LIMITS.MAX_COST) * 100,
-    };
-  } catch (error) {
-    console.error("Failed to get usage:", error);
-    return null;
-  }
-}
+      return {
+        totalCost,
+        totalRequests: stats?.totalRequests || 0,
+        totalTokens: Number(stats?.totalTokens || 0),
+        remainingBudget: MODEL_LIMITS.MAX_COST - totalCost,
+        usagePercentage: (totalCost / MODEL_LIMITS.MAX_COST) * 100,
+      };
+    } catch (error) {
+      console.error("Failed to get usage:", error);
+      return null;
+    }
+  },
+);

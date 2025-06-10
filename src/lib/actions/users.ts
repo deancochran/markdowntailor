@@ -2,13 +2,14 @@
 
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
+import { withSentry } from "@/lib/utils/sentry";
 import { eq } from "drizzle-orm";
 import { user } from "migrations/schema";
 
 /**
- * Delete a resume
+ * Delete a user
  */
-export async function deleteUser() {
+export const deleteUser = withSentry("delete-user", async () => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -17,4 +18,4 @@ export async function deleteUser() {
 
   // Delete user (cascades all user owned data)
   await db.delete(user).where(eq(user.id, session.user.id));
-}
+});
