@@ -67,25 +67,27 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [x] Add user account deletion capability
 - [x] Database cascade deletion for user content
 - [x] Implement AI usage tracking infrastructure
-- [ ] Set up monitoring and alerting systems
-
-### Week 2 (June 16-22)
+- [x] Implement Sentry integration for security monitoring
+- [x] Set up monitoring and alerting systems
+- [ ] Set up Stripe
+- [ ] Setup Email Provider
 - [ ] Implement beta protection permission access policies
 - [ ] Incorporate testing into each page of the application
-- [ ] Implement Sentry integration for security monitoring
-- [ ] Set up CRM and email provider
+
+### Week 2 (June 16-22)
+- [ ] Create Privacy Policy
+- [ ] Create Terms of Service
+- [ ] Set up IaC with Terraform
+  - [ ] Configure resume builder title/name
 
 ### Week 3 (June 23-29)
-- [ ] Configure resume builder title/name
-- [ ] Create Terms of Service
-- [ ] Create Privacy Policy
-- [ ] Set up IaC with Terraform
+
 
 
 ### Week 4 (June 30 - July 1)
 - [ ] README.md updates and documentation
 - [ ] Go-live readiness checklist
-- [ ] Beta launch monitoring
+- [ ] Set up CRM
 
 
 ## Technical Specifications
