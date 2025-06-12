@@ -12,6 +12,7 @@ import { withSentry } from "@/lib/utils/sentry";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { sanitizeResumeInput } from "../utils/sanitization";
 
 export type addResumeType = Omit<z.infer<InsertResumeSchema>, "userId">;
 
@@ -79,6 +80,7 @@ const resumeUpdateSchema = z.object({
   css: z.string().min(1).max(10000),
 });
 
+// Update the saveResume function (around line 75)
 export const saveResume = withSentry(
   "save-resume",
   async (resumeId: string, values: z.infer<UpdateResumeSchema>) => {
@@ -88,7 +90,10 @@ export const saveResume = withSentry(
       throw new Error("Unauthorized");
     }
 
-    const validatedFields = resumeUpdateSchema.safeParse(values);
+    // Sanitize input before validation
+    const sanitizedInput = sanitizeResumeInput(values);
+
+    const validatedFields = resumeUpdateSchema.safeParse(sanitizedInput);
 
     if (!validatedFields.success) {
       throw new Error("Resume not valid");
@@ -242,7 +247,6 @@ export const restoreVersion = withSentry(
         title: versionToRestore.title,
         markdown: versionToRestore.markdown,
         css: versionToRestore.css,
-        content: versionToRestore.content,
         updatedAt: new Date(),
       })
       .where(eq(resume.id, resumeId));
@@ -251,7 +255,6 @@ export const restoreVersion = withSentry(
       title: versionToRestore.title,
       markdown: versionToRestore.markdown,
       css: versionToRestore.css,
-      content: versionToRestore.content,
       version: newVersion,
       resumeId: resumeId,
     });
@@ -286,7 +289,6 @@ export const createResumeFromVersion = withSentry(
         title: `${existingResume.title} (Copy)`,
         markdown: existingResume.markdown,
         css: existingResume.css,
-        content: existingResume.content,
       })
       .returning();
 

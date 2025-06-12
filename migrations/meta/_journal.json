@@ -78,6 +78,13 @@
       "when": 1749739808358,
       "tag": "0010_light_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1749772033204,
+      "tag": "0011_smiling_hitman",
+      "breakpoints": true
     }
   ]
 }

@@ -161,7 +161,6 @@ export const resumeVersions = pgTable("resume_versions", {
   title: text("title").notNull(),
   markdown: text("markdown").notNull().default(""),
   css: text("css").notNull().default(""),
-  content: text("content").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

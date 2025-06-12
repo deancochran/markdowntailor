@@ -77,7 +77,7 @@
     - [x] Create alert management dashboard
 ---
 
-- [ ] Alpha Program
+- [x] Alpha Program
   - [x] Set up Stripe
     - [x] Create Account
     - [x] Setup Account

@@ -69,9 +69,10 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
 - [x] Implement AI usage tracking infrastructure
 - [x] Implement Sentry integration for security monitoring
 - [x] Set up monitoring and alerting systems
-- [ ] Set up Stripe
-- [ ] Implement alpha protection permission access policies
-- [ ] Setup Email Provider
+- [x] Set up Stripe
+- [x] Implement alpha protection permission access policies
+- [ ] Add input sanitization to the markdown and css editors
+- [ ] Incorporate testing into each page of the application
 
 ### Week 2 (June 16-22)
 - [ ] Create Privacy Policy
@@ -87,7 +88,6 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
   - [ ] Configure AI integration for debugging
 ---
 
-- [ ] Incorporate testing into each page of the application
 
 ### Week 3 (June 23-29)
 
@@ -97,6 +97,7 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
 - [ ] README.md updates and documentation
 - [ ] Go-live readiness checklist
 - [ ] Set up CRM
+- [ ] Setup Email Provider
 - [ ] Work out budget
 
 

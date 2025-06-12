@@ -3,22 +3,29 @@ import React from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
+import { sanitizeCSS } from "./sanitization";
 
 /**
  * Generates HTML content from markdown and CSS for preview, printing, or download
  */
 export function generateHTMLContent(markdown: string, css: string): string {
+  // Sanitize CSS before use
+  const sanitizedCSS = sanitizeCSS(css);
+
   // Create a temporary container to properly render the markdown
   const tempContainer = document.createElement("div");
   const root = createRoot(tempContainer);
 
   flushSync(() => {
     // Render the markdown content to the temporary container
+    // Remove rehypeRaw plugin to prevent raw HTML injection
     root.render(
       React.createElement(
         ReactMarkdown,
-        { rehypePlugins: [rehypeRaw] },
+        {
+          // Don't allow raw HTML - this is a key security improvement
+          // rehypePlugins: [rehypeRaw] <- REMOVED
+        },
         markdown,
       ),
     );
@@ -53,8 +60,8 @@ export function generateHTMLContent(markdown: string, css: string): string {
             margin: 0;
           }
 
-          /* Now apply the custom CSS */
-          ${css}
+          /* Now apply the custom CSS - sanitized */
+          ${sanitizedCSS}
         </style>
       </head>
       <body>

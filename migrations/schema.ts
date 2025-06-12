@@ -109,7 +109,6 @@ export const resumeVersions = pgTable(
     title: text().notNull(),
     markdown: text().default("").notNull(),
     css: text().default("").notNull(),
-    content: text().default("").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
       .notNull(),
