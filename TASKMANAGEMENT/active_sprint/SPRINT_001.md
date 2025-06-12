@@ -1,14 +1,14 @@
 ---
-title: Beta Version Sprint
+title: alpha Version Sprint
 start: 2025-06-09
 end: 2025-07-01
 duration: 22 days
 ---
 
-# Sprint 001 - Beta Launch Preparation
+# Sprint 001 - alpha Launch Preparation
 
 ## Executive Summary
-This sprint focuses on delivering a secure, stable beta version of ResumeForge with enterprise-grade infrastructure, locked-down AI usage controls, and comprehensive documentation. All critical systems must be bulletproof for the July 1st beta launch.
+This sprint focuses on delivering a secure, stable alpha version of ResumeForge with enterprise-grade infrastructure, locked-down AI usage controls, and comprehensive documentation. All critical systems must be bulletproof for the July 1st alpha launch.
 
 
 ## Definitions of Done (Non-Negotiable Primary Objectives)
@@ -26,7 +26,7 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [ ] Infrastructure passes all security scans (CIS benchmarks)
 - [ ] Automated disaster recovery tested and documented
 - [ ] State management with encryption and versioning
-- [ ] Cost optimization alerts configured (<$500/month beta budget)
+- [ ] Cost optimization alerts configured (<$500/month alpha budget)
 
 ### AI Usage Limits - Complete Lockdown
 **Bulletproof AI usage controls with real-time monitoring**
@@ -43,8 +43,8 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [ ] Process tested with playwright/vitest
 
 ### README.md Complete Overhaul
-**Professional, comprehensive documentation for beta launch**
-- [ ] Beta-specific setup instructions
+**Professional, comprehensive documentation for alpha launch**
+- [ ] alpha-specific setup instructions
 - [ ] Infrastructure deployment guide
 - [ ] AI usage monitoring documentation
 - [ ] Troubleshooting section with common issues
@@ -52,7 +52,7 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [ ] Security and compliance information
 
 ### Sprint 002 Planning & Roadmap
-**Detailed post-beta sprint planning with user feedback integration**
+**Detailed post-alpha sprint planning with user feedback integration**
 - [ ] Sprint 002 backlog prioritized and estimated
 - [ ] User feedback collection strategy defined
 - [ ] Performance monitoring and optimization plan
@@ -70,15 +70,24 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [x] Implement Sentry integration for security monitoring
 - [x] Set up monitoring and alerting systems
 - [ ] Set up Stripe
+- [ ] Implement alpha protection permission access policies
 - [ ] Setup Email Provider
-- [ ] Implement beta protection permission access policies
-- [ ] Incorporate testing into each page of the application
 
 ### Week 2 (June 16-22)
 - [ ] Create Privacy Policy
 - [ ] Create Terms of Service
 - [ ] Set up IaC with Terraform
   - [ ] Configure resume builder title/name
+- [ ] Setup CICD Pipelines
+  - [ ] Set up environments (dev, staging, production, alpha)
+  - [ ] Configure Release Strategy
+  - [ ] Configure automated builds
+  - [ ] Configure automated testing
+  - [ ] Configure automated deployment
+  - [ ] Configure AI integration for debugging
+---
+
+- [ ] Incorporate testing into each page of the application
 
 ### Week 3 (June 23-29)
 
@@ -88,6 +97,7 @@ This sprint focuses on delivering a secure, stable beta version of ResumeForge w
 - [ ] README.md updates and documentation
 - [ ] Go-live readiness checklist
 - [ ] Set up CRM
+- [ ] Work out budget
 
 
 ## Technical Specifications
@@ -120,7 +130,7 @@ ai_limits:
 - **Page Load Time**: <2 seconds (95th percentile)
 - **API Response Time**: <500ms average
 - **Database Query Time**: <100ms average
-- **Uptime SLA**: 99.9% during beta period
+- **Uptime SLA**: 99.9% during alpha period
 
 ## Risk Assessment & Mitigation
 
@@ -133,6 +143,6 @@ ai_limits:
    - *Mitigation*: Aggressive rate limiting and monitoring
    - *Fallback*: Automatic service suspension
 
-3. **Security Vulnerabilities**: Beta exposure risks
+3. **Security Vulnerabilities**: alpha exposure risks
    - *Mitigation*: Comprehensive security testing
    - *Fallback*: Rapid response team and rollback procedures

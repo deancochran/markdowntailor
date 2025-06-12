@@ -18,7 +18,7 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Resume Builder",
+  title: "markdowntailor",
   description: "A markdown-based resume editor",
 };
 
@@ -37,7 +37,7 @@ export default async function RootLayout({
               <div className="flex w-full px-8 h-14 items-center justify-between">
                 <div className="flex items-center">
                   <Link href="/" className="flex items-center ">
-                    <span className="font-bold">ResumeBuilder</span>
+                    <span className="font-bold">markdowntailor</span>
                   </Link>
                 </div>
 

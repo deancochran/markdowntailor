@@ -1,12 +1,7 @@
 import { auth } from "@/auth";
 import { resume as Resume } from "@/db/schema";
-import {
-  checkAILimits,
-  cleanMessages,
-  logAIRequest,
-  MODEL,
-} from "@/lib/actions/ai";
-import { openai } from "@ai-sdk/openai";
+import { getPreferredModelObject, logAIRequest } from "@/lib/ai";
+import { apiRateLimiter } from "@/lib/upstash";
 import {
   InvalidToolArgumentsError,
   LanguageModelUsage,
@@ -18,8 +13,6 @@ import {
 } from "ai";
 
 import { z } from "zod";
-
-const model = openai(MODEL);
 
 const modifyContentTool = tool({
   description: `Directly modifies the resume markdown or CSS content with streaming updates.`,
@@ -96,40 +89,28 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const rateLimit = await apiRateLimiter.limit(session.user.id);
+  if (!rateLimit.success) {
+    return new Response("Too Many Requests", {
+      status: 429,
+    });
+  }
+
   if (!resume || !resume.markdown || !resume.css) {
     return new Response("Bad Request: Resume data is missing or malformed.", {
       status: 400,
     });
   }
-  // Check limits and clean input
-  const limitCheck = await checkAILimits(session.user.id);
-  if (!limitCheck.allowed) {
-    await logAIRequest({
-      userId: session.user.id,
-      model: model.modelId,
-      modelProvider: model.provider,
-      status: "blocked",
-      promptTokens: 0,
-      completionTokens: 0,
-      totalTokens: 0,
-    });
-    return new Response(
-      JSON.stringify({
-        error: limitCheck.error,
-        usage: limitCheck.usage,
-      }),
-      { status: 429, headers: { "Content-Type": "application/json" } },
-    );
-  }
-  const cleanedMessages = cleanMessages(messages);
+
+  const model_selection = getPreferredModelObject(session.user);
   try {
     let requestUsage: LanguageModelUsage;
     const result = streamText({
-      model: model,
+      model: model_selection.model,
       tools: {
         modify_content: modifyContentTool,
       },
-      messages: cleanedMessages,
+      messages: messages,
       maxSteps: 5,
       system: `
 You are a friendly assistant with an intelligence for building resumes.
@@ -161,32 +142,31 @@ Types of improvements you should be proactive about:
       experimental_continueSteps: true,
       onFinish: async ({ usage, finishReason }) => {
         requestUsage = usage;
-        await logAIRequest({
-          userId: session.user.id,
-          model: model.modelId,
-          modelProvider: model.provider,
-          status: finishReason === "stop" ? "success" : finishReason,
-          // Pass the accurate token breakdown
-          promptTokens: requestUsage.promptTokens,
-          completionTokens: requestUsage.completionTokens,
-          totalTokens: requestUsage.totalTokens,
-        });
+
+        await logAIRequest(
+          {
+            status: finishReason === "stop" ? "success" : finishReason,
+            promptTokens: requestUsage.promptTokens,
+            completionTokens: requestUsage.completionTokens,
+            totalTokens: requestUsage.totalTokens,
+          },
+          session.user,
+        );
       },
     });
 
     return result.toDataStreamResponse({
       getErrorMessage: (error) => {
         // Log failed requests
-        logAIRequest({
-          userId: session.user.id,
-          model: model.modelId,
-          modelProvider: model.provider,
-          status: "failed",
-          // Pass the accurate token breakdown
-          promptTokens: requestUsage.promptTokens,
-          completionTokens: requestUsage.completionTokens,
-          totalTokens: requestUsage.totalTokens,
-        });
+        logAIRequest(
+          {
+            status: "failed",
+            promptTokens: requestUsage.promptTokens,
+            completionTokens: requestUsage.completionTokens,
+            totalTokens: requestUsage.totalTokens,
+          },
+          session.user,
+        );
 
         if (NoSuchToolError.isInstance(error)) {
           return "The model tried to call an unknown tool.";
@@ -201,16 +181,15 @@ Types of improvements you should be proactive about:
       },
     });
   } catch (error) {
-    await logAIRequest({
-      userId: session.user.id,
-      model: model.modelId,
-      modelProvider: model.provider,
-      status: "failed",
-      // Pass the accurate token breakdown
-      promptTokens: 0,
-      completionTokens: 0,
-      totalTokens: 0,
-    });
+    await logAIRequest(
+      {
+        status: "failed",
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      },
+      session.user,
+    );
     throw error;
   }
 }

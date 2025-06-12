@@ -19,10 +19,19 @@ export const user = pgTable("user", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: text("name"),
-  email: text("email").unique(),
+  name: text("name").notNull().default("ResumeBuilder"),
+  email: text("email").notNull().unique(),
+  stripeCustomerId: text("stripe_customer_id").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  model_preference: text("model_preference").default("o4-mini").notNull(),
+  provider_preference: text("provider_preference").default("openai").notNull(),
+  credits: numeric("credits", { precision: 19, scale: 4 })
+    .default("0.00")
+    .notNull(),
+  alpha_credits_redeemed: boolean("alpha_credits_redeemed")
+    .default(false)
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -168,8 +177,9 @@ export const aiRequestLog = pgTable("ai_request_log", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "set null" }),
-  stripeAccountId: text("stripe_account_id"), // New field for Stripe account
-  costEstimate: numeric("cost_estimate", { precision: 10, scale: 2 }).notNull(), // PostgreSQL real type
+  credits: numeric("credits", { precision: 19, scale: 4 })
+    .notNull()
+    .default("0.0000"),
   promptTokens: integer("prompt_tokens").notNull(),
   completionTokens: integer("completion_tokens").notNull(),
   totalTokens: integer("total_tokens").notNull(),

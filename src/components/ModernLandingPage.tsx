@@ -1,4 +1,5 @@
 "use client";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -7,15 +8,162 @@ import {
   FileDown,
   FileEdit,
   GitFork,
-  Github,
-  Linkedin,
   Palette,
   Sparkles,
   Star,
-  Twitter,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+// Alpha Program Banner Component
+function AlphaProgramBanner() {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+  const [programStatus, setProgramStatus] = useState<
+    "before" | "active" | "ended"
+  >("before");
+  const [mounted, setMounted] = useState(false);
+
+  // Set your alpha program dates here - memoized to prevent unnecessary re-renders
+  const ALPHA_START_DATE = useMemo(() => new Date("2025-07-01T00:00:00Z"), []);
+  const ALPHA_END_DATE = useMemo(() => new Date("2025-07-31T23:59:59Z"), []);
+
+  useEffect(() => {
+    setMounted(true);
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const startTime = ALPHA_START_DATE.getTime();
+      const endTime = ALPHA_END_DATE.getTime();
+
+      if (now < startTime) {
+        // Before alpha starts - countdown to start
+        const difference = startTime - now;
+        setProgramStatus("before");
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor(
+            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          ),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        };
+      } else if (now >= startTime && now <= endTime) {
+        // During alpha - countdown to end
+        const difference = endTime - now;
+        setProgramStatus("active");
+        return {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor(
+            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          ),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        };
+      } else {
+        // After alpha ends
+        setProgramStatus("ended");
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [ALPHA_START_DATE, ALPHA_END_DATE]);
+
+  if (!mounted) {
+    return null; // Prevent hydration mismatch
+  }
+
+  const getBannerContent = () => {
+    switch (programStatus) {
+      case "before":
+        return {
+          title: "🚀 Alpha Program Starting Soon!",
+          badgeText: "COMING SOON",
+          badgeVariant: "secondary" as const,
+          showCountdown: true,
+          countdownLabel: "Starts in:",
+        };
+      case "active":
+        return {
+          title: "🔥 Alpha Program Live Now!",
+          badgeText: "LIVE NOW",
+          badgeVariant: "destructive" as const,
+          showCountdown: true,
+          countdownLabel: "Ends in:",
+        };
+      case "ended":
+        return {
+          title: "Alpha Program Has Ended",
+          badgeText: "PROGRAM ENDED",
+          badgeVariant: "outline" as const,
+          showCountdown: false,
+          countdownLabel: "",
+        };
+    }
+  };
+
+  const content = getBannerContent();
+
+  return (
+    <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20 p-1">
+      <div className="w-full h-full p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="flex flex-col items-start gap-1">
+          <Badge variant={content.badgeVariant} className="font-semibold">
+            {content.badgeText}
+          </Badge>
+          <h3 className="text-lg font-bold text-foreground">{content.title}</h3>
+        </div>
+
+        {content.showCountdown && (
+          <div className="flex items-center gap-2">
+            <div className="text-sm font-medium text-muted-foreground">
+              {content.countdownLabel}
+            </div>
+            <div className="flex gap-1">
+              {timeLeft.days > 0 && (
+                <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
+                  <div className="text-lg font-bold text-primary">
+                    {timeLeft.days}
+                  </div>
+                  <div className="text-xs text-muted-foreground">DAYS</div>
+                </div>
+              )}
+              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
+                <div className="text-lg font-bold text-primary">
+                  {timeLeft.hours}
+                </div>
+                <div className="text-xs text-muted-foreground">HRS</div>
+              </div>
+              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
+                <div className="text-lg font-bold text-primary">
+                  {timeLeft.minutes}
+                </div>
+                <div className="text-xs text-muted-foreground">MIN</div>
+              </div>
+              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
+                <div className="text-lg font-bold text-primary">
+                  {timeLeft.seconds}
+                </div>
+                <div className="text-xs text-muted-foreground">SEC</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ModernLandingPage() {
   const [isVisible, setIsVisible] = useState(true); // Start as true to match server render
@@ -73,6 +221,9 @@ export default function ModernLandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
+      {/* Alpha Program Banner */}
+      <AlphaProgramBanner />
+
       <main className="flex-grow flex flex-col gap-20 py-10">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
@@ -129,7 +280,7 @@ export default function ModernLandingPage() {
         >
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Why Choose Our AI Resume Builder?
+              Why Choose markdowntailor?
             </h2>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
               Our platform is designed to give you a competitive edge in your
@@ -312,33 +463,17 @@ export default function ModernLandingPage() {
       <footer className="border-t border-border/50">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="col-span-12 lg:col-span-4">
+            <div className="col-span-12 lg:col-span-4 flex flex-col items-start justify-between">
               <h3 className="text-xl font-bold text-foreground">
-                ResumeBuilder
+                markdowntailor
               </h3>
-              <p className="text-muted-foreground mt-2 text-sm">
-                &copy; {new Date().getFullYear()} ResumeBuilder&trade; All
-                rights reserved.
-              </p>
-              <div className="flex mt-4 space-x-4">
-                <Link
-                  href="#"
-                  className="text-muted-foreground hover:text-primary"
-                >
-                  <Twitter className="h-6 w-6" />
-                </Link>
-                <Link
-                  href="#"
-                  className="text-muted-foreground hover:text-primary"
-                >
-                  <Github className="h-6 w-6" />
-                </Link>
-                <Link
-                  href="#"
-                  className="text-muted-foreground hover:text-primary"
-                >
-                  <Linkedin className="h-6 w-6" />
-                </Link>
+              <div className="items-start flex flex-col justify-end">
+                <p className="text-muted-foreground mt-2 text-sm">
+                  &copy; {new Date().getFullYear()} markdowntailor&trade;
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  All rights reserved.
+                </p>
               </div>
             </div>
             <div className="col-span-12 lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-8">

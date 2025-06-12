@@ -11,6 +11,10 @@ export const linkedinlogin = withSentry("linkedin-login", async () => {
   await signIn("linkedin", { redirectTo: "/" }, { prompt: "login" });
 });
 
+export const googlelogin = withSentry("google-login", async () => {
+  await signIn("google", { redirectTo: "/" }, { prompt: "login" });
+});
+
 export const logout = withSentry("logout", async () => {
   await signOut({ redirectTo: "/" });
 });

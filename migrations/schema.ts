@@ -17,24 +17,6 @@ export const verificationToken = pgTable("verificationToken", {
   updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
 });
 
-export const user = pgTable(
-  "user",
-  {
-    id: text().primaryKey().notNull(),
-    name: text(),
-    email: text(),
-    emailVerified: timestamp({ mode: "string" }),
-    image: text(),
-    createdAt: timestamp("created_at", { mode: "string" })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string" })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [unique("user_email_unique").on(table.email)],
-);
-
 export const account = pgTable(
   "account",
   {
@@ -171,10 +153,6 @@ export const aiRequestLog = pgTable(
   {
     id: text().primaryKey().notNull(),
     userId: text("user_id").notNull(),
-    costEstimate: numeric("cost_estimate", {
-      precision: 10,
-      scale: 2,
-    }).notNull(),
     promptTokens: integer("prompt_tokens").notNull(),
     completionTokens: integer("completion_tokens").notNull(),
     totalTokens: integer("total_tokens").notNull(),
@@ -184,7 +162,7 @@ export const aiRequestLog = pgTable(
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
       .notNull(),
-    stripeAccountId: text("stripe_account_id"),
+    credits: numeric({ precision: 19, scale: 4 }).default("0.0000").notNull(),
   },
   (table) => [
     foreignKey({
@@ -192,5 +170,33 @@ export const aiRequestLog = pgTable(
       foreignColumns: [user.id],
       name: "ai_request_log_user_id_user_id_fk",
     }).onDelete("set null"),
+  ],
+);
+
+export const user = pgTable(
+  "user",
+  {
+    id: text().primaryKey().notNull(),
+    name: text().default("ResumeBuilder").notNull(),
+    email: text().notNull(),
+    emailVerified: timestamp({ mode: "string" }),
+    image: text(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+    modelPreference: text("model_preference").default("o4-mini").notNull(),
+    providerPreference: text("provider_preference").default("openai").notNull(),
+    credits: numeric({ precision: 19, scale: 4 }).default("0.00").notNull(),
+    stripeCustomerId: text("stripe_customer_id"),
+    alphaCreditsRedeemed: boolean("alpha_credits_redeemed")
+      .default(false)
+      .notNull(),
+  },
+  (table) => [
+    unique("user_email_unique").on(table.email),
+    unique("user_stripe_customer_id_unique").on(table.stripeCustomerId),
   ],
 );

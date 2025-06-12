@@ -31,12 +31,12 @@
     - [x] Create user-friendly error messages
 ---
 
-- [ ] Implement Sentry integration for security monitoring (Medium Complexity)
+- [x] Implement Sentry integration for security monitoring (Medium Complexity)
   - *Rationale: Real-time monitoring and alerting for malicious user behavior and security threats*
   - [x] Set up Sentry account and project configuration
     - [x] Create Sentry account
     - [x] Configure project settings
-    - [x] Set up environments (dev, staging, production, beta)
+    - [x] Set up environments (dev, staging, production, alpha)
     - [x] Configure data scrubbing rules
   - [x] Integrate Sentry SDK into the application
     - [x] Install Sentry packages
@@ -77,9 +77,45 @@
     - [x] Create alert management dashboard
 ---
 
-- [ ] Set up environments (dev, staging, production, beta)
-  - [ ] Configure Release Strategy
-  - [ ] Configure automated builds
-  - [ ] Configure automated testing
-  - [ ] Configure automated deployment
-  - [ ] Configure AI integration for debugging
+- [ ] Alpha Program
+  - [x] Set up Stripe
+    - [x] Create Account
+    - [x] Setup Account
+    - [x] Setup Alpha Product
+    - [x] Setup Alpha Metering
+    - [x] Setup User credits in DB Schema
+    - [x] Setup Webhook
+  - [x] Dynamic Model Usage Pricing
+    - [x] Create Pricing Constants
+    - [x] Dynamically adjust the user credits on usage event
+    - [x] Ensure prior logic isn't affect (adjust accordingly)
+  - [x] Alpha Program Access Policies
+    - [x] create alpha_credits_redeemed column
+    - [x] prevent users from clicking the purchase button if redeemed
+    - [x] prevent users from /api/stripe/checkout if redeemed
+
+  - [x] Alpha Program Live Banner
+    - [x] create an alpha program banner that counts down to start date and time till end
+    - [x] once program ends have message display that the program is over
+
+- [x] Update and Verify AuthJs config
+  - [x] Add Google login
+---
+
+- [ ] Establish Input sanitization
+  - [ ] Create Markdown processing pipeline
+    - [ ] Raw -> MarkdownIt --> DomPurify --> DB
+  - [ ] Create CSS processing pipeline
+    - [ ] Raw -> CSS Parser --> Validate No JS Properties --> DB
+  - [ ] Create text input sanitization
+    - [ ] Ensure no XSS attacks
+    - [ ] Ensure no SQL injection attacks
+
+---
+
+  - [ ] Testing for Alpha Program
+    - [ ] Test Stripe
+    - [ ] Test Dynamic Pricing
+    - [ ] Test Email Access Policies
+    - [ ] Alpha Program Access Policies
+---

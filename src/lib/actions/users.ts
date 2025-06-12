@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
 import { withSentry } from "@/lib/utils/sentry";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { user } from "migrations/schema";
 
 /**
@@ -19,3 +19,33 @@ export const deleteUser = withSentry("delete-user", async () => {
   // Delete user (cascades all user owned data)
   await db.delete(user).where(eq(user.id, session.user.id));
 });
+
+export async function updateUserWithStripeCustomerId(
+  userId: string,
+  stripeCustomerId: string,
+) {
+  await db
+    .update(user)
+    .set({
+      stripeCustomerId,
+    })
+    .where(eq(user.id, userId));
+}
+
+export async function addCreditsToUser(userId: string, credits: number) {
+  await db
+    .update(user)
+    .set({
+      credits: sql`credits + ${credits}`,
+    })
+    .where(eq(user.id, userId));
+}
+
+export async function deductCreditsFromUser(userId: string, credits: number) {
+  await db
+    .update(user)
+    .set({
+      credits: sql`${user.credits} - ${credits.toFixed(4)}`,
+    })
+    .where(eq(user.id, userId));
+}

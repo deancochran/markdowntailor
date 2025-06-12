@@ -1,0 +1,1 @@
+ALTER TABLE "ai_request_log" DROP COLUMN "stripe_account_id";

@@ -1,6 +1,6 @@
 ## Sprint 002 Preliminary Planning
 
-### Post-Beta Focus Areas
+### Post-alpha Focus Areas
 1. **User Feedback Integration**
    - Feedback collection and analysis system
    - Priority feature development based on usage data
@@ -23,7 +23,7 @@
 ### Sprint 002 Estimated Timeline
 - **Start**: July 2, 2025
 - **End**: July 25, 2025
-- **Focus**: Post-beta improvements and production preparation
+- **Focus**: Post-alpha improvements and production preparation
 
 ## Communication Plan
 

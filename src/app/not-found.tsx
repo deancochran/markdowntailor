@@ -32,7 +32,7 @@ export default function NotFound() {
 
 export function generateMetadata() {
   return {
-    title: "404: Career Roadblock | Resume Builder",
+    title: "404: Career Roadblock | markdowntailor",
     description:
       "Oops! The page you're looking for seems to have been laid off.",
   };

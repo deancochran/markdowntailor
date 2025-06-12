@@ -1,15 +1,15 @@
 import { db } from "@/db/drizzle";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import Credentials from "next-auth/providers/credentials";
-import GitHub from "next-auth/providers/github";
-import LinkedIn from "next-auth/providers/linkedin";
-
 import { eq } from "drizzle-orm";
 import NextAuth, { User } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import GitHub from "next-auth/providers/github";
+import Google from "next-auth/providers/google";
+import LinkedIn from "next-auth/providers/linkedin";
 import z, { ZodError } from "zod";
 import { user } from "./db/schema";
 
-const providers = [GitHub, LinkedIn];
+const providers = [GitHub, LinkedIn, Google];
 
 const testSignInSchema = z.object({
   email: z
@@ -61,7 +61,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: providers,
   callbacks: {
     authorized: async ({ auth }) => {
-      // Logged in users are authenticated, otherwise redirect to login page
       return !!auth;
     },
     jwt({ token, user }) {
@@ -70,9 +69,38 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       return token;
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (token.sub) {
-        session.user.id = token.sub;
+        try {
+          // Fetch fresh, complete user data from database
+          const dbUser = await db
+            .select()
+            .from(user)
+            .where(eq(user.id, token.sub))
+            .limit(1);
+
+          if (dbUser.length > 0) {
+            const currentUser = dbUser[0];
+
+            // Include all data in session (server-side only)
+            session.user = {
+              ...session.user,
+              id: currentUser.id,
+              name: currentUser.name,
+              email: currentUser.email,
+              stripeCustomerId: currentUser.stripeCustomerId,
+              model_preference: currentUser.model_preference,
+              provider_preference: currentUser.provider_preference,
+              credits: currentUser.credits,
+              alpha_credits_redeemed: currentUser.alpha_credits_redeemed,
+              createdAt: currentUser.createdAt,
+              updatedAt: currentUser.updatedAt,
+            };
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          // Handle error appropriately
+        }
       }
       return session;
     },

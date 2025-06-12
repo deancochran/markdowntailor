@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
-import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
+
+import { AICredits } from "@/components/settings/AICredits";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -8,10 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { AlertCircle, CheckCircle } from "lucide-react";
+import { SessionProvider } from "next-auth/react";
 import { redirect } from "next/navigation";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ payment?: string }>;
+}) {
+  const { payment } = await searchParams;
+
   const session = await auth();
 
   if (!session) {
@@ -27,6 +36,25 @@ export default async function SettingsPage() {
             Manage your account settings and preferences
           </p>
         </div>
+
+        {/* Payment Status Alerts */}
+        {payment === "success" && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Payment successful! Your credits have been added to your account.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {payment === "cancelled" && (
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              Payment was cancelled. You can try again anytime.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Profile Section */}
         <Card>
@@ -61,24 +89,18 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* AI Credits Section - Inline Form */}
+        <SessionProvider>
+          <AICredits />
+        </SessionProvider>
+
         {/* Account Actions */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Account Actions</CardTitle>
             <CardDescription>Manage your account data</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">
-                Export Your Data (Coming Soon)
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                Download all your resumes and account data
-              </p>
-            </div>
-
-            <Separator />
-
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-destructive">
                 Delete Account
@@ -89,20 +111,6 @@ export default async function SettingsPage() {
               </p>
               <DeleteAccountDialog userEmail={session.user?.email || ""} />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Preferences */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Preferences</CardTitle>
-            <CardDescription>Customize your experience</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Theme preferences are available in the theme toggle in the
-              navigation bar.
-            </p>
           </CardContent>
         </Card> */}
       </div>

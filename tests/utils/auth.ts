@@ -2,11 +2,12 @@ import { db } from "@/db/drizzle";
 import { accounts, user } from "@/db/schema";
 import { Page, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+import { User } from "next-auth";
 import { v4 } from "uuid";
 
 export class AuthHelper {
   private page: Page;
-  private currentUser?: typeof user.$inferSelect;
+  private currentUser?: User;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,7 +16,7 @@ export class AuthHelper {
   /**
    * Creates a test user with proper accounts linking for credentials auth
    */
-  async createAndAuthenticateUser(): Promise<typeof user.$inferSelect> {
+  async createAndAuthenticateUser(): Promise<User> {
     // Create user with unique ID and email
     const uniqueEmail = `test-${v4()}@example.com`;
     const userId = v4();
@@ -38,12 +39,11 @@ export class AuthHelper {
       providerAccountId: createdUser.id,
     });
 
-
     // Now authenticate using the proper NextAuth flow
     await this.authenticateWithCredentials(createdUser.email as string);
 
     this.currentUser = createdUser;
-    return createdUser;
+    return this.currentUser;
   }
 
   /**
@@ -70,7 +70,6 @@ export class AuthHelper {
 
       // Give NextAuth time to set up the session
       await this.page.waitForTimeout(1000);
-
     } catch (error) {
       console.error("Credentials authentication failed:", error);
       throw error;
@@ -145,7 +144,6 @@ export class AuthHelper {
 
         // Then clean up the user
         await db.delete(user).where(eq(user.id, this.currentUser.id));
-
       } catch (error) {
         console.warn("Failed to cleanup test user:", error);
       }
@@ -160,7 +158,7 @@ export class AuthHelper {
 
 export const authTest = test.extend<{
   authHelper: AuthHelper;
-  authenticatedUser: NonNullable<typeof user.$inferSelect>;
+  authenticatedUser: NonNullable<User>;
 }>({
   authHelper: async ({ page }, use) => {
     const authHelper = new AuthHelper(page);

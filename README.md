@@ -96,7 +96,7 @@ tests/
 // Example test structure
 import { test, expect } from '@playwright/test';
 
-test.describe('Resume Builder', () => {
+test.describe('markdowntailor', () => {
   test('should create a new resume', async ({ page }) => {
     // Test implementation
   });

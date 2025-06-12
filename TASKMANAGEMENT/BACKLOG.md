@@ -1,37 +1,37 @@
-# Resume Builder Project Backlog
+# markdowntailor Project Backlog
 
-This backlog contains all planned tasks for the Resume Builder application, organized by priority category. Items are moved to sprint planning as they become part of the active development cycle.
+This backlog contains all planned tasks for the markdowntailor application, organized by priority category. Items are moved to sprint planning as they become part of the active development cycle.
 
 ## Critical Priority
 
 
 
-- [ ] Implement beta protection permission access policies (High Complexity)
+- [ ] Implement alpha protection permission access policies (High Complexity)
   - *Rationale: Prevents unauthorized access to user data; fundamental security requirement*
-  - [ ] Beta timeframe: July 1-31, 2025
-  - [ ] User limit: 100 beta users maximum
+  - [ ] alpha timeframe: July 1-31, 2025
+  - [ ] User limit: 100 alpha users maximum
   - [ ] Access expiration: Automatic on July 31st
   - [ ] Define TIMEFRAME managed access
-    - [ ] Create beta access configuration schema
-    - [ ] Define beta start and end date constants
+    - [ ] Create alpha access configuration schema
+    - [ ] Define alpha start and end date constants
     - [ ] Implement date validation utilities
-    - [ ] Create beta status checking function
+    - [ ] Create alpha status checking function
   - [ ] Implement middleware to prevent all authentication after timeframe expires
     - [ ] Create authentication middleware
     - [ ] Add timeframe validation to auth flow
-    - [ ] Implement graceful redirect for expired beta
-    - [ ] Create custom error pages for beta expiration
+    - [ ] Implement graceful redirect for expired alpha
+    - [ ] Create custom error pages for alpha expiration
     - [ ] Add logging for blocked authentication attempts
   - [ ] Write playwright tests for permission boundaries
-    - [ ] Test successful login during beta period
-    - [ ] Test blocked login after beta expiration
+    - [ ] Test successful login during alpha period
+    - [ ] Test blocked login after alpha expiration
     - [ ] Test permission enforcement for different user roles
     - [ ] Test edge cases (timezone differences, daylight savings)
-  - [ ] Add limits for AI usage based on aggregate user balance (every user gets $5)
-    - [ ] Create user balance tracking schema
-    - [ ] Implement balance deduction logic
-    - [ ] Add balance checking middleware
-    - [ ] Create balance exhaustion error handling
+  - [ ] Add limits for AI usage based on aggregate user credits (every user gets $5)
+    - [ ] Create user credits tracking schema
+    - [ ] Implement credits deduction logic
+    - [ ] Add credits checking middleware
+    - [ ] Create credits exhaustion error handling
 
 ---
 
@@ -194,36 +194,20 @@ This backlog contains all planned tasks for the Resume Builder application, orga
 
 ## High Priority
 
+- [ ] Add a credits purchase mechanism
+  - *Rationale: Essential for monetization*
+
+- [ ] Implement more granular pricing tiers
+  - *Rationale: Essential for monetization stability*
+
 - [ ] Remove placeholder/fake reviews (Low Complexity)
   - *Rationale: Essential for trust building and platform integrity*
-  - [ ] Identify all placeholder content
-    - [ ] Audit current reviews
-    - [ ] Find placeholder testimonials
-    - [ ] List fake statistics
-  - [ ] Remove or replace with real content
-    - [ ] Delete fake reviews
-    - [ ] Update testimonial section
-    - [ ] Replace with actual user feedback
-  - [ ] Update related UI components
-    - [ ] Modify review display logic
-    - [ ] Update review counters
-    - [ ] Adjust layout for real content
+
 ---
 
 - [ ] Correct exaggerated information (Low Complexity)
   - *Rationale: Ensures honest messaging for user trust*
-  - [ ] Audit all marketing claims
-    - [ ] Review feature descriptions
-    - [ ] Check performance claims
-    - [ ] Verify user statistics
-  - [ ] Update with accurate information
-    - [ ] Revise feature descriptions
-    - [ ] Update performance metrics
-    - [ ] Correct user numbers
-  - [ ] Review and update regularly
-    - [ ] Create accuracy checklist
-    - [ ] Schedule regular reviews
-    - [ ] Document changes
+
 ---
 
 
@@ -232,194 +216,69 @@ This backlog contains all planned tasks for the Resume Builder application, orga
 
 - [ ] Implement character limit for markdown (Low Complexity)
   - *Rationale: Performance and consistency optimization*
-  - [ ] Define character limits
-    - [ ] Research optimal limits
-    - [ ] Set per-section limits
-    - [ ] Create total limit
-  - [ ] Add character counting
-    - [ ] Implement real-time counter
-    - [ ] Add visual indicators
-    - [ ] Create warning thresholds
-  - [ ] Implement limit enforcement
-    - [ ] Add input restrictions
-    - [ ] Create error messages
-    - [ ] Implement truncation logic
+
 ---
 
 - [ ] Implement character limit for CSS (Low Complexity)
   - *Rationale: Maintains template structural integrity*
-  - [ ] Define CSS size limits
-    - [ ] Set byte size limit
-    - [ ] Define rule count limit
-    - [ ] Create selector limits
-  - [ ] Add CSS validation
-    - [ ] Implement syntax checking
-    - [ ] Add security validation
-    - [ ] Create safe CSS whitelist
-  - [ ] Create limit UI
-    - [ ] Add size indicators
-    - [ ] Implement validation messages
-    - [ ] Create optimization suggestions
+
 ---
 
-- [ ] Create globally cached primary resume for users (Medium Complexity)
+- [ ] Create globally cached primary resume pdf for users (Medium Complexity)
   - *Rationale: Primary application function enabling users to maintain and share main resume*
-  - [ ] Design caching architecture
-    - [ ] Choose caching strategy (Redis/in-memory)
-    - [ ] Define cache key structure
-    - [ ] Set cache expiration policies
-    - [ ] Plan cache invalidation strategy
-  - [ ] Implement resume caching layer
-    - [ ] Create cache service
-    - [ ] Implement cache read/write operations
-    - [ ] Add cache warming logic
-    - [ ] Create cache statistics tracking
-  - [ ] Create primary resume designation system
-    - [ ] Add primary flag to resume schema
-    - [ ] Implement primary resume selection UI
-    - [ ] Create validation for single primary
-    - [ ] Add primary resume indicators
-  - [ ] Implement cache invalidation
-    - [ ] Create update triggers
-    - [ ] Implement selective invalidation
-    - [ ] Add manual cache clearing
-    - [ ] Create cache consistency checks
-  - [ ] Add performance monitoring
-    - [ ] Track cache hit/miss rates
-    - [ ] Monitor response times
-    - [ ] Create performance dashboards
-    - [ ] Set up performance alerts
+
 ---
 
 - [ ] Create About Us page (Low Complexity)
   - *Rationale: Builds user connection and trust*
-  - [ ] Write About Us content
-    - [ ] Create company story
-    - [ ] Add team information
-    - [ ] Include mission statement
-  - [ ] Design About Us layout
-    - [ ] Create visual design
-    - [ ] Add team photos
-    - [ ] Implement timeline
-  - [ ] Add interactive elements
-    - [ ] Create team member cards
-    - [ ] Add social links
-    - [ ] Implement contact CTAs
+
 ---
 
 - [ ] Create Contact page (Low Complexity)
-  - *Rationale: Necessary support and feedback channel during beta*
-  - [ ] Design contact form
-    - [ ] Create form fields
-    - [ ] Add validation rules
-    - [ ] Implement spam protection
-    - [ ] Create success/error states
-  - [ ] Implement email integration
-    - [ ] Set up email service
-    - [ ] Create email templates
-    - [ ] Add email queuing
-    - [ ] Implement retry logic
-  - [ ] Add support categories
-    - [ ] Define support types
-    - [ ] Create routing rules
-    - [ ] Add priority levels
-    - [ ] Implement auto-responses
+  - *Rationale: Necessary support and feedback channel during alpha*
+
 ---
 
 - [ ] Create Features page (Medium Complexity)
-  - *Rationale: Marketing utility; product demonstrates features during beta*
-  - [ ] Design features showcase
-    - [ ] Create feature categories
-    - [ ] Design feature cards
-    - [ ] Add feature icons
-    - [ ] Implement feature comparisons
-  - [ ] Create interactive demos
-    - [ ] Build feature animations
-    - [ ] Add video demonstrations
-    - [ ] Create try-it sections
-    - [ ] Implement feature tours
-  - [ ] Add feature benefits
-    - [ ] Write benefit copy
-    - [ ] Create use cases
-    - [ ] Add testimonials
-    - [ ] Include statistics
+  - *Rationale: Marketing utility; product demonstrates features during alpha*
+
 ---
 
 - [ ] Create Pricing page (Low Complexity)
-  - *Rationale: Deferrable if beta remains free*
-  - [ ] Design pricing tiers
-    - [ ] Define tier features
-    - [ ] Set pricing points
-    - [ ] Create comparison table
-  - [ ] Implement pricing UI
-    - [ ] Build pricing cards
-    - [ ] Add toggle for billing periods
-    - [ ] Create feature comparisons
-  - [ ] Add payment integration prep
-    - [ ] Research payment providers
-    - [ ] Plan integration approach
-    - [ ] Create placeholder CTAs
+  - *Rationale: Deferrable if alpha remains free*
+
 ---
 
 
 ## Low Priority
 
+- [ ] Add SEO to the application/blog
+  - *Rationale: Enabled for future scalability and customization*
+
+- [ ] Create a UI for model and provider selection
+  - *Rationale: Enabled for future scalability and customization*
 
 - [ ] Search Engine Optimization (SEO) (High Complexity)
   - *Rationale: Long-term strategy for post-stabilization focus*
-  - [ ] Technical SEO implementation
-    - [ ] Optimize meta tags
-    - [ ] Implement schema markup
-    - [ ] Create XML sitemap
-    - [ ] Optimize page speed
-    - [ ] Implement canonical URLs
-  - [ ] Content SEO strategy
-    - [ ] Keyword research
-    - [ ] Content optimization
-    - [ ] Create SEO-friendly URLs
-    - [ ] Implement heading structure
-  - [ ] Link building preparation
-    - [ ] Create linkable assets
-    - [ ] Plan outreach strategy
-    - [ ] Build partner relationships
-  - [ ] SEO monitoring setup
-    - [ ] Install analytics
-    - [ ] Set up Search Console
-    - [ ] Create ranking tracking
-    - [ ] Build SEO dashboard
+
 ---
 
 - [ ] Create Blog (Medium Complexity)
   - *Rationale: Content marketing tool, non-essential for initial launch*
-  - [ ] Design blog architecture
-    - [ ] Create post schema
-    - [ ] Design category system
-    - [ ] Implement tagging
-    - [ ] Build author profiles
-  - [ ] Implement blog functionality
-    - [ ] Create post editor
-    - [ ] Add publishing workflow
-    - [ ] Implement comments
-    - [ ] Create RSS feed
-  - [ ] Create blog UI
-    - [ ] Design post layouts
-    - [ ] Build archive pages
-    - [ ] Add search functionality
-    - [ ] Create related posts
-  - [ ] Plan content strategy
-    - [ ] Define content pillars
-    - [ ] Create editorial calendar
-    - [ ] Plan guest posting
-    - [ ] Set up content metrics
+
 ---
 
 ## Icebox (Future Consideration)
 
 - Integration with job board APIs
-- Premium features for monetization
 - Collaborative resume review functionality
+- AI-powered ATS analytics
 - AI-powered job matching based on resume content
 - Resume analytics dashboard
-- Template customization options
 - Mobile app version
 - Localization/internationalization support
+- Credit History: Track all credit transactions (purchases, usage, refunds)
+- Usage Analytics: Dashboard showing credit consumption patterns
+- Low Balance Alerts: Notify users when credits are running low
+- Refund Handling: Add webhook handlers for refunds
+- Credit Gifting: Allow users to gift credits to others
