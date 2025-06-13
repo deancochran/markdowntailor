@@ -9,7 +9,7 @@ import { sanitizeCSS } from "./sanitization";
  * Generates HTML content from markdown and CSS for preview, printing, or download
  */
 export function generateHTMLContent(markdown: string, css: string): string {
-  // Sanitize CSS before use
+  // Sanitize CSS before use - double-check for security
   const sanitizedCSS = sanitizeCSS(css);
 
   // Create a temporary container to properly render the markdown
@@ -18,17 +18,8 @@ export function generateHTMLContent(markdown: string, css: string): string {
 
   flushSync(() => {
     // Render the markdown content to the temporary container
-    // Remove rehypeRaw plugin to prevent raw HTML injection
-    root.render(
-      React.createElement(
-        ReactMarkdown,
-        {
-          // Don't allow raw HTML - this is a key security improvement
-          // rehypePlugins: [rehypeRaw] <- REMOVED
-        },
-        markdown,
-      ),
-    );
+    // ReactMarkdown is secure by default (no raw HTML)
+    root.render(React.createElement(ReactMarkdown, {}, markdown));
   });
 
   // Extract the HTML content from the container
@@ -39,7 +30,7 @@ export function generateHTMLContent(markdown: string, css: string): string {
     <html>
       <head>
         <style>
-          /* Reset all styles to ensure no external influence */
+          /* Reset styles */
           html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a,
           abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small,
           strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form,
@@ -60,7 +51,7 @@ export function generateHTMLContent(markdown: string, css: string): string {
             margin: 0;
           }
 
-          /* Now apply the custom CSS - sanitized */
+          /* User CSS - sanitized */
           ${sanitizedCSS}
         </style>
       </head>
@@ -70,6 +61,8 @@ export function generateHTMLContent(markdown: string, css: string): string {
     </html>
   `;
 }
+
+// ... rest of the file remains the same
 
 /**
  * Utility to download content as an HTML file

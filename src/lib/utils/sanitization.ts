@@ -113,26 +113,97 @@ export function sanitizeMarkdown(markdown: string): string {
     .replace(/\s+style\s*=\s*["'][^"']*["']/gi, "");
 }
 
-// Sanitize CSS
+// Sanitize CSS - IMPROVED VERSION
 export function sanitizeCSS(css: string): string {
   const clean = validateInput(css, 20000, "CSS");
 
-  return clean
-    .split(";")
-    .map((rule) => {
-      const [property, value] = rule.split(":").map((str) => str?.trim());
+  // Remove comments first
+  const withoutComments = clean.replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // Split CSS into rules (not individual properties)
+  const rules = withoutComments
+    .split("}")
+    .map((rule) => rule.trim())
+    .filter((rule) => rule.length > 0);
+  const validRules: string[] = [];
+
+  for (const rule of rules) {
+    if (!rule.includes("{")) continue;
+
+    const [selector, properties] = rule.split("{");
+    if (!selector || !properties) continue;
+
+    // Basic selector validation
+    const cleanSelector = selector.trim();
+    if (
+      cleanSelector.includes("<script") ||
+      cleanSelector.includes("javascript:") ||
+      cleanSelector.includes("@import") ||
+      cleanSelector.includes("expression(")
+    ) {
+      continue;
+    }
+
+    // Validate properties within this rule
+    const validProperties: string[] = [];
+    const propertyPairs = properties
+      .split(";")
+      .map((prop) => prop.trim())
+      .filter((prop) => prop.length > 0);
+
+    for (const propertyPair of propertyPairs) {
+      const [property, value] = propertyPair
+        .split(":")
+        .map((str) => str?.trim());
       if (
         !property ||
         !value ||
-        !SANITIZATION_CONFIG.safeCssProperties.includes(property) ||
+        !SANITIZATION_CONFIG.safeCssProperties.includes(
+          property.toLowerCase(),
+        ) ||
         SANITIZATION_CONFIG.dangerousCssValues.some((danger) =>
-          value.includes(danger),
+          value.toLowerCase().includes(danger),
         )
       ) {
-        return null;
+        continue; // Skip this property
       }
-      return `${property}: ${value}`;
-    })
-    .filter(Boolean)
-    .join("; ");
+      validProperties.push(`${property}: ${value}`);
+    }
+
+    if (validProperties.length > 0) {
+      validRules.push(`${cleanSelector} { ${validProperties.join("; ")} }`);
+    }
+  }
+
+  return validRules.join("\n");
+}
+
+// Sanitize Text (for titles, etc.)
+export function sanitizeText(text: string): string {
+  const clean = validateInput(text, 1000, "Text");
+
+  // Remove HTML tags and dangerous patterns
+  return clean
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<[^>]*>/g, "") // Remove all HTML tags
+    .replace(/&(?:#x?[0-9a-f]+|[a-z]+);/gi, "") // Remove HTML entities
+    .replace(/javascript:\s*[^"'\s]*/gi, "") // Remove javascript: URLs
+    .replace(/data:\s*[^"'\s]*/gi, ""); // Remove data: URLs
+}
+
+// Comprehensive sanitization function
+export function sanitizeResumeInput(input: {
+  title?: string;
+  markdown?: string;
+  css?: string;
+}): {
+  title: string;
+  markdown: string;
+  css: string;
+} {
+  return {
+    title: input.title ? sanitizeText(input.title) : "",
+    markdown: input.markdown ? sanitizeMarkdown(input.markdown) : "",
+    css: input.css ? sanitizeCSS(input.css) : "",
+  };
 }

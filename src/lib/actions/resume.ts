@@ -24,9 +24,13 @@ export const addResume = withSentry(
     if (!session?.user?.id) {
       throw new Error("You must be logged in to create a resume");
     }
+
+    // Sanitize input before validation
+    const sanitizedInput = sanitizeResumeInput(values);
+
     const validatedFields = insertResumeSchema
       .omit({ userId: true })
-      .safeParse(values);
+      .safeParse(sanitizedInput);
 
     if (!validatedFields.success) {
       throw new Error("Failed to create Resume");
@@ -35,7 +39,7 @@ export const addResume = withSentry(
     const [newResume] = await db
       .insert(resume)
       .values({
-        ...values,
+        ...validatedFields.data,
         userId: session.user.id,
       })
       .returning();
@@ -76,8 +80,8 @@ export const getResumes = withSentry("get-resumes", async () => {
 
 const resumeUpdateSchema = z.object({
   title: z.string().min(1).max(100),
-  markdown: z.string().min(1).max(10000),
-  css: z.string().min(1).max(10000),
+  markdown: z.string().max(10000).default(""),
+  css: z.string().max(10000).default(""),
 });
 
 // Update the saveResume function (around line 75)
@@ -96,7 +100,7 @@ export const saveResume = withSentry(
     const validatedFields = resumeUpdateSchema.safeParse(sanitizedInput);
 
     if (!validatedFields.success) {
-      throw new Error("Resume not valid");
+      throw new Error("Must provide valid input for title, css, and markdown");
     }
 
     const [existingResume] = await db
@@ -230,6 +234,13 @@ export const restoreVersion = withSentry(
       throw new Error("Version not found");
     }
 
+    // Sanitize the data being restored
+    const sanitizedData = sanitizeResumeInput({
+      title: versionToRestore.title,
+      markdown: versionToRestore.markdown,
+      css: versionToRestore.css,
+    });
+
     const latestVersions = await db
       .select()
       .from(resumeVersions)
@@ -244,17 +255,17 @@ export const restoreVersion = withSentry(
     await db
       .update(resume)
       .set({
-        title: versionToRestore.title,
-        markdown: versionToRestore.markdown,
-        css: versionToRestore.css,
+        title: sanitizedData.title,
+        markdown: sanitizedData.markdown,
+        css: sanitizedData.css,
         updatedAt: new Date(),
       })
       .where(eq(resume.id, resumeId));
 
     await db.insert(resumeVersions).values({
-      title: versionToRestore.title,
-      markdown: versionToRestore.markdown,
-      css: versionToRestore.css,
+      title: sanitizedData.title,
+      markdown: sanitizedData.markdown,
+      css: sanitizedData.css,
       version: newVersion,
       resumeId: resumeId,
     });

@@ -2,8 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resume as Resume } from "@/db/schema";
-// Add this import at the top of the file
+import { toast } from "sonner";
 
+import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import {
   createResumeFromVersion,
   deleteResume,
@@ -15,7 +16,7 @@ import { printDocument } from "@/lib/utils/printUtils";
 import { estimatePageCount } from "@/lib/utils/resumeUtils";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
-import { Attachment, Message, ToolInvocation } from "ai";
+import { Attachment, Message } from "ai";
 import { InferSelectModel } from "drizzle-orm";
 import {
   ArrowLeft,
@@ -33,7 +34,6 @@ import Link from "next/link";
 import { redirect, usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
 import { Input } from "./ui/input";
@@ -62,7 +62,7 @@ export default function ResumeEditor({
   resume: InferSelectModel<typeof Resume>;
 }) {
   const pathname = usePathname();
-  const { register, watch, setValue } = useForm({
+  const { watch, setValue } = useForm({
     defaultValues: resume,
   });
 
@@ -90,14 +90,36 @@ export default function ResumeEditor({
   const [modifiedMarkdown, modifyMarkdown] = useState(markdown);
   const [modifiedCss, modifyCss] = useState(css);
 
+  // Add these hooks inside your component
+  const { sanitizedValue: sanitizedTitle } = useSanitizedInput(
+    title,
+    "text",
+    (error) => toast.error(`Title sanitization: ${error}`),
+  );
+
+  const {
+    sanitizedValue: sanitizedMarkdown,
+    sanitize: _sanitizeMarkdownContent,
+  } = useSanitizedInput(modifiedMarkdown, "markdown", (error) =>
+    toast.error(`Markdown sanitization: ${error}`),
+  );
+
+  const { sanitizedValue: sanitizedCSS, sanitize: _sanitizeCSSContent } =
+    useSanitizedInput(modifiedCss, "css", (error) =>
+      toast.error(`CSS sanitization: ${error}`),
+    );
+
+  // Note: We don't sync sanitized content back to the editors to avoid infinite loops
+  // The editors show raw content, but sanitized content is used for saving/preview
+
   // Effect to detect if there are any changes compared to the baseline
   useEffect(() => {
     const hasChanges =
-      baselineResume.title !== title ||
-      baselineResume.markdown !== modifiedMarkdown ||
-      baselineResume.css !== modifiedCss;
+      baselineResume.title !== sanitizedTitle ||
+      baselineResume.markdown !== sanitizedMarkdown ||
+      baselineResume.css !== sanitizedCSS;
     setIsDirty(hasChanges);
-  }, [title, modifiedMarkdown, modifiedCss, baselineResume]);
+  }, [sanitizedTitle, sanitizedMarkdown, sanitizedCSS, baselineResume]);
 
   // Effect to cleanup editors when tab changes
   useEffect(() => {
@@ -214,10 +236,9 @@ export default function ResumeEditor({
     try {
       setIsSaving(true);
       const updatedResume = await saveResume(id, {
-        title,
-        markdown: modifiedMarkdown,
-        css: modifiedCss,
-        content: generateHTMLContent(modifiedMarkdown, modifiedCss),
+        title: sanitizedTitle,
+        markdown: sanitizedMarkdown,
+        css: sanitizedCSS,
       });
       toast.success("Resume saved successfully");
       // Update the baseline to the newly saved resume
@@ -226,18 +247,20 @@ export default function ResumeEditor({
       setValue("markdown", updatedResume.markdown);
       setValue("css", updatedResume.css);
       setValue("updatedAt", updatedResume.updatedAt);
-    } catch {
-      toast.error("Failed to save resume");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save resume";
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
   }, [
     id,
-    title,
+    sanitizedTitle,
     isSaving,
     setValue,
-    modifiedMarkdown,
-    modifiedCss,
+    sanitizedMarkdown,
+    sanitizedCSS,
     isDirty,
     isExceeding,
   ]);
@@ -254,14 +277,14 @@ export default function ResumeEditor({
 
   const handleGeneratePdf = useCallback(() => {
     try {
-      const htmlContent = generateHTMLContent(modifiedMarkdown, modifiedCss);
+      const htmlContent = generateHTMLContent(sanitizedMarkdown, sanitizedCSS);
       printDocument(htmlContent);
       toast.success("PDF generation started");
     } catch (error) {
       console.error("PDF generation error:", error);
       toast.error("Failed to generate PDF");
     }
-  }, [modifiedMarkdown, modifiedCss]);
+  }, [sanitizedMarkdown, sanitizedCSS]);
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -311,14 +334,12 @@ export default function ResumeEditor({
 
           if (iframeDoc) {
             const htmlContent = generateHTMLContent(
-              modifiedMarkdown,
-              modifiedCss,
+              sanitizedMarkdown,
+              sanitizedCSS,
             );
 
-            // Use write method instead of innerHTML
-            iframeDoc.open();
-            iframeDoc.write(htmlContent);
-            iframeDoc.close();
+            // Use innerHTML instead of deprecated write method
+            iframeDoc.documentElement.innerHTML = htmlContent;
 
             // Add click handler for links
             iframeDoc.addEventListener("click", (event) => {
@@ -334,7 +355,7 @@ export default function ResumeEditor({
 
       return () => clearTimeout(handle);
     }
-  }, [previewTab, modifiedMarkdown, modifiedCss]);
+  }, [previewTab, sanitizedMarkdown, sanitizedCSS]);
 
   // Add an additional useEffect for handling iframe load events
   useEffect(() => {
@@ -349,26 +370,24 @@ export default function ResumeEditor({
           (!iframeDoc.body || iframeDoc.body.innerHTML.trim() === "")
         ) {
           const htmlContent = generateHTMLContent(
-            modifiedMarkdown,
-            modifiedCss,
+            sanitizedMarkdown,
+            sanitizedCSS,
           );
-          iframeDoc.open();
-          iframeDoc.write(htmlContent);
-          iframeDoc.close();
+          iframeDoc.documentElement.innerHTML = htmlContent;
         }
       };
 
       iframe.addEventListener("load", handleLoad);
       return () => iframe.removeEventListener("load", handleLoad);
     }
-  }, [previewTab, modifiedMarkdown, modifiedCss]);
+  }, [previewTab, sanitizedMarkdown, sanitizedCSS]);
 
   // Separate useEffect for page estimation
   useEffect(() => {
-    const newEstimatedPages = estimatePageCount(modifiedMarkdown);
+    const newEstimatedPages = estimatePageCount(sanitizedMarkdown);
     setEstimatedPages(newEstimatedPages);
     setIsExceeding(newEstimatedPages > 3);
-  }, [modifiedMarkdown]);
+  }, [sanitizedMarkdown]);
 
   const applyModification = useCallback(
     (modification: {
@@ -483,12 +502,12 @@ export default function ResumeEditor({
   // Process tool invocations and apply modifications
   const processToolInvocations = useCallback(
     (message: Message) => {
-      // Access invocations using non-deprecated pattern
+      // Check if message has experimental_attachments property as alternative to toolInvocations
       const invocations =
         "toolInvocations" in message ? message.toolInvocations : undefined;
       if (!invocations) return;
 
-      invocations.forEach((invocation: ToolInvocation) => {
+      invocations.forEach((invocation) => {
         if (invocation.state === "result" && invocation.result) {
           const result = invocation.result;
           if (result.applyDirectly) {
@@ -513,9 +532,9 @@ export default function ResumeEditor({
   } = useChat({
     body: {
       resume: {
-        markdown: modifiedMarkdown,
-        css: modifiedCss,
-        title,
+        markdown: sanitizedMarkdown,
+        css: sanitizedCSS,
+        title: sanitizedTitle,
       },
     },
     experimental_throttle: 100,
@@ -544,7 +563,7 @@ export default function ResumeEditor({
         modifiedMarkdownEditorRef.current = modifiedEditor;
 
         // Use a safer approach to handle content changes
-        const _changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+        modifiedEditor.onDidChangeModelContent(() => {
           if (isMountedRef.current && modifiedEditor.getValue) {
             try {
               const value = modifiedEditor.getValue() || markdown;
@@ -568,7 +587,7 @@ export default function ResumeEditor({
         modifiedCssEditorRef.current = modifiedEditor;
 
         // Use a safer approach to handle content changes
-        const _changeHandler = modifiedEditor.onDidChangeModelContent(() => {
+        modifiedEditor.onDidChangeModelContent(() => {
           if (isMountedRef.current && modifiedEditor.getValue) {
             try {
               const value = modifiedEditor.getValue() || css;
@@ -596,7 +615,8 @@ export default function ResumeEditor({
 
           <Input
             className="text-xl font-semibold bg-transparent focus:outline-none"
-            {...register("title")}
+            value={sanitizedTitle}
+            onChange={(e) => setValue("title", e.target.value)}
           />
         </div>
 
