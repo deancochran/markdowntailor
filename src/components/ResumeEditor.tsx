@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
 
@@ -17,6 +16,7 @@ import { estimatePageCount } from "@/lib/utils/resumeUtils";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
+import { cx } from "class-variance-authority";
 import { InferSelectModel } from "drizzle-orm";
 import {
   ArrowLeft,
@@ -127,42 +127,15 @@ export default function ResumeEditor({
   // Note: We don't sync sanitized content back to the editors to avoid infinite loops
   // The editors show raw content, but sanitized content is used for saving/preview
 
-  // Effect to detect if there are any changes compared to the baseline
+  // FIXED: Effect to detect if there are any changes compared to the baseline
+  // Now includes modified content from editors
   useEffect(() => {
     const hasChanges =
-      baselineResume.title !== sanitizedTitle ||
-      baselineResume.markdown !== sanitizedMarkdown ||
-      baselineResume.css !== sanitizedCSS;
+      baselineResume.title !== title ||
+      baselineResume.markdown !== modifiedMarkdown ||
+      baselineResume.css !== modifiedCss;
     setIsDirty(hasChanges);
-  }, [sanitizedTitle, sanitizedMarkdown, sanitizedCSS, baselineResume]);
-
-  // Effect to cleanup editors when tab changes
-  useEffect(() => {
-    // Cleanup previous editor when tab changes
-    return () => {
-      if (editorsTab === "markdown") {
-        try {
-          // Store value before cleanup
-          if (modifiedMarkdownEditorRef.current) {
-            const value = modifiedMarkdownEditorRef.current.getValue();
-            if (value) modifyMarkdown(value);
-          }
-        } catch (e) {
-          console.error("Error during markdown editor cleanup:", e);
-        }
-      } else if (editorsTab === "css") {
-        try {
-          // Store value before cleanup
-          if (modifiedCssEditorRef.current) {
-            const value = modifiedCssEditorRef.current.getValue();
-            if (value) modifyCss(value);
-          }
-        } catch (e) {
-          console.error("Error during CSS editor cleanup:", e);
-        }
-      }
-    };
-  }, [editorsTab, modifyMarkdown, modifyCss]);
+  }, [title, modifiedMarkdown, modifiedCss, baselineResume]);
 
   // Effect to warn user before closing tab with unsaved changes
   useEffect(() => {
@@ -181,21 +154,6 @@ export default function ResumeEditor({
     };
   }, [isDirty]);
 
-  // Cleanup editors on component unmount
-  useEffect(() => {
-    return () => {
-      // Dispose of editors on unmount
-      if (modifiedMarkdownEditorRef.current) {
-        // Explicitly set to null to avoid errors during unmount
-        modifiedMarkdownEditorRef.current = null;
-      }
-      if (modifiedCssEditorRef.current) {
-        // Explicitly set to null to avoid errors during unmount
-        modifiedCssEditorRef.current = null;
-      }
-    };
-  }, []);
-
   // Refs to store editor instances for proper cleanup
   const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
     null,
@@ -203,16 +161,34 @@ export default function ResumeEditor({
   const modifiedMarkdownEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
     null,
   );
-  // Add references to track if editors are mounted
-  const isMountedRef = useRef(true);
 
-  // Track when component is mounted/unmounted
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  // FIXED: Consolidated editor mount creator with better formatting preservation
+  const createEditorMount = useCallback(
+    (
+      ref: React.MutableRefObject<editor.IStandaloneCodeEditor | null>,
+      setter: (value: string) => void,
+    ): DiffOnMount =>
+      (diffEditor) => {
+        const modified = diffEditor.getModifiedEditor();
+        ref.current = modified;
+
+        // Preserve formatting when content changes
+        modified.onDidChangeModelContent(() => {
+          const newValue = modified.getValue() || "";
+          setter(newValue);
+        });
+
+        // Set up better formatting options
+        modified.updateOptions({
+          formatOnPaste: true,
+          formatOnType: true,
+          autoIndent: "full",
+          insertSpaces: true,
+          tabSize: 2,
+        });
+      },
+    [],
+  );
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this resume?")) {
@@ -244,6 +220,7 @@ export default function ResumeEditor({
     }
   };
 
+  // FIXED: Updated handleSave to use modified content and preserve formatting
   const handleSave = useCallback(async () => {
     if (isSaving || !isDirty || isExceeding) return;
 
@@ -255,12 +232,19 @@ export default function ResumeEditor({
         css: sanitizedCSS,
       });
       toast.success("Resume saved successfully");
+
       // Update the baseline to the newly saved resume
       setBaselineResume(updatedResume);
-      // On successful save, update original values to reflect the saved content
+
+      // Update form values to match saved content
       setValue("markdown", updatedResume.markdown);
       setValue("css", updatedResume.css);
       setValue("updatedAt", updatedResume.updatedAt);
+
+      // FIXED: Update modified content to match saved content
+      // This ensures the editors show the saved version as the new baseline
+      modifyMarkdown(updatedResume.markdown);
+      modifyCss(updatedResume.css);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to save resume";
@@ -401,6 +385,7 @@ export default function ResumeEditor({
     setIsExceeding(newEstimatedPages > 3);
   }, [sanitizedMarkdown]);
 
+  // FIXED: Better modification application with formatting preservation
   const applyModification = useCallback((modification: Modification) => {
     const {
       contentType,
@@ -428,7 +413,12 @@ export default function ResumeEditor({
         console.error(`${contentType} editor model not available`);
         return;
       }
+
       console.log(`MOD: ${JSON.stringify(modification)}`);
+
+      // Store current selection and scroll position to preserve user context
+      const currentSelection = editor.getSelection();
+      const currentScrollTop = editor.getScrollTop();
 
       switch (operation) {
         case "replace":
@@ -449,9 +439,23 @@ export default function ResumeEditor({
             } else {
               newText = fullText.replace(targetContent, newContent);
             }
+
             console.log("REPLACE", newText);
 
-            model.setValue(newText);
+            // FIXED: Use pushEditOperations for better undo/redo and formatting preservation
+            editor.pushUndoStop();
+            editor.executeEdits("ai-modification", [
+              {
+                range: model.getFullModelRange(),
+                text: newText,
+              },
+            ]);
+            editor.pushUndoStop();
+
+            // Format the document after replacement
+            setTimeout(() => {
+              editor.getAction("editor.action.formatDocument")?.run();
+            }, 100);
           }
           break;
 
@@ -461,6 +465,7 @@ export default function ResumeEditor({
             position.line !== undefined &&
             position.column !== undefined
           ) {
+            editor.pushUndoStop();
             editor.executeEdits("ai-modification", [
               {
                 range: new IRange(
@@ -472,36 +477,68 @@ export default function ResumeEditor({
                 text: newContent,
               },
             ]);
+            editor.pushUndoStop();
           } else {
             // Insert at current cursor position if no position specified
             const selection = editor.getSelection();
             if (selection) {
+              editor.pushUndoStop();
               editor.executeEdits("ai-modification", [
                 {
                   range: selection,
                   text: newContent,
                 },
               ]);
+              editor.pushUndoStop();
             }
           }
           break;
 
         case "append":
           const currentText = model.getValue();
-          model.setValue(currentText + (currentText ? "\n" : "") + newContent);
+          const appendText =
+            currentText + (currentText ? "\n" : "") + newContent;
+
+          editor.pushUndoStop();
+          editor.executeEdits("ai-modification", [
+            {
+              range: model.getFullModelRange(),
+              text: appendText,
+            },
+          ]);
+          editor.pushUndoStop();
           break;
 
         case "prepend":
           const existingText = model.getValue();
-          model.setValue(
-            newContent + (existingText ? "\n" : "") + existingText,
-          );
+          const prependText =
+            newContent + (existingText ? "\n" : "") + existingText;
+
+          editor.pushUndoStop();
+          editor.executeEdits("ai-modification", [
+            {
+              range: model.getFullModelRange(),
+              text: prependText,
+            },
+          ]);
+          editor.pushUndoStop();
           break;
 
         default:
           console.warn(`Unknown operation: ${operation}`);
           return;
       }
+
+      // FIXED: Restore scroll position and selection after modification
+      setTimeout(() => {
+        if (currentSelection) {
+          editor.setSelection(currentSelection);
+        }
+        editor.setScrollTop(currentScrollTop);
+
+        // Trigger formatting for the affected range
+        editor.getAction("editor.action.formatDocument")?.run();
+      }, 50);
 
       toast.success(`Applied modification to the ${contentType} document`);
     } catch (error) {
@@ -579,54 +616,6 @@ export default function ResumeEditor({
   });
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-
-  // Handler for editor mount with proper disposal
-  const handleMarkdownEditorMount: DiffOnMount = useCallback(
-    (editor) => {
-      if (!isMountedRef.current) return;
-      const modifiedEditor = editor.getModifiedEditor();
-      if (modifiedEditor) {
-        modifiedMarkdownEditorRef.current = modifiedEditor;
-
-        // Use a safer approach to handle content changes
-        modifiedEditor.onDidChangeModelContent(() => {
-          if (isMountedRef.current && modifiedEditor.getValue) {
-            try {
-              const value = modifiedEditor.getValue() || markdown;
-              modifyMarkdown(value);
-            } catch (e) {
-              console.error("Error getting editor value:", e);
-            }
-          }
-        });
-      }
-    },
-    [markdown, modifyMarkdown],
-  );
-
-  const handleCssEditorMount: DiffOnMount = useCallback(
-    (editor) => {
-      if (!isMountedRef.current) return;
-
-      const modifiedEditor = editor.getModifiedEditor();
-      if (modifiedEditor) {
-        modifiedCssEditorRef.current = modifiedEditor;
-
-        // Use a safer approach to handle content changes
-        modifiedEditor.onDidChangeModelContent(() => {
-          if (isMountedRef.current && modifiedEditor.getValue) {
-            try {
-              const value = modifiedEditor.getValue() || css;
-              modifyCss(value);
-            } catch (e) {
-              console.error("Error getting editor value:", e);
-            }
-          }
-        });
-      }
-    },
-    [css, modifyCss],
-  );
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
@@ -726,117 +715,98 @@ export default function ResumeEditor({
         </div>
       </div>
 
-      <div className="relative grid grid-cols-2 min-h-0 p-4 h-full bg-muted">
-        <div className="relative overflow-hidden">
-          <Tabs
-            value={editorsTab}
-            onValueChange={(value) => {
-              // Use a more controlled approach to tab switching
-              if (value !== editorsTab) {
-                // Save current content before switching
-                try {
-                  if (
-                    editorsTab === "markdown" &&
-                    modifiedMarkdownEditorRef.current
-                  ) {
-                    const currentValue =
-                      modifiedMarkdownEditorRef.current.getValue();
-                    if (currentValue) modifyMarkdown(currentValue);
-                  } else if (
-                    editorsTab === "css" &&
-                    modifiedCssEditorRef.current
-                  ) {
-                    const currentValue =
-                      modifiedCssEditorRef.current.getValue();
-                    if (currentValue) modifyCss(currentValue);
-                  }
-                } catch {
-                  toast.error("Error during tab switch");
-                }
-
-                // Important: Set refs to null before changing tabs
-                if (value === "css") {
-                  modifiedMarkdownEditorRef.current = null;
-                } else {
-                  modifiedCssEditorRef.current = null;
-                }
-
-                // Now it's safe to switch tabs
-                setEditorsTab(value);
-              }
-            }}
-            className="flex flex-col gap-0 h-full border overflow-hidden"
-          >
-            <TabsList className="w-full flex justify-start border-b rounded-none px-4 flex-shrink-0">
-              <TabsTrigger value="markdown" className="px-4 py-2">
-                Markdown
-              </TabsTrigger>
-              <TabsTrigger value="css" className="px-4 py-2">
-                CSS
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent
-              value="markdown"
-              className="flex-1 min-h-0 overflow-hidden"
+      <div className="relative flex flex-row min-h-0 p-4 h-full w-full bg-muted gap-4 overflow-hidden">
+        <div className="h-full w-full flex flex-col border">
+          {/* Custom Tab Headers */}
+          <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b">
+            <Button
+              className="flex grow"
+              variant={editorsTab === "markdown" ? "outline" : "ghost"}
+              onClick={() => setEditorsTab("markdown")}
             >
-              {/* Only render the editor when its tab is active to avoid disposal issues */}
-              {editorsTab === "markdown" ? (
-                <DiffEditor
-                  key="markdown-editor" // Add a key to force re-creation when needed
-                  language="markdown"
-                  original={markdown}
-                  modified={modifiedMarkdown}
-                  onMount={handleMarkdownEditorMount}
-                  keepCurrentOriginalModel={true}
-                  keepCurrentModifiedModel={true}
-                  options={{
-                    ...diffEditorOptions,
-                    fixedOverflowWidgets: true, // Add this to help with disposal issues
-                  }}
-                  theme={theme === "dark" ? "vs-dark" : "light"}
-                />
-              ) : null}
-            </TabsContent>
-            <TabsContent value="css" className="flex-1 min-h-0 overflow-hidden">
-              {/* Only render the editor when its tab is active to avoid disposal issues */}
-              {editorsTab === "css" ? (
-                <DiffEditor
-                  key="css-editor" // Add a key to force re-creation when needed
-                  language="css"
-                  original={css}
-                  modified={modifiedCss}
-                  onMount={handleCssEditorMount}
-                  keepCurrentOriginalModel={true}
-                  keepCurrentModifiedModel={true}
-                  options={{
-                    ...diffEditorOptions,
-                    fixedOverflowWidgets: true, // Add this to help with disposal issues
-                  }}
-                  theme={theme === "dark" ? "vs-dark" : "light"}
-                />
-              ) : null}
-            </TabsContent>
-          </Tabs>
-        </div>
-        <div className="relative overflow-hidden">
-          <Tabs
-            value={previewTab}
-            onValueChange={setPreviewTab}
-            className="flex flex-col gap-0 h-full border"
-          >
-            <TabsList className="w-full flex justify-start border-b rounded-none px-4">
-              <TabsTrigger value="preview" className="px-4 py-2">
-                Print Preview
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="px-4 py-2">
-                AI Chat
-              </TabsTrigger>
-            </TabsList>
+              Markdown
+            </Button>
+            <Button
+              className="flex grow"
+              variant={editorsTab === "css" ? "outline" : "ghost"}
+              onClick={() => setEditorsTab("css")}
+            >
+              CSS
+            </Button>
+          </div>
 
-            <TabsContent
-              value="preview"
-              className="flex-1 flex flex-col h-full w-full overflow-hidden"
+          {/* Editor Container */}
+          <div className="flex-1 relative">
+            {/* Always render both editors but control visibility */}
+            <div
+              className={cx(
+                "absolute inset-0",
+                editorsTab === "markdown" ? "block" : "hidden",
+              )}
+            >
+              <DiffEditor
+                key="markdown-editor"
+                language="markdown"
+                original={markdown}
+                modified={modifiedMarkdown}
+                keepCurrentOriginalModel={true}
+                keepCurrentModifiedModel={true}
+                onMount={createEditorMount(
+                  modifiedMarkdownEditorRef,
+                  modifyMarkdown,
+                )}
+                options={diffEditorOptions}
+                theme={theme === "dark" ? "vs-dark" : "light"}
+                height="100%"
+              />
+            </div>
+
+            <div
+              className={cx(
+                "absolute inset-0",
+                editorsTab === "css" ? "block" : "hidden",
+              )}
+            >
+              <DiffEditor
+                key="css-editor"
+                language="css"
+                original={css}
+                modified={modifiedCss}
+                keepCurrentOriginalModel={true}
+                keepCurrentModifiedModel={true}
+                onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
+                options={diffEditorOptions}
+                theme={theme === "dark" ? "vs-dark" : "light"}
+                height="100%"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="h-full w-full overflow-hidden flex flex-col border">
+          <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b ">
+            <Button
+              className="flex grow"
+              variant={previewTab === "preview" ? "outline" : "ghost"}
+              onClick={() => setPreviewTab("preview")}
+            >
+              Preview
+            </Button>
+            <Button
+              className="flex grow"
+              variant={previewTab === "chat" ? "outline" : "ghost"}
+              onClick={() => setPreviewTab("chat")}
+            >
+              AI Chat
+            </Button>
+          </div>
+
+          <div className="flex-1 relative">
+            {/* Always render both editors but control visibility */}
+            <div
+              className={cx(
+                "absolute inset-0 flex flex-col justify-between",
+                previewTab === "preview" ? "block" : "hidden",
+              )}
             >
               <div className="relative flex-1  overflow-hidden">
                 <iframe
@@ -889,11 +859,13 @@ export default function ResumeEditor({
                   </Button>
                 </div>
               </div>
-            </TabsContent>
+            </div>
 
-            <TabsContent
-              value="chat"
-              className="flex-1 flex flex-col w-full overflow-hidden"
+            <div
+              className={cx(
+                "absolute inset-0 flex flex-col justify-between",
+                previewTab === "chat" ? "block" : "hidden",
+              )}
             >
               <div className="flex-1 w-full overflow-y-auto">
                 <div className="w-full md:max-w-3xl mx-auto p-2">
@@ -917,8 +889,8 @@ export default function ResumeEditor({
                   setMessages={setMessages}
                 />
               </form>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </div>
       </div>
     </div>

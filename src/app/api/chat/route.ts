@@ -3,7 +3,6 @@ import { resume } from "@/db/schema";
 import { getPreferredModelObject } from "@/lib/ai";
 import { logAIRequestWithStripeCredits } from "@/lib/ai/credits";
 import { apiRateLimiter } from "@/lib/upstash";
-import { anthropic } from "@ai-sdk/anthropic";
 import {
   InvalidToolArgumentsError,
   Message,
@@ -224,7 +223,7 @@ export async function POST(req: Request) {
 
     const modelSelection = getPreferredModelObject(session.user);
     const result = streamText({
-      model: anthropic("claude-4-sonnet-20250514"),
+      model: modelSelection.model,
       tools: {
         batch_modify: batchModifyTool,
         analyze_content: analyzeContentTool,
