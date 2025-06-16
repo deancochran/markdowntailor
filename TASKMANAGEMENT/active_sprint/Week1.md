@@ -102,14 +102,14 @@
   - [x] Add Google login
 ---
 
-- [ ] Establish Input sanitization
-  - [ ] Create Markdown processing pipeline
-    - [ ] Raw -> MarkdownIt --> DomPurify --> DB
-  - [ ] Create CSS processing pipeline
-    - [ ] Raw -> CSS Parser --> Validate No JS Properties --> DB
-  - [ ] Create text input sanitization
-    - [ ] Ensure no XSS attacks
-    - [ ] Ensure no SQL injection attacks
+- [x] Establish Input sanitization
+  - [x] Create Markdown processing pipeline
+    - [x] Raw -> MarkdownIt --> DomPurify --> DB
+  - [x] Create CSS processing pipeline
+    - [x] Raw -> CSS Parser --> Validate No JS Properties --> DB
+  - [x] Create text input sanitization
+    - [x] Ensure no XSS attacks
+    - [x] Ensure no SQL injection attacks
 
 ---
 

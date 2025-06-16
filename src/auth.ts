@@ -44,7 +44,7 @@ if (process.env.NODE_ENV === "development") {
             return null;
           }
           const currentUser = dbUser[0];
-          return { ...currentUser, role: "user" } as User;
+          return { ...currentUser } as User;
         } catch (error) {
           if (error instanceof ZodError) {
             return null;
@@ -91,7 +91,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               stripeCustomerId: currentUser.stripeCustomerId,
               model_preference: currentUser.model_preference,
               provider_preference: currentUser.provider_preference,
-              credits: currentUser.credits,
               alpha_credits_redeemed: currentUser.alpha_credits_redeemed,
               createdAt: currentUser.createdAt,
               updatedAt: currentUser.updatedAt,

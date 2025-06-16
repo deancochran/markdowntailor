@@ -85,7 +85,7 @@ export default async function ResumesPage() {
               </CardContent>
               <CardFooter className="w-full flex items-end">
                 <Link href="/templates" className="w-full">
-                  <Button className="w-full group" size="lg">
+                  <Button className="w-full group " size="lg">
                     View Templates
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>

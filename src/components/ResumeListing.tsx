@@ -296,7 +296,7 @@ function ResumeCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="w-full "
                   disabled={resume._isOptimistic || resume._isDeleting}
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -405,7 +405,7 @@ function ResumeDropdownMenu({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 "
             disabled={isOptimistic || isDeleting}
           >
             <MoreVertical className="h-4 w-4" />
@@ -419,7 +419,7 @@ function ResumeDropdownMenu({
             onClick={printPdf}
             variant="ghost"
             size="sm"
-            className="w-full"
+            className="w-full "
             disabled={isOptimistic || isDeleting}
           >
             <Printer className="h-4 w-4 mr-2" />
@@ -431,7 +431,7 @@ function ResumeDropdownMenu({
             onClick={handleDuplicate}
             variant="ghost"
             size="sm"
-            className="w-full"
+            className="w-full "
             disabled={isOptimistic || isDeleting}
           >
             <Copy className="h-4 w-4 mr-2" />
@@ -444,7 +444,7 @@ function ResumeDropdownMenu({
             onClick={handleDelete}
             variant="ghost"
             size="sm"
-            className="w-full"
+            className="w-full "
             disabled={isOptimistic || isDeleting}
           >
             <Trash2 className="h-4 w-4 mr-2" />

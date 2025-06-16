@@ -1,7 +1,6 @@
 import {
   boolean,
   integer,
-  numeric,
   pgTable,
   primaryKey,
   text,
@@ -26,9 +25,6 @@ export const user = pgTable("user", {
   image: text("image"),
   model_preference: text("model_preference").default("o4-mini").notNull(),
   provider_preference: text("provider_preference").default("openai").notNull(),
-  credits: numeric("credits", { precision: 19, scale: 4 })
-    .default("0.00")
-    .notNull(),
   alpha_credits_redeemed: boolean("alpha_credits_redeemed")
     .default(false)
     .notNull(),
@@ -176,12 +172,8 @@ export const aiRequestLog = pgTable("ai_request_log", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "set null" }),
-  credits: numeric("credits", { precision: 19, scale: 4 })
-    .notNull()
-    .default("0.0000"),
   promptTokens: integer("prompt_tokens").notNull(),
   completionTokens: integer("completion_tokens").notNull(),
-  totalTokens: integer("total_tokens").notNull(),
   model: text("model").notNull(),
   modelProvider: text("model_provider").notNull(),
   status: text("status").notNull().default("success"),

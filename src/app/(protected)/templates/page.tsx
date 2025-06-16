@@ -199,7 +199,7 @@ export default function Templates() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="justify-between min-w-[200px]"
+                  className="justify-between min-w-[200px] "
                 >
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
@@ -223,7 +223,7 @@ export default function Templates() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedTags([])}
-                        className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                        className="h-auto p-0 text-xs text-muted-foreground  hover:text-foreground"
                       >
                         Clear all
                       </Button>
@@ -248,7 +248,7 @@ export default function Templates() {
                           />
                           <label
                             htmlFor={key}
-                            className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
+                            className="flex items-center gap-2 text-sm font-normal  flex-1"
                           >
                             <TagIcon className="h-4 w-4" />
                             {meta.label}
@@ -280,7 +280,7 @@ export default function Templates() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-auto w-auto p-0 ml-1 hover:bg-transparent"
+                      className="h-auto w-auto p-0 ml-1   hover:bg-transparent"
                       onClick={() => toggleTag(tag)}
                     >
                       <X className="h-3 w-3" />
@@ -474,7 +474,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <Eye className="h-4 w-4 mr-2" />
+          <Eye className="h-4 w-4   mr-2" />
           Preview
         </Button>
       </DialogTrigger>
@@ -494,7 +494,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
             >
               {isCreating ? (
                 <>
-                  <div className="h-4 w-4 mr-2 animate-spin border-2 border-white border-t-transparent rounded-full" />
+                  <div className="h-4 w-4  mr-2 animate-spin border-2 border-white border-t-transparent rounded-full" />
                   Creating...
                 </>
               ) : (
@@ -571,6 +571,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     size="sm"
                     onClick={() => adjustZoom(-0.1)}
                     disabled={zoomLevel <= 0.2}
+                    className=" "
                   >
                     <ZoomOut className="h-4 w-4" />
                   </Button>
@@ -582,6 +583,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
                     size="sm"
                     onClick={() => adjustZoom(0.1)}
                     disabled={zoomLevel >= 2.0}
+                    className=" "
                   >
                     <ZoomIn className="h-4 w-4" />
                   </Button>

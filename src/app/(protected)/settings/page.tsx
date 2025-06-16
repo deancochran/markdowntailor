@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 
-import { AICredits } from "@/components/settings/AICredits";
+import { CreditClaimSection } from "@/components/settings/CreditClaimSection";
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
+import { StripeBillingCredits } from "@/components/settings/StripeBillingCredits";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -10,8 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, CheckCircle } from "lucide-react";
-import { SessionProvider } from "next-auth/react";
+import { AlertCircle, CheckCircle, CreditCard } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function SettingsPage({
@@ -39,18 +40,18 @@ export default async function SettingsPage({
 
         {/* Payment Status Alerts */}
         {payment === "success" && (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
+          <Alert>
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
               Payment successful! Your credits have been added to your account.
             </AlertDescription>
           </Alert>
         )}
 
         {payment === "cancelled" && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
+          <Alert className="border">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
               Payment was cancelled. You can try again anytime.
             </AlertDescription>
           </Alert>
@@ -90,12 +91,51 @@ export default async function SettingsPage({
         </Card>
 
         {/* AI Credits Section - Inline Form */}
-        <SessionProvider>
-          <AICredits />
-        </SessionProvider>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Credits</CardTitle>
+            <CardDescription>
+              Get credits to power your AI-assisted resume building
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Current Balance */}
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                <span className="text-sm font-medium">Current Balance</span>
+              </div>
+
+              <StripeBillingCredits />
+
+              <p className="text-sm text-muted-foreground">
+                Available AI credits
+              </p>
+            </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Free $5.00 Credit Package
+                </CardTitle>
+                <CardDescription>
+                  Perfect for trying out AI resume enhancements and optimization
+                  features
+                </CardDescription>
+              </CardHeader>
+
+              <CreditClaimSection
+                initialAlphaCreditsRedeemed={
+                  session.user.alpha_credits_redeemed || false
+                }
+              />
+            </Card>
+          </CardContent>
+        </Card>
 
         {/* Account Actions */}
-        {/* <Card>
+        <Card>
           <CardHeader>
             <CardTitle>Account Actions</CardTitle>
             <CardDescription>Manage your account data</CardDescription>
@@ -112,7 +152,7 @@ export default async function SettingsPage({
               <DeleteAccountDialog userEmail={session.user?.email || ""} />
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
     </div>
   );

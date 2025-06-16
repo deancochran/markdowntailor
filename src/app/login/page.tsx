@@ -27,7 +27,7 @@ function LoginContent() {
           <CardContent className="space-y-4">
             <form action={googlelogin}>
               <Button
-                className="w-full h-12 cursor-pointer bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+                className="w-full h-12  bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
                 variant="secondary"
                 type="submit"
               >
@@ -59,7 +59,7 @@ function LoginContent() {
             </form>
             <form action={linkedinlogin}>
               <Button
-                className="w-full h-12  cursor-pointer bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+                className="w-full h-12   bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
                 variant="secondary"
                 type="submit"
               >
@@ -87,7 +87,7 @@ function LoginContent() {
             </form>
             <form action={githublogin}>
               <Button
-                className="w-full h-12 cursor-pointer bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
+                className="w-full h-12  bg-secondary hover:bg-secondary/90 text-secondary-foreground border border-border shadow-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden"
                 variant="secondary"
                 type="submit"
               >

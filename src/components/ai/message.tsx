@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -11,14 +10,14 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import cx from "classnames";
 import equal from "fast-deep-equal";
-import { Copy, Pen, Sparkles } from "lucide-react";
+import { Pencil, Sparkles, SparklesIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useState } from "react";
-import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 import { Markdown } from "./markdown";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
+import { PreviewAttachment } from "./preview-attachment";
 
 const PurePreviewMessage = ({
   message,
@@ -58,13 +57,13 @@ const PurePreviewMessage = ({
           {message.role === "assistant" && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
               <div className="translate-y-px">
-                <Sparkles />
+                <SparklesIcon size={14} />
               </div>
             </div>
           )}
 
           <div
-            className={cn("flex flex-col gap-1 w-full", {
+            className={cn("flex flex-col gap-4 w-full", {
               "min-h-96": message.role === "assistant" && requiresScrollPadding,
             })}
           >
@@ -74,13 +73,11 @@ const PurePreviewMessage = ({
                   data-testid={`message-attachments`}
                   className="flex flex-row justify-end gap-2"
                 >
-                  {message.experimental_attachments.map((attachment, index) => (
-                    <div
-                      key={index}
-                      className="text-xs text-zinc-500 max-w-16 truncate"
-                    >
-                      {attachment.name}
-                    </div>
+                  {message.experimental_attachments.map((attachment) => (
+                    <PreviewAttachment
+                      key={attachment.url}
+                      attachment={attachment}
+                    />
                   ))}
                 </div>
               )}
@@ -114,7 +111,7 @@ const PurePreviewMessage = ({
                                 setMode("edit");
                               }}
                             >
-                              <Pen />
+                              <Pencil />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Edit message</TooltipContent>
@@ -150,42 +147,82 @@ const PurePreviewMessage = ({
                   );
                 }
               }
-            })}
 
-            <TooltipProvider delayDuration={0}>
-              <div
-                className={`flex flex-row gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className="py-1 px-2 h-fit text-muted-foreground"
-                      variant="outline"
-                      onClick={async () => {
-                        const textFromParts = message.parts
-                          ?.filter((part) => part.type === "text")
-                          .map((part) => part.text)
-                          .join("\n")
-                          .trim();
+              if (type === "tool-invocation") {
+                const { toolInvocation } = part;
+                const { toolName, toolCallId, state } = toolInvocation;
 
-                        if (!textFromParts) {
-                          toast.error("There's no text to copy!");
-                          return;
-                        }
-
-                        await copyToClipboard(textFromParts);
-                        toast.success("Copied to clipboard!");
-                      }}
+                if (state === "call") {
+                  return (
+                    <div
+                      key={toolCallId}
+                      className={cx({
+                        skeleton: true,
+                      })}
                     >
-                      <Copy />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Copy</TooltipContent>
-                </Tooltip>
-              </div>
-            </TooltipProvider>
+                      {toolName === "batch_modify" ? (
+                        <p>
+                          <span key={index}>{toolName}</span>
+                        </p>
+                      ) : toolName === "analyze_content" ? (
+                        <p>
+                          <span key={index}>{toolName}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                }
+
+                if (state === "result") {
+                  const { result } = toolInvocation;
+
+                  return (
+                    <div key={toolCallId}>
+                      {toolName === "batch_modify" ? (
+                        <p>Analyzed Content</p>
+                      ) : toolName === "analyze_content" ? (
+                        <p>Analyzed Content</p>
+                      ) : (
+                        <pre>{JSON.stringify(result, null, 2)}</pre>
+                      )}
+                    </div>
+                  );
+                }
+              }
+            })}
           </div>
         </div>
+        {/* <TooltipProvider delayDuration={0}>
+          <div
+            className={`flex flex-row gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="py-1 px-2 h-fit text-muted-foreground"
+                variant="outline"
+                onClick={async () => {
+                  const textFromParts = message.parts
+                    ?.filter((part) => part.type === "text")
+                    .map((part) => part.text)
+                    .join("\n")
+                    .trim();
+
+                  if (!textFromParts) {
+                    toast.error("There's no text to copy!");
+                    return;
+                  }
+
+                  await copyToClipboard(textFromParts);
+                  toast.success("Copied to clipboard!");
+                }}
+                  <Copy />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Copy</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider> */}
       </motion.div>
     </AnimatePresence>
   );
@@ -224,12 +261,12 @@ export const ThinkingMessage = () => {
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <Sparkles />
+          <Sparkles size={14} />
         </div>
 
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-col gap-4 text-muted-foreground">
-            thinking...
+            Hmm...
           </div>
         </div>
       </div>

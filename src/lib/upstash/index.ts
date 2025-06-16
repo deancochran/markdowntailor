@@ -10,3 +10,8 @@ export const apiRateLimiter = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.fixedWindow(5, "5 s"),
 });
+
+export const aiChatCache = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});

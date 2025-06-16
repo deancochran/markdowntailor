@@ -2,7 +2,6 @@ import {
   boolean,
   foreignKey,
   integer,
-  numeric,
   pgTable,
   text,
   timestamp,
@@ -154,14 +153,12 @@ export const aiRequestLog = pgTable(
     userId: text("user_id").notNull(),
     promptTokens: integer("prompt_tokens").notNull(),
     completionTokens: integer("completion_tokens").notNull(),
-    totalTokens: integer("total_tokens").notNull(),
     model: text().notNull(),
     modelProvider: text("model_provider").notNull(),
     status: text().default("success").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
       .notNull(),
-    credits: numeric({ precision: 19, scale: 4 }).default("0.0000").notNull(),
   },
   (table) => [
     foreignKey({
@@ -186,9 +183,8 @@ export const user = pgTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .defaultNow()
       .notNull(),
-    modelPreference: text("model_preference").default("o4-mini").notNull(),
+    modelPreference: text("model_preference").default("gpt-4.1").notNull(),
     providerPreference: text("provider_preference").default("openai").notNull(),
-    credits: numeric({ precision: 19, scale: 4 }).default("0.00").notNull(),
     stripeCustomerId: text("stripe_customer_id"),
     alphaCreditsRedeemed: boolean("alpha_credits_redeemed")
       .default(false)

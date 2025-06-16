@@ -2,12 +2,18 @@
 
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
+import {
+  addStripeCredits,
+  getStripeCreditsBalance,
+  getStripeCreditTransactions,
+} from "@/lib/stripe/billing";
 import { withSentry } from "@/lib/utils/sentry";
-import { eq, sql } from "drizzle-orm";
-import { user } from "migrations/schema";
+import { eq } from "drizzle-orm";
+import { stripe } from "../stripe";
 
 /**
- * Delete a user
+ * Delete a user and their Stripe customer
  */
 export const deleteUser = withSentry("delete-user", async () => {
   const session = await auth();
@@ -16,7 +22,9 @@ export const deleteUser = withSentry("delete-user", async () => {
     throw new Error("Unauthorized");
   }
 
-  // Delete user (cascades all user owned data)
+  if (session.user.stripeCustomerId) {
+    await stripe.customers.del(session.user.stripeCustomerId);
+  }
   await db.delete(user).where(eq(user.id, session.user.id));
 });
 
@@ -32,20 +40,50 @@ export async function updateUserWithStripeCustomerId(
     .where(eq(user.id, userId));
 }
 
-export async function addCreditsToUser(userId: string, credits: number) {
-  await db
-    .update(user)
-    .set({
-      credits: sql`credits + ${credits}`,
-    })
-    .where(eq(user.id, userId));
+/**
+ * Add credits to user via Stripe credit grant
+ */
+export async function addCreditsToUserViaStripe(
+  userId: string,
+  credits: string,
+  category: "paid" | "promotional" = "paid",
+  expiresAt?: Date,
+) {
+  const [dbUser] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+
+  if (!dbUser?.stripeCustomerId) {
+    throw new Error("User does not have a Stripe customer ID");
+  }
+
+  await addStripeCredits(dbUser, credits, category, expiresAt);
 }
 
-export async function deductCreditsFromUser(userId: string, credits: number) {
-  await db
-    .update(user)
-    .set({
-      credits: sql`${user.credits} - ${credits.toFixed(4)}`,
-    })
-    .where(eq(user.id, userId));
+/**
+ * Get user's current credit balance from Stripe
+ */
+export async function getUserStripeCreditsBalance(): Promise<string> {
+  const session = await auth();
+
+  if (!session?.user?.id || !session.user.stripeCustomerId) {
+    throw new Error("Unauthorized or missing Stripe customer ID");
+  }
+
+  return await getStripeCreditsBalance(session.user);
+}
+
+/**
+ * Get user's credit transaction history from Stripe
+ */
+export async function getUserStripeCreditTransactions(limit: number = 10) {
+  const session = await auth();
+
+  if (!session?.user?.id || !session.user.stripeCustomerId) {
+    throw new Error("Unauthorized or missing Stripe customer ID");
+  }
+
+  return await getStripeCreditTransactions(session.user, limit);
 }

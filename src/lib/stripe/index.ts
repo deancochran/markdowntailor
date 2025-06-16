@@ -1,10 +1,11 @@
-// Create a new file: src/lib/stripe.ts
+// Updated version of your Stripe integration
 import { db } from "@/db/drizzle";
-import { aiRequestLog, user } from "@/db/schema";
-import Decimal from "decimal.js";
-import { desc, eq, sql } from "drizzle-orm";
+import { user } from "@/db/schema";
+import { addStripeCredits } from "@/lib/stripe/billing";
+import { StripeAgentToolkit } from "@stripe/agent-toolkit/ai-sdk";
+import { eq } from "drizzle-orm";
+import { User } from "next-auth";
 import Stripe from "stripe";
-
 // Validate required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is required");
@@ -15,95 +16,72 @@ if (!process.env.STRIPE_WEBHOOK_SECRET) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+export const stripeAgentToolkit = new StripeAgentToolkit({
+  secretKey: process.env.STRIPE_SECRET_KEY,
+  configuration: {
+    actions: {
+      paymentLinks: {
+        create: true,
+      },
+    },
+  },
+});
 export const ALPHA_PRODUCT_ID = "prod_SU9j9hBWrOFvuJ";
 export const ALPHA_CREDIT_AMOUNT = 5; // 5 credits for $5
+export const ALPHA_METER_EVENT_NAME = "api_ai_chat";
+
 /**
- * Creates a Stripe checkout session
+ * Creates a Stripe checkout session for credit purchases
  */
-// Types for better type safety
 export interface CheckoutSessionParams {
-  userId: string;
-  amount?: number; // Amount in cents
+  user: User;
+  amount: number; // Amount in credits/dollars
 }
 
-export async function createCheckoutSession({
-  userId,
+export async function createCreditPurchaseCheckoutSession({
+  user,
   amount,
 }: CheckoutSessionParams): Promise<Stripe.Checkout.Session> {
   try {
-    // Validate required parameters
-    if (!amount) {
-      throw new Error("Either priceId or amount is required");
-    }
-
-    // Get user from database using Drizzle ORM
-    const [dbUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    if (!dbUser) {
-      throw new Error("User not found");
-    }
-
-    // Base session parameters
-    const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      payment_method_types: ["card"],
+    const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            // product_data: {
+            //   name: `${amount} AI Credits`,
+            //   description: `Purchase ${amount} credits for AI-powered resume building`,
+            // },
+            // unit_amount: new Decimal(amount).mul(100).toNumber(),
+            product: ALPHA_PRODUCT_ID,
+            unit_amount: 0, // Free for alpha
+          },
+          quantity: 1,
+        },
+      ],
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          metadata: {
+            user_id: user.id,
+          },
+        },
+      },
+      metadata: {
+        user_id: user.id,
+      },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=cancelled`,
-      metadata: {
-        user_id: userId,
-      },
-    };
-
-    sessionParams.line_items = [
-      {
-        price_data: {
-          currency: "usd",
-          product: "prod_SU9j9hBWrOFvuJ",
-          unit_amount: 0,
-        },
-        quantity: 1,
-      },
-    ];
-
-    // Handle existing Stripe customer
-    if (dbUser.stripeCustomerId) {
-      try {
-        // Verify the customer still exists in Stripe
-        await stripe.customers.retrieve(dbUser.stripeCustomerId);
-        sessionParams.customer = dbUser.stripeCustomerId;
-      } catch (error) {
-        const stripeError = error as Stripe.errors.StripeError;
-        if (stripeError.statusCode === 404) {
-          // Customer was deleted in Stripe but not in our DB
-          console.log(
-            `Customer ${dbUser.stripeCustomerId} not found in Stripe, will create new one`,
-          );
-          // Clear the invalid customer ID
-          await db
-            .update(user)
-            .set({ stripeCustomerId: null })
-            .where(eq(user.id, userId));
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    // Configure customer creation if no valid customer ID
-    if (!sessionParams.customer) {
-      sessionParams.customer_creation = "always";
-      if (dbUser.email) {
-        sessionParams.customer_email = dbUser.email;
-      }
-    }
-
-    // Create the checkout session
-    const session = await stripe.checkout.sessions.create(sessionParams);
-
+      ...(!!user.stripeCustomerId
+        ? { customer: user.stripeCustomerId }
+        : {
+            customer_email: user.email,
+            customer_creation: "always",
+          }),
+    });
+    console.log("✅ Successfully handled customer.created");
     return session;
   } catch (error) {
     console.error("Error creating checkout session:", error);
@@ -114,101 +92,106 @@ export async function createCheckoutSession({
     );
   }
 }
-/**
- * Handles successful checkout session completion
- */
-async function handleCheckoutSessionCompleted(
-  session: Stripe.Checkout.Session,
-): Promise<void> {
-  try {
-    console.log("🎯 Starting handleCheckoutSessionCompleted");
-    console.log("Session data:", {
-      id: session.id,
-      amount_total: session.amount_total,
-      customer: session.customer,
-      metadata: session.metadata,
-    });
 
-    const userId = session.metadata?.user_id;
-    if (!userId) {
-      console.error(
-        "❌ No user_id found in session metadata:",
-        session.metadata,
-      );
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  if (!invoice.customer || !invoice.metadata?.user_id) {
+    console.warn("Invoice missing required metadata or customer ID");
+    return;
+  }
+  let [dbUser] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, invoice.metadata.user_id));
+
+  if (!dbUser) {
+    console.warn("User not found");
+    return;
+  }
+
+  // Handle case where user doesn't have stripeCustomerId yet (race condition)
+  // Extract customer ID from the invoice and update the user record
+  const customerId =
+    typeof invoice.customer === "string"
+      ? invoice.customer
+      : invoice.customer.id;
+
+  if (!dbUser.stripeCustomerId) {
+    console.log(
+      `🔄 Setting missing Stripe customer ID: ${customerId} for user: ${invoice.metadata.user_id}`,
+    );
+    [dbUser] = await db
+      .update(user)
+      .set({ stripeCustomerId: customerId })
+      .where(eq(user.id, invoice.metadata.user_id))
+      .returning();
+  }
+
+  try {
+    // Handle alpha program
+    if (dbUser.alpha_credits_redeemed) {
+      console.warn("User has already redeemed their alpha credits");
       return;
     }
 
-    console.log(`✅ Processing checkout for user: ${userId}`);
-
-    // Update user with Stripe customer ID if available
-    if (session.customer) {
-      console.log(`💳 Updating customer ID: ${session.customer}`);
-      await db
+    await db.transaction(async (tx) => {
+      const [_user] = await tx
         .update(user)
-        .set({ stripeCustomerId: session.customer as string })
-        .where(eq(user.id, userId));
-    }
+        .set({ alpha_credits_redeemed: true })
+        .where(eq(user.id, invoice.metadata!.user_id))
+        .returning();
 
-    // ALPHA RELEASE STRIPE LOGIC
-    // Get line items to verify the product
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    console.log("📦 Line items:", lineItems.data);
-    const hasAlphaProduct = lineItems.data.some(
-      (item) => item.price?.product === ALPHA_PRODUCT_ID,
+      await addStripeCredits(
+        _user,
+        ALPHA_CREDIT_AMOUNT.toString(),
+        "promotional",
+      );
+    });
+    console.log(
+      `✅ Successfully handled invoice.payment_succeeded.. Granted $${ALPHA_CREDIT_AMOUNT} to user: ${invoice.metadata.user_id}`,
     );
-
-    if (hasAlphaProduct) {
-      console.log(
-        `🎁 Alpha product detected, adding ${ALPHA_CREDIT_AMOUNT} credits to user ${userId}`,
-      );
-
-      await db.transaction(async (tx)=>{
-
-        await tx.update(user)
-        .set({
-          credits: sql`credits + ${ALPHA_CREDIT_AMOUNT}`, // Add alpha credits
-          alpha_credits_redeemed: true
-        })
-        .where(eq(user.id, userId));
-      })
-
-      console.log(
-        `✅ Added $${ALPHA_CREDIT_AMOUNT} credits to user ${userId} for alpha program checkout (Product: ${ALPHA_PRODUCT_ID})`,
-      );
-    } else {
-      // Fallback to amount-based credits for regular products
-      const amountTotal = session.amount_total;
-      console.log(`💰 Amount total: ${amountTotal}`);
-
-      if (amountTotal) {
-        // Convert cents to credits with proper precision (USD DOLLARS)
-        const creditsToAdd = new Decimal(amountTotal).dividedBy(100).toFixed(4);
-
-        console.log(
-          `🔄 About to add ${creditsToAdd} credits to user ${userId}`,
-        );
-
-        await db
-          .update(user)
-          .set({
-            credits: sql`credits + ${creditsToAdd}`, // Add to existing credits
-          })
-          .where(eq(user.id, userId));
-
-        console.log(
-          `✅ Added ${creditsToAdd} credits to user ${userId} for payment of $${new Decimal(amountTotal).dividedBy(100).toFixed(2)}`,
-        );
-      } else {
-        console.log(
-          "⚠️ No alpha product found and no amount_total, skipping credit addition",
-        );
-      }
-    }
   } catch (error) {
-    console.error("❌ Error handling checkout session completed:", error);
-    throw error;
+    console.error("❌ Failed to grant credits", error);
+    return;
   }
 }
+
+async function handleCustomerDeleted(customer: Stripe.Customer) {
+  const userId = customer.metadata?.user_id;
+  if (!userId) {
+    console.error(
+      "❌ No userId found in customer metadata:",
+      customer.metadata,
+    );
+    return;
+  }
+
+  const [dbUser] = await db
+    .update(user)
+    .set({ stripeCustomerId: null })
+    .where(eq(user.stripeCustomerId, customer.id))
+    .returning();
+
+  console.log(`🗑️ Customer deleted: ${customer.id} for user: ${dbUser.id}`);
+}
+
+async function handleCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session,
+) {
+  // Update user with Stripe customer ID if available
+  if (session.metadata?.user_id) {
+    console.log(`💳 Updating customer ID: ${session.customer}`);
+    await db
+      .update(user)
+      .set({ stripeCustomerId: session.customer as string })
+      .where(eq(user.id, session.metadata.user_id));
+    console.log(
+      `✅ Customer Created: ${session.customer} for user: ${session.metadata?.user_id}`,
+    );
+  } else {
+    console.log(`❌ No user_id found in session metadata`);
+  }
+}
+
 /**
  * Handles Stripe webhook events
  */
@@ -222,16 +205,18 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
       process.env.STRIPE_WEBHOOK_SECRET!,
     );
 
-    console.log(`📨 Webhook event type: ${event.type}`);
-    console.log(`📨 Event ID: ${event.id}`);
+    console.log(`📨 Stripe Webhook ${event.id}: ${event.type}`);
 
     switch (event.type) {
       case "checkout.session.completed":
-        console.log("🎯 Handling checkout.session.completed event");
-        await handleCheckoutSessionCompleted(
-          event.data.object as Stripe.Checkout.Session,
-        );
-        console.log("✅ Successfully handled checkout.session.completed");
+        await handleCheckoutSessionCompleted(event.data.object);
+        break;
+      case "customer.deleted":
+        await handleCustomerDeleted(event.data.object);
+        break;
+
+      case "invoice.payment_succeeded":
+        await handleInvoicePaymentSucceeded(event.data.object);
         break;
 
       default:
@@ -246,31 +231,4 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
-}
-// Get user's payment history from Stripe (when needed)
-export async function getUserPaymentHistory(stripeCustomerId: string) {
-  if (!stripeCustomerId) return [];
-
-  const charges = await stripe.charges.list({
-    customer: stripeCustomerId,
-    limit: 100,
-  });
-
-  return charges.data.map((charge) => ({
-    id: charge.id,
-    amount: charge.amount / 100, // Convert to dollars
-    status: charge.status,
-    created: new Date(charge.created * 1000),
-    description: charge.description,
-  }));
-}
-
-// Get user's credit usage history (from your existing aiRequestLog)
-export async function getUserCreditUsage(userId: string, limit = 50) {
-  return await db
-    .select()
-    .from(aiRequestLog)
-    .where(eq(aiRequestLog.userId, userId))
-    .orderBy(desc(aiRequestLog.createdAt))
-    .limit(limit);
 }

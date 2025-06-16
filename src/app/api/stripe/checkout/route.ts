@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { createCheckoutSession } from "@/lib/stripe";
+import { createCreditPurchaseCheckoutSession } from "@/lib/stripe";
 import { apiRateLimiter } from "@/lib/upstash";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create checkout session - always payment mode, always redirect to settings
-    const checkoutSession = await createCheckoutSession({
-      userId: session.user.id,
+    // ALPHA RELEASE CHECKOUT
+    const checkoutSession = await createCreditPurchaseCheckoutSession({
+      user: session.user,
       amount,
     });
 

@@ -1,7 +1,5 @@
 import { db } from "@/db/drizzle";
 import { aiRequestLog } from "@/db/schema";
-import { logAIRequest } from "@/lib/ai";
-import { expect } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { authTest } from "../utils/auth";
 
@@ -22,25 +20,9 @@ authTest.describe("AI Actions Unit Tests", () => {
 
   authTest(
     "logAIRequest - should log request correctly",
-    async ({ authenticatedUser }) => {
-      await logAIRequest(
-        {
-          totalTokens: 100000,
-          promptTokens: 100000,
-          completionTokens: 0,
-          status: "success",
-        },
-        authenticatedUser,
-      );
-
-      const logs = await db
-        .select()
-        .from(aiRequestLog)
-        .where(eq(aiRequestLog.userId, authenticatedUser.id));
-      expect(logs.length).toBe(1);
-      expect(logs[0].totalTokens).toBe(100000);
-      expect(logs[0].status).toBe("success");
-      expect(parseFloat(logs[0].costEstimate)).toBeGreaterThan(0);
+    async () => {
+      throw new Error("Not implemented");
+    });
     },
   );
 

@@ -157,7 +157,7 @@ export default function ResumeVersionsComponent({
       <header className="w-full flex h-14 items-center justify-between p-4 border-b bg-background">
         <div className="flex items-center gap-4">
           <Link href={`/resumes/${resume.id}`}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className=" ">
               <ArrowLeft className="h-5 w-5" />
               <span className="sr-only">Back to Editor</span>
             </Button>
@@ -360,7 +360,7 @@ export default function ResumeVersionsComponent({
                               }
                               size="sm"
                               onClick={() => handleSelectOriginal(version)}
-                              className="text-xs flex-1 sm:flex-none"
+                              className="text-xs flex-1 sm:flex-none "
                             >
                               Original
                             </Button>
@@ -372,7 +372,7 @@ export default function ResumeVersionsComponent({
                               }
                               size="sm"
                               onClick={() => handleSelectModified(version)}
-                              className="text-xs flex-1 sm:flex-none"
+                              className="text-xs flex-1 sm:flex-none "
                             >
                               Modified
                             </Button>
@@ -383,7 +383,7 @@ export default function ResumeVersionsComponent({
                                 handleDuplicateFromVersion(version)
                               }
                               disabled={isDuplicating === version.id}
-                              className="text-xs flex-1 sm:flex-none"
+                              className="text-xs flex-1 sm:flex-none "
                             >
                               <Copy className="h-3 w-3 mr-1" />
                               {isDuplicating === version.id
@@ -397,7 +397,7 @@ export default function ResumeVersionsComponent({
                               disabled={
                                 isRestoring === version.id || index === 0
                               }
-                              className="text-xs flex-1 sm:flex-none"
+                              className="text-xs flex-1 sm:flex-none "
                             >
                               <RotateCcw className="h-3 w-3 mr-1" />
                               {isRestoring === version.id

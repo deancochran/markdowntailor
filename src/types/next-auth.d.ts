@@ -10,14 +10,13 @@ declare module "next-auth" {
       id: string;
       name: string;
       email: string;
-      stripeCustomerId?: string | null;
+      stripeCustomerId: string | null;
       model_preference: string;
       provider_preference: string;
-      credits: string;
       alpha_credits_redeemed: boolean;
       createdAt: Date;
       updatedAt: Date;
-      image?: string | null;
+      image: string | null;
     } & DefaultSession["user"];
   }
 
@@ -29,14 +28,13 @@ declare module "next-auth" {
     id: string;
     name: string;
     email: string;
-    stripeCustomerId?: string | null;
+    stripeCustomerId: string | null;
     model_preference: string;
     provider_preference: string;
-    credits: string;
     alpha_credits_redeemed: boolean;
     createdAt: Date;
     updatedAt: Date;
-    image?: string | null;
+    image: string | null;
   }
 }
 

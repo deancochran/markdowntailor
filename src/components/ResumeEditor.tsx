@@ -56,6 +56,21 @@ class IRange {
   }
 }
 
+type Modification = {
+  contentType: "markdown" | "css";
+  operation: "replace" | "insert" | "append" | "prepend";
+  targetContent?: string;
+  isRegex?: boolean;
+  regexFlags?: string;
+  newContent: string;
+  position?: {
+    line?: number | null;
+    column?: number | null;
+  };
+  reason?: string;
+  index?: number;
+};
+
 export default function ResumeEditor({
   resume,
 }: {
@@ -219,8 +234,7 @@ export default function ResumeEditor({
     try {
       response = await createResumeFromVersion(resume.id);
       toast.success("Resume duplicated successfully");
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Failed to duplicate resume");
     } finally {
       setIsDuplicating(false);
@@ -269,8 +283,7 @@ export default function ResumeEditor({
     try {
       // Download logic
       toast.success("HTML file downloaded successfully");
-    } catch (error) {
-      console.error("Download error:", error);
+    } catch {
       toast.error("Failed to download HTML file");
     }
   };
@@ -280,8 +293,7 @@ export default function ResumeEditor({
       const htmlContent = generateHTMLContent(sanitizedMarkdown, sanitizedCSS);
       printDocument(htmlContent);
       toast.success("PDF generation started");
-    } catch (error) {
-      console.error("PDF generation error:", error);
+    } catch {
       toast.error("Failed to generate PDF");
     }
   }, [sanitizedMarkdown, sanitizedCSS]);
@@ -389,120 +401,118 @@ export default function ResumeEditor({
     setIsExceeding(newEstimatedPages > 3);
   }, [sanitizedMarkdown]);
 
-  const applyModification = useCallback(
-    (modification: {
-      success: boolean;
-      applyDirectly?: boolean;
-      contentType?: "markdown" | "css";
-      operation?: "replace" | "insert" | "append" | "prepend";
-      targetContent?: string; // Made optional and string-only to match API
-      newContent: string;
-      position?: {
-        line?: number;
-        column?: number;
-      };
-      description?: string;
-    }) => {
-      if (!modification.applyDirectly || !modification.success) return;
+  const applyModification = useCallback((modification: Modification) => {
+    const {
+      contentType,
+      operation,
+      targetContent,
+      isRegex,
+      regexFlags,
+      newContent,
+      position,
+    } = modification;
 
-      const {
-        contentType,
-        operation,
-        targetContent,
-        newContent,
-        position,
-        // description,
-      } = modification;
+    try {
+      const editor =
+        contentType === "markdown"
+          ? modifiedMarkdownEditorRef.current
+          : modifiedCssEditorRef.current;
 
-      try {
-        const editor =
-          contentType === "markdown"
-            ? modifiedMarkdownEditorRef.current
-            : modifiedCssEditorRef.current;
+      if (!editor) {
+        console.error(`${contentType} editor not available`);
+        return;
+      }
 
-        if (!editor) {
-          console.error(`${contentType} editor not available`);
-          return;
-        }
+      const model = editor.getModel();
+      if (!model) {
+        console.error(`${contentType} editor model not available`);
+        return;
+      }
+      console.log(`MOD: ${JSON.stringify(modification)}`);
 
-        const model = editor.getModel();
-        if (!model) {
-          console.error(`${contentType} editor model not available`);
-          return;
-        }
+      switch (operation) {
+        case "replace":
+          if (targetContent) {
+            const fullText = model.getValue();
+            let newText;
 
-        switch (operation) {
-          case "replace":
-            if (targetContent) {
-              const fullText = model.getValue();
-              const newText = fullText.replace(targetContent, newContent);
-              model.setValue(newText);
+            // Handle regex replacement if isRegex is true
+            if (isRegex) {
+              try {
+                const regex = new RegExp(targetContent, regexFlags || "");
+                newText = fullText.replace(regex, newContent);
+              } catch (error) {
+                console.error("Invalid regex:", targetContent, error);
+                // Fallback to literal replace
+                newText = fullText.replace(targetContent, newContent);
+              }
+            } else {
+              newText = fullText.replace(targetContent, newContent);
             }
-            break;
+            console.log("REPLACE", newText);
 
-          case "insert":
-            if (
-              position &&
-              position.line !== undefined &&
-              position.column !== undefined
-            ) {
+            model.setValue(newText);
+          }
+          break;
+
+        case "insert":
+          if (
+            position &&
+            position.line !== undefined &&
+            position.column !== undefined
+          ) {
+            editor.executeEdits("ai-modification", [
+              {
+                range: new IRange(
+                  position.column ?? 0,
+                  position.line ?? 0,
+                  position.column ?? 0,
+                  position.line ?? 0,
+                ),
+                text: newContent,
+              },
+            ]);
+          } else {
+            // Insert at current cursor position if no position specified
+            const selection = editor.getSelection();
+            if (selection) {
               editor.executeEdits("ai-modification", [
                 {
-                  range: new IRange(
-                    position.column,
-                    position.line,
-                    position.column,
-                    position.line,
-                  ),
+                  range: selection,
                   text: newContent,
                 },
               ]);
-            } else {
-              // Insert at current cursor position if no position specified
-              const selection = editor.getSelection();
-              if (selection) {
-                editor.executeEdits("ai-modification", [
-                  {
-                    range: selection,
-                    text: newContent,
-                  },
-                ]);
-              }
             }
-            break;
+          }
+          break;
 
-          case "append":
-            const currentText = model.getValue();
-            model.setValue(
-              currentText + (currentText ? "\n" : "") + newContent,
-            );
-            break;
+        case "append":
+          const currentText = model.getValue();
+          model.setValue(currentText + (currentText ? "\n" : "") + newContent);
+          break;
 
-          case "prepend":
-            const existingText = model.getValue();
-            model.setValue(
-              newContent + (existingText ? "\n" : "") + existingText,
-            );
-            break;
+        case "prepend":
+          const existingText = model.getValue();
+          model.setValue(
+            newContent + (existingText ? "\n" : "") + existingText,
+          );
+          break;
 
-          default:
-            console.warn(`Unknown operation: ${operation}`);
-            return;
-        }
-
-        toast.success(`Applied modification to the ${contentType} document`);
-      } catch (error) {
-        console.error("Error applying modification:", error);
-        toast.error("Failed to apply modification");
+        default:
+          console.warn(`Unknown operation: ${operation}`);
+          return;
       }
-    },
-    [],
-  );
 
-  // Process tool invocations and apply modifications
+      toast.success(`Applied modification to the ${contentType} document`);
+    } catch (error) {
+      console.error("Error applying modification:", error);
+      toast.error("Failed to apply modification");
+    }
+  }, []);
+
   const processToolInvocations = useCallback(
     (message: Message) => {
-      // Check if message has experimental_attachments property as alternative to toolInvocations
+      // Check if message has tool invocations
       const invocations =
         "toolInvocations" in message ? message.toolInvocations : undefined;
       if (!invocations) return;
@@ -510,8 +520,26 @@ export default function ResumeEditor({
       invocations.forEach((invocation) => {
         if (invocation.state === "result" && invocation.result) {
           const result = invocation.result;
-          if (result.applyDirectly) {
-            applyModification(result);
+
+          // Handle batch_modify tool results
+          if (result.modifications && Array.isArray(result.modifications)) {
+            // Apply each modification directly without transformation
+            result.modifications.forEach((modification: Modification) => {
+              applyModification(modification);
+            });
+
+            // Show a summary toast after applying all modifications
+            if (result.summary) {
+              toast.success(result.summary);
+            }
+          }
+
+          // Handle analyze_content tool results if needed
+          else if (result.analysisType && result.findings) {
+            console.log("Analysis results:", result);
+            toast.info(
+              `Analysis complete: Found ${result.findings.length} items to improve`,
+            );
           }
         }
       });
@@ -520,7 +548,6 @@ export default function ResumeEditor({
   );
 
   const {
-    append,
     messages,
     setMessages,
     handleSubmit,
@@ -557,7 +584,6 @@ export default function ResumeEditor({
   const handleMarkdownEditorMount: DiffOnMount = useCallback(
     (editor) => {
       if (!isMountedRef.current) return;
-
       const modifiedEditor = editor.getModifiedEditor();
       if (modifiedEditor) {
         modifiedMarkdownEditorRef.current = modifiedEditor;
@@ -607,7 +633,7 @@ export default function ResumeEditor({
       <div className="w-full flex h-14 items-center justify-between p-4">
         <div className="flex items-center gap-4">
           <Link href="/resumes">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className=" ">
               <ArrowLeft className="h-5 w-5" />
               <span className="sr-only">Back to Resumes</span>
             </Button>
@@ -641,7 +667,7 @@ export default function ResumeEditor({
             </p>
             <Button
               variant="link"
-              className="p-0 m-0 text-xs h-fit text-muted-foreground"
+              className="p-0 m-0 text-xs h-fit text-muted-foreground "
               asChild
             >
               <Link href={`${pathname}/versions`}>View Versions</Link>
@@ -652,7 +678,7 @@ export default function ResumeEditor({
             onClick={handleSave}
             disabled={isSaving || !isDirty || isExceeding}
             variant="outline"
-            className={`relative gap-2`}
+            className={`relative gap-2 `}
           >
             <Save className="h-4 w-4" />
             {isSaving ? "Saving..." : "Save"}
@@ -661,7 +687,7 @@ export default function ResumeEditor({
           <Button
             onClick={handleGeneratePdf}
             variant="outline"
-            className="gap-2"
+            className="gap-2 "
             data-testid="export-pdf-button"
           >
             <Printer className="h-4 w-4" />
@@ -671,7 +697,7 @@ export default function ResumeEditor({
           <Button
             onClick={handleDownloadHTML}
             variant="outline"
-            className="gap-2"
+            className="gap-2 "
             data-testid="download-html-button"
           >
             <Download className="h-4 w-4" />
@@ -682,7 +708,7 @@ export default function ResumeEditor({
             onClick={handleDuplicate}
             disabled={isDuplicating || isDirty}
             variant="outline"
-            className="gap-2"
+            className="gap-2 "
           >
             <Copy className="h-4 w-4" />
             {isDuplicating ? "Duplicating..." : "Duplicate"}
@@ -692,7 +718,7 @@ export default function ResumeEditor({
             onClick={handleDelete}
             disabled={isDeleting}
             variant="outline"
-            className="gap-2"
+            className="gap-2 "
           >
             <Trash className="h-4 w-4" />
             {isDeleting ? "Deleting..." : "Delete"}
@@ -724,8 +750,8 @@ export default function ResumeEditor({
                       modifiedCssEditorRef.current.getValue();
                     if (currentValue) modifyCss(currentValue);
                   }
-                } catch (e) {
-                  console.error("Error during tab switch:", e);
+                } catch {
+                  toast.error("Error during tab switch");
                 }
 
                 // Important: Set refs to null before changing tabs
@@ -845,6 +871,7 @@ export default function ResumeEditor({
                     size="sm"
                     onClick={onZoomOut}
                     disabled={zoomLevel <= 0.2}
+                    className=""
                   >
                     <ZoomOut className="h-4 w-4" />
                   </Button>
@@ -856,6 +883,7 @@ export default function ResumeEditor({
                     size="sm"
                     onClick={onZoomIn}
                     disabled={zoomLevel >= 2.0}
+                    className=""
                   >
                     <ZoomIn className="h-4 w-4" />
                   </Button>
@@ -886,9 +914,7 @@ export default function ResumeEditor({
                   stop={stop}
                   attachments={attachments}
                   setAttachments={setAttachments}
-                  messages={messages}
                   setMessages={setMessages}
-                  append={append}
                 />
               </form>
             </TabsContent>

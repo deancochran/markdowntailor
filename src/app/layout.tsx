@@ -92,7 +92,7 @@ export default async function RootLayout({
                         </DropdownMenu>
                       </div>
                     ) : (
-                      <Button className="cursor-pointer" type="button" asChild>
+                      <Button className="" type="button" asChild>
                         <Link href="/login">Sign In</Link>
                       </Button>
                     )}

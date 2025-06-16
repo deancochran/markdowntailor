@@ -1,154 +1,247 @@
 import { auth } from "@/auth";
-import { resume as Resume } from "@/db/schema";
-import { getPreferredModelObject, logAIRequest } from "@/lib/ai";
+import { resume } from "@/db/schema";
+import { getPreferredModelObject } from "@/lib/ai";
+import { logAIRequestWithStripeCredits } from "@/lib/ai/credits";
 import { apiRateLimiter } from "@/lib/upstash";
+import { anthropic } from "@ai-sdk/anthropic";
 import {
   InvalidToolArgumentsError,
-  LanguageModelUsage,
   Message,
   NoSuchToolError,
   streamText,
   tool,
   ToolExecutionError,
 } from "ai";
-
 import { z } from "zod";
 
-const modifyContentTool = tool({
-  description: `Directly modifies the resume markdown or CSS content with streaming updates.`,
-  parameters: z.object({
-    contentType: z
-      .enum(["markdown", "css"])
-      .describe("Whether to modify the markdown or CSS content."),
-    operation: z
-      .enum(["replace", "insert", "append", "prepend"])
-      .describe("The type of modification to perform."),
-    targetContent: z
-      .string()
-      .optional()
-      .describe(
-        "The exact content to find and replace (for 'replace' operation). Can be a string or regex pattern.",
-      ),
-    isRegex: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe("Whether targetContent should be treated as a regex pattern."),
-    regexFlags: z
-      .string()
-      .optional()
-      .describe(
-        "Regex flags if isRegex is true (e.g., 'gi' for global, case-insensitive).",
-      ),
-    newContent: z.string().describe("The new content to apply."),
-    position: z
-      .object({
-        line: z.number().optional(),
-        column: z.number().optional(),
-      })
-      .optional()
-      .describe("Specific position for insertion (for 'insert' operation)."),
-    description: z
-      .string()
-      .describe("A description of what this modification does."),
-  }),
-  execute: async (args) => {
-    let processedTargetContent: string | RegExp | undefined =
-      args.targetContent;
+// Streamlined modification schema for batch operations
+const ModificationSchema = z.object({
+  contentType: z.enum(["markdown", "css"]).describe("Target file type"),
+  operation: z
+    .enum(["replace", "insert", "append", "prepend"])
+    .describe("Modification type"),
+  targetContent: z
+    .string()
+    .optional()
+    .describe("Content to find for replace operations"),
+  isRegex: z
+    .boolean()
+    .default(false)
+    .describe("Whether targetContent is a regex pattern"),
+  regexFlags: z
+    .string()
+    .optional()
+    .describe("Regex flags (e.g., 'gi' for global case-insensitive)"),
+  newContent: z.string().describe("Content to apply"),
+  position: z
+    .object({
+      line: z
+        .union([z.number().refine(() => true), z.null()])
+        .describe("Line number for insert operations"),
+      column: z
+        .union([z.number().refine(() => true), z.null()])
+        .describe("Column position for insert operations"),
+    })
+    .optional()
+    .describe("Position for insert operations"),
+  reason: z
+    .string()
+    .describe("Explanation of why this change improves the resume"),
+});
 
-    if (args.targetContent && args.isRegex) {
-      try {
-        processedTargetContent = new RegExp(
-          args.targetContent,
-          args.regexFlags || "",
-        );
-      } catch {
-        console.error("Invalid regex pattern:", args.targetContent);
-        processedTargetContent = args.targetContent;
+const batchModifyTool = tool({
+  description:
+    "Apply multiple strategic modifications to resume content. Supports regex patterns for powerful find-and-replace operations.",
+  parameters: z.object({
+    modifications: z
+      .array(ModificationSchema)
+      .describe("Array of modifications to apply sequentially"),
+    summary: z.string().describe("Overall summary of improvements being made"),
+  }),
+  execute: async ({ modifications, summary }) => {
+    // Process regex patterns and validate modifications
+    const processedMods = modifications.map((mod, index) => {
+      let processedTargetContent = mod.targetContent;
+
+      // Handle regex processing
+      if (mod.targetContent && mod.isRegex) {
+        try {
+          // Validate regex pattern
+          new RegExp(mod.targetContent, mod.regexFlags || "");
+          processedTargetContent = mod.targetContent;
+        } catch {
+          console.warn(
+            `Invalid regex pattern at index ${index}:`,
+            mod.targetContent,
+          );
+          throw new Error(`Invalid regex pattern: ${mod.targetContent}`);
+        }
       }
-    }
+
+      return {
+        ...mod,
+        targetContent: processedTargetContent,
+        index,
+      };
+    });
 
     return {
       success: true,
-      contentType: args.contentType,
-      operation: args.operation,
-      targetContent: processedTargetContent,
-      newContent: args.newContent,
-      position: args.position,
-      description: args.description,
-      applyDirectly: true,
+      modifications: processedMods,
+      summary,
+      totalChanges: modifications.length,
+      timestamp: new Date().toISOString(),
     };
   },
 });
-export async function POST(req: Request) {
-  const { messages, resume }: { messages: Message[]; resume: typeof Resume } =
-    await req.json();
 
-  const session = await auth();
-  if (!session) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+const analyzeContentTool = tool({
+  description:
+    "Analyze resume content for improvement opportunities without making changes",
+  parameters: z.object({
+    contentType: z
+      .enum(["markdown", "css", "both"])
+      .describe("Content to analyze"),
+    analysisType: z
+      .enum(["structure", "style", "content", "comprehensive"])
+      .describe("Type of analysis"),
+    findings: z
+      .array(
+        z.object({
+          issue: z.string().describe("Identified issue or opportunity"),
+          severity: z
+            .enum(["critical", "major", "minor"])
+            .describe("Issue severity"),
+          recommendation: z.string().describe("Recommended solution"),
+          location: z.string().optional().describe("Where the issue occurs"),
+        }),
+      )
+      .describe("Analysis findings"),
+  }),
+  execute: async ({ contentType, analysisType, findings }) => {
+    return {
+      success: true,
+      contentType,
+      analysisType,
+      findings,
+      timestamp: new Date().toISOString(),
+    };
+  },
+});
 
-  const rateLimit = await apiRateLimiter.limit(session.user.id);
-  if (!rateLimit.success) {
-    return new Response("Too Many Requests", {
-      status: 429,
-    });
-  }
+const SYSTEM_PROMPT = `You are ResumeCraft AI, an expert resume optimization assistant specializing in strategic content improvement and professional presentation.
 
-  if (!resume || !resume.markdown || !resume.css) {
-    return new Response("Bad Request: Resume data is missing or malformed.", {
-      status: 400,
-    });
-  }
+## Your Core Mission
+Transform resumes into compelling, ATS-optimized documents that maximize interview opportunities through strategic content enhancement and visual refinement.
 
-  const model_selection = getPreferredModelObject(session.user);
-  try {
-    let requestUsage: LanguageModelUsage;
-    const result = streamText({
-      model: model_selection.model,
-      tools: {
-        modify_content: modifyContentTool,
-      },
-      messages: messages,
-      maxSteps: 5,
-      system: `
-You are a friendly assistant with an intelligence for building resumes.
-Your primary goal is to help users improve their resume by making direct modifications to their markdown and CSS content.
-You should proactively make improvements and apply changes directly to the user's content using the modify_content tool.
+## Current Resume Content
 
-Current Resume Markdown:
+### Markdown Content:
 \`\`\`markdown
-${resume.markdown}
+{RESUME_MARKDOWN}
 \`\`\`
 
-Current Resume CSS:
+### CSS Styling:
 \`\`\`css
-${resume.css}
+{RESUME_CSS}
 \`\`\`
 
-Always identify areas for improvement:
-- Explain what you've analyzed and why your proposed changes are better
-- Be proactive - don't just suggest, actually make improvements
+## Your Approach
+1. **ANALYZE FIRST**: Always understand the current content before making changes
+2. **STRATEGIC IMPROVEMENTS**: Focus on high-impact modifications that enhance professional presentation
+3. **BATCH OPERATIONS**: Group related changes for efficient processing - all modifications are applied automatically
+4. **LEVERAGE REGEX**: Use regex patterns for consistent formatting and pattern-based improvements
+5. **EXPLAIN REASONING**: Provide clear rationale for each modification
 
-Types of improvements you should be proactive about:
-- Fix grammar, spelling, and punctuation errors
-- Improve wording for impact and clarity
-- Enhance formatting and styling
-- Optimize content structure
-- Add missing elements or sections
-- Improve visual presentation through CSS
-`,
+## Improvement Priorities
+
+### Content Enhancement (Markdown)
+- **Impact-Driven Language**: Transform weak phrases into strong, quantifiable achievements
+- **ATS Optimization**: Ensure keyword density and proper formatting for applicant tracking systems
+- **Professional Tone**: Maintain consistent, confident voice throughout
+- **Structure Optimization**: Improve flow, hierarchy, and readability
+
+### Visual Enhancement (CSS)
+- **Professional Aesthetics**: Clean, modern design that enhances readability
+- **Typography**: Optimal font choices, sizing, and spacing for professional presentation
+- **Layout Optimization**: Strategic use of white space and visual hierarchy
+- **Print Compatibility**: Ensure resume looks professional both on screen and in print
+
+## Tool Usage Guidelines
+
+### Use batch_modify for:
+- Multiple content improvements in a single operation
+- Pattern-based replacements using regex (e.g., date formatting, consistent spacing)
+- Comprehensive styling updates across the document
+- Sequential modifications that build upon each other
+
+### Use analyze_content for:
+- Pre-modification content assessment
+- Identifying patterns that need regex-based fixes
+- Quality assurance and validation checks
+- Understanding document structure before making changes
+
+## Response Style
+- **Proactive**: Identify and address issues without waiting for specific requests
+- **Strategic**: Focus on changes that meaningfully impact resume effectiveness
+- **Educational**: Explain the reasoning behind improvements
+- **Professional**: Maintain expert-level communication throughout
+
+## Quality Standards
+Every modification must:
+- Enhance professional presentation
+- Improve readability and scan-ability
+- Maintain factual accuracy
+- Follow resume best practices
+- Consider ATS compatibility
+
+Begin by analyzing the current resume content and identifying the most impactful improvements you can make.`;
+
+export async function POST(req: Request) {
+  try {
+    const {
+      messages,
+      resume: _resume,
+    }: { messages: Message[]; resume: typeof resume.$inferSelect } =
+      await req.json();
+
+    // Authentication and rate limiting
+    const session = await auth();
+    if (!session) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const rateLimit = await apiRateLimiter.limit(session.user.id);
+    if (!rateLimit.success) {
+      return new Response("Too Many Requests", { status: 429 });
+    }
+
+    // Prepare dynamic system prompt
+    const systemPrompt = SYSTEM_PROMPT.replace(
+      "{RESUME_MARKDOWN}",
+      _resume.markdown,
+    ).replace("{RESUME_CSS}", _resume.css);
+
+    const modelSelection = getPreferredModelObject(session.user);
+    const result = streamText({
+      model: anthropic("claude-4-sonnet-20250514"),
+      tools: {
+        batch_modify: batchModifyTool,
+        analyze_content: analyzeContentTool,
+      },
+      messages,
+      system: systemPrompt,
+      maxSteps: 8,
       experimental_continueSteps: true,
+      temperature: 0.3, // Lower temperature for more consistent, professional outputs
+      // forward the abort signal:
+      abortSignal: req.signal,
       onFinish: async ({ usage, finishReason }) => {
-        requestUsage = usage;
-
-        await logAIRequest(
+        await logAIRequestWithStripeCredits(
           {
             status: finishReason === "stop" ? "success" : finishReason,
-            promptTokens: requestUsage.promptTokens,
-            completionTokens: requestUsage.completionTokens,
-            totalTokens: requestUsage.totalTokens,
+            promptTokens: usage.promptTokens,
+            completionTokens: usage.completionTokens,
           },
           session.user,
         );
@@ -157,39 +250,22 @@ Types of improvements you should be proactive about:
 
     return result.toDataStreamResponse({
       getErrorMessage: (error) => {
-        // Log failed requests
-        logAIRequest(
-          {
-            status: "failed",
-            promptTokens: requestUsage.promptTokens,
-            completionTokens: requestUsage.completionTokens,
-            totalTokens: requestUsage.totalTokens,
-          },
-          session.user,
-        );
-
+        // Enhanced error handling
         if (NoSuchToolError.isInstance(error)) {
-          return "The model tried to call an unknown tool.";
+          return "Model attempted to use an unavailable tool. Please try again.";
         } else if (InvalidToolArgumentsError.isInstance(error)) {
-          return "The model called a tool with invalid arguments.";
+          console.error("InvalidToolArgumentsError details:", error);
+          return "Invalid tool parameters provided. Please refine your request.";
         } else if (ToolExecutionError.isInstance(error)) {
-          return "An error occurred during tool execution.";
+          return "Tool execution failed. Please try a different approach.";
         } else {
-          console.error(error);
-          return "An unknown error occurred.";
+          console.error("Unexpected error:", error);
+          return "An unexpected error occurred. Please try again.";
         }
       },
     });
   } catch (error) {
-    await logAIRequest(
-      {
-        status: "failed",
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
-      },
-      session.user,
-    );
-    throw error;
+    console.error("Unexpected error:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
 }

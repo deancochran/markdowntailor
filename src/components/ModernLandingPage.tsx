@@ -249,7 +249,7 @@ export default function ModernLandingPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="px-8 w-full" size={"lg"} asChild>
+              <Button className="px-8 w-full " size={"lg"} asChild>
                 <Link href="/resumes">
                   Create Your Resume
                   <ArrowRight className="h-5 w-5" />
@@ -450,7 +450,7 @@ export default function ModernLandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
             Ready to Land Your Dream Job?
           </h2>
-          <Button className="px-8 py-4 text-lg" size={"lg"} asChild>
+          <Button className="px-8 py-4 text-lg " size={"lg"} asChild>
             <Link href="/resumes">
               Start Building Your Resume Now
               <ArrowRight className="h-5 w-5 ml-2" />
