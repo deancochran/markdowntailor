@@ -8,8 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createResumeFromVersion, deleteResume } from "@/lib/actions/resume";
-import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
-import { printDocument } from "@/lib/utils/printUtils";
+
 import {
   Calendar,
   Clock,
@@ -17,7 +16,6 @@ import {
   Edit,
   FileText,
   MoreVertical,
-  Printer,
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -146,7 +144,7 @@ export default function ResumeListing({
                 {optimisticResumes.map((resume) => (
                   <motion.div
                     key={resume.id}
-                    variants={itemVariants}
+                    variants={{ itemVariants }}
                     layout
                     exit="exit"
                     className={resume._isDeleting ? "pointer-events-none" : ""}
@@ -199,7 +197,7 @@ function ResumeCard({
   };
 
   return (
-    <motion.div variants={cardVariants} whileHover="hover" whileTap="tap">
+    <motion.div variants={{ cardVariants }} whileHover="hover" whileTap="tap">
       <Card
         className={`
         group transition-all duration-200 border bg-card
@@ -388,16 +386,6 @@ function ResumeDropdownMenu({
     }
   };
 
-  const printPdf = () => {
-    try {
-      const htmlContent = generateHTMLContent(resume.markdown, resume.css);
-      printDocument(htmlContent);
-      toast.success("PDF generation started");
-    } catch {
-      toast.error("Failed to generate PDF");
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -414,18 +402,6 @@ function ResumeDropdownMenu({
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" align="end">
-        <DropdownMenuItem>
-          <Button
-            onClick={printPdf}
-            variant="ghost"
-            size="sm"
-            className="w-full "
-            disabled={isOptimistic || isDeleting}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Print/PDF
-          </Button>
-        </DropdownMenuItem>
         <DropdownMenuItem>
           <Button
             onClick={handleDuplicate}

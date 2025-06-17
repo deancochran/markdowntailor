@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addResume } from "@/lib/actions/resume";
-import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
+
 import { templatePreviewOptions } from "@/lib/utils/monacoOptions";
 import { Editor } from "@monaco-editor/react";
 import {
@@ -35,12 +35,10 @@ import {
   Search,
   Users,
   X,
-  ZoomIn,
-  ZoomOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 enum TemplateTag {
@@ -357,14 +355,12 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   const [templateContent, setTemplateContent] = useState({
     markdown: "",
     css: "",
-    html: "",
   });
-  const [activeTab, setActiveTab] = useState("preview");
-  const [zoomLevel, setZoomLevel] = useState(0.6);
+  const [activeTab, setActiveTab] = useState("markdown");
+
   const [isCreating, setIsCreating] = useState(false);
 
   const { theme } = useTheme();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const router = useRouter();
 
   const loadTemplateContent = async () => {
@@ -384,9 +380,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
         cssResponse.text(),
       ]);
 
-      setZoomLevel(0.6);
-      const html = generateHTMLContent(markdown, css);
-      setTemplateContent({ markdown, css, html });
+      setTemplateContent({ markdown, css });
     } catch (error) {
       console.error("Failed to load template content:", error);
       toast.error("Failed to load template content");
@@ -400,51 +394,9 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     if (open) {
       loadTemplateContent();
     } else {
-      setActiveTab("preview");
+      setActiveTab("markdown");
     }
   };
-
-  useEffect(() => {
-    if (iframeRef.current && templateContent.html) {
-      const iframe = iframeRef.current;
-      const iframeDoc =
-        iframe.contentDocument || iframe.contentWindow?.document;
-
-      if (iframeDoc) {
-        // Check if iframe is empty or needs refresh
-        const isEmpty =
-          !iframeDoc.body || iframeDoc.body.innerHTML.trim() === "";
-
-        if (isEmpty || activeTab === "preview") {
-          iframeDoc.open();
-          iframeDoc.write(templateContent.html);
-          iframeDoc.close();
-        }
-      }
-    }
-  }, [templateContent.html, activeTab]);
-
-  // Additional effect to handle iframe load event
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (iframe && templateContent.html) {
-      const handleLoad = () => {
-        const iframeDoc =
-          iframe.contentDocument || iframe.contentWindow?.document;
-        if (
-          iframeDoc &&
-          (!iframeDoc.body || iframeDoc.body.innerHTML.trim() === "")
-        ) {
-          iframeDoc.open();
-          iframeDoc.write(templateContent.html);
-          iframeDoc.close();
-        }
-      };
-
-      iframe.addEventListener("load", handleLoad);
-      return () => iframe.removeEventListener("load", handleLoad);
-    }
-  }, [templateContent.html]);
 
   const handleCreateFromTemplate = async () => {
     setIsCreating(true);
@@ -464,10 +416,6 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
     } finally {
       setIsCreating(false);
     }
-  };
-
-  const adjustZoom = (delta: number) => {
-    setZoomLevel((prev) => Math.max(0.1, Math.min(2.0, prev + delta)));
   };
 
   return (
@@ -519,77 +467,10 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           >
             <div className="flex-shrink-0 w-full overflow-hidden">
               <TabsList className="flex flex-row gap-4 w-full">
-                <TabsTrigger value="preview">Preview</TabsTrigger>
                 <TabsTrigger value="markdown">Markdown</TabsTrigger>
                 <TabsTrigger value="css">CSS</TabsTrigger>
               </TabsList>
             </div>
-
-            <TabsContent
-              className="flex-1 flex flex-col w-full overflow-hidden"
-              value="preview"
-            >
-              <div className="relative h-full grow overflow-hidden">
-                <iframe
-                  ref={iframeRef}
-                  title="Resume Preview"
-                  style={{
-                    width: "210mm",
-                    height: "297mm",
-                    border: "1px solid #ccc",
-                    background: "white",
-                    transform: `scale(${zoomLevel})`,
-                    transformOrigin: "top left",
-                    transition: "transform 0.3s ease-in-out",
-                    overflow: "hidden",
-                  }}
-                  onLoad={() => {
-                    // Ensure content is loaded when iframe loads
-                    if (templateContent.html) {
-                      const iframe = iframeRef.current;
-                      const iframeDoc =
-                        iframe?.contentDocument ||
-                        iframe?.contentWindow?.document;
-                      if (
-                        iframeDoc &&
-                        (!iframeDoc.body ||
-                          iframeDoc.body.innerHTML.trim() === "")
-                      ) {
-                        iframeDoc.open();
-                        iframeDoc.write(templateContent.html);
-                        iframeDoc.close();
-                      }
-                    }
-                  }}
-                />
-              </div>
-              <div className="grow-0 bg-muted text-muted-foreground  items-center w-full flex justify-between border-t px-2">
-                <div className="text-sm text-muted-foreground">A4 Preview</div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => adjustZoom(-0.1)}
-                    disabled={zoomLevel <= 0.2}
-                    className=" "
-                  >
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm min-w-[50px] text-center">
-                    {Math.round(zoomLevel * 100)}%
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => adjustZoom(0.1)}
-                    disabled={zoomLevel >= 2.0}
-                    className=" "
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
 
             <TabsContent
               value="markdown"
