@@ -208,6 +208,8 @@ This backlog contains all planned tasks for the markdowntailor application, orga
 - [ ] Correct exaggerated information (Low Complexity)
   - *Rationale: Ensures honest messaging for user trust*
 
+
+
 ---
 
 
@@ -246,6 +248,11 @@ This backlog contains all planned tasks for the markdowntailor application, orga
 
 - [ ] Create Pricing page (Low Complexity)
   - *Rationale: Deferrable if alpha remains free*
+
+---
+
+- [ ] Web Worker For PDF Generation -- Improve Performance (High Complexity)
+  - *Rationale: PDF Gerernation is slow and resource intensive*
 
 ---
 
