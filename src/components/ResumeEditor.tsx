@@ -15,7 +15,7 @@ import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
 import { cx } from "class-variance-authority";
 import { InferSelectModel } from "drizzle-orm";
-import { ArrowLeft, Copy, Save, Trash } from "lucide-react";
+import { Copy, Save, Trash } from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -82,6 +82,7 @@ export default function ResumeEditor({
   const [actualPages, setActualPages] = useState(0);
   const [isExceeding, setIsExceeding] = useState(false);
   const [editorsTab, setEditorsTab] = useState("markdown");
+  const [mobileTab, setMobileTab] = useState("markdown");
   const { theme } = useTheme();
 
   const id = watch("id");
@@ -320,8 +321,6 @@ export default function ResumeEditor({
         return;
       }
 
-      console.log(`MOD: ${JSON.stringify(modification)}`);
-
       // Store current selection and scroll position to preserve user context
       const currentSelection = editor.getSelection();
       const currentScrollTop = editor.getScrollTop();
@@ -345,8 +344,6 @@ export default function ResumeEditor({
             } else {
               newText = fullText.replace(targetContent, newContent);
             }
-
-            console.log("REPLACE", newText);
 
             // FIXED: Use pushEditOperations for better undo/redo and formatting preservation
             editor.pushUndoStop();
@@ -479,7 +476,6 @@ export default function ResumeEditor({
 
           // Handle analyze_content tool results if needed
           else if (result.analysisType && result.findings) {
-            console.log("Analysis results:", result);
             toast.info(
               `Analysis complete: Found ${result.findings.length} items to improve`,
             );
@@ -525,25 +521,19 @@ export default function ResumeEditor({
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
-      <div className="w-full flex h-14 items-center justify-between p-4">
-        <div className="flex items-center gap-4">
-          <Link href="/resumes">
-            <Button variant="ghost" size="icon" className=" ">
-              <ArrowLeft className="h-5 w-5" />
-              <span className="sr-only">Back to Resumes</span>
-            </Button>
-          </Link>
-
+      <div className="w-full flex flex-col sm:flex-row sm:h-14 items-start sm:items-center justify-between p-3 sm:p-4 gap-3 sm:gap-4 border-b">
+        <div className="flex items-center w-full sm:w-auto">
           <Input
-            className="text-xl font-semibold bg-transparent focus:outline-none"
+            className="text-lg sm:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
             value={sanitizedTitle}
             onChange={(e) => setValue("title", e.target.value)}
+            placeholder="Untitled Resume"
           />
         </div>
 
-        <div className="flex items-center gap-1">
-          <span className="flex flex-col items-end text-muted-foreground">
-            <p className="p-0 m-0 text-xs h-fit whitespace-nowrap">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 w-full sm:w-auto">
+          <div className="flex flex-col items-start sm:items-end text-muted-foreground order-2 sm:order-1">
+            <p className="text-xs leading-none">
               Updated:{" "}
               {(() => {
                 const updated = new Date(updatedAt);
@@ -562,76 +552,238 @@ export default function ResumeEditor({
             </p>
             <Button
               variant="link"
-              className="p-0 m-0 text-xs h-fit text-muted-foreground "
+              className="p-0 h-auto text-xs text-muted-foreground hover:text-foreground"
               asChild
             >
               <Link href={`${pathname}/versions`}>View Versions</Link>
             </Button>
-          </span>
+          </div>
 
-          <Button
-            onClick={handleSave}
-            disabled={isSaving || !isDirty || isExceeding}
-            variant="outline"
-            className={`relative gap-2 `}
-          >
-            <Save className="h-4 w-4" />
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
+          <div className="flex items-center gap-1 order-1 sm:order-2">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !isDirty || isExceeding}
+              size="sm"
+              className="h-8 px-3 gap-1.5"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {isSaving ? "Saving..." : "Save"}
+              </span>
+            </Button>
 
-          <Button
-            onClick={handleDuplicate}
-            disabled={isDuplicating || isDirty}
-            variant="outline"
-            className="gap-2 "
-          >
-            <Copy className="h-4 w-4" />
-            {isDuplicating ? "Duplicating..." : "Duplicate"}
-          </Button>
+            <Button
+              onClick={handleDuplicate}
+              disabled={isDuplicating || isDirty}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 gap-1.5"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {isDuplicating ? "Duplicating..." : "Duplicate"}
+              </span>
+            </Button>
 
-          <Button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            variant="outline"
-            className="gap-2 "
-          >
-            <Trash className="h-4 w-4" />
-            {isDeleting ? "Deleting..." : "Delete"}
-          </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {isDeleting ? "Deleting..." : "Delete"}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="relative flex flex-row min-h-0 p-4 h-full w-full bg-muted gap-4 overflow-hidden">
-        <div className="h-full w-full flex flex-col border">
-          {/* Custom Tab Headers */}
-          <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b">
-            <Button
-              className="flex grow"
-              variant={editorsTab === "markdown" ? "outline" : "ghost"}
-              onClick={() => setEditorsTab("markdown")}
-            >
-              Markdown
-            </Button>
-            <Button
-              className="flex grow"
-              variant={editorsTab === "css" ? "outline" : "ghost"}
-              onClick={() => setEditorsTab("css")}
-            >
-              CSS
-            </Button>
+      <div className="relative flex flex-col min-h-0 p-4 h-full w-full bg-muted gap-4 overflow-hidden">
+        {/* Mobile Tab Bar - visible only on small screens */}
+        <div className="flex md:hidden items-center justify-center gap-1 p-2 border bg-background rounded">
+          <Button
+            className="flex grow text-xs"
+            variant={mobileTab === "markdown" ? "outline" : "ghost"}
+            onClick={() => setMobileTab("markdown")}
+          >
+            Markdown
+          </Button>
+          <Button
+            className="flex grow text-xs"
+            variant={mobileTab === "css" ? "outline" : "ghost"}
+            onClick={() => setMobileTab("css")}
+          >
+            CSS
+          </Button>
+          <Button
+            className="flex grow text-xs"
+            variant={mobileTab === "preview" ? "outline" : "ghost"}
+            onClick={() => setMobileTab("preview")}
+          >
+            Preview
+          </Button>
+          <Button
+            className="flex grow text-xs"
+            variant={mobileTab === "chat" ? "outline" : "ghost"}
+            onClick={() => setMobileTab("chat")}
+          >
+            AI Chat
+          </Button>
+        </div>
+
+        {/* Desktop Two-Column Layout */}
+        <div className="hidden md:flex flex-row min-h-0 h-full w-full gap-4 overflow-hidden">
+          <div className="h-full w-full flex flex-col border">
+            {/* Desktop Editor Tab Headers */}
+            <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b">
+              <Button
+                className="flex grow"
+                variant={editorsTab === "markdown" ? "outline" : "ghost"}
+                onClick={() => setEditorsTab("markdown")}
+              >
+                Markdown
+              </Button>
+              <Button
+                className="flex grow"
+                variant={editorsTab === "css" ? "outline" : "ghost"}
+                onClick={() => setEditorsTab("css")}
+              >
+                CSS
+              </Button>
+            </div>
+
+            {/* Desktop Editor Container */}
+            <div className="flex-1 relative">
+              <div
+                className={cx(
+                  "absolute inset-0",
+                  editorsTab === "markdown" ? "block" : "hidden",
+                )}
+              >
+                <DiffEditor
+                  key="markdown-editor"
+                  language="markdown"
+                  original={markdown}
+                  modified={modifiedMarkdown}
+                  keepCurrentOriginalModel={true}
+                  keepCurrentModifiedModel={true}
+                  onMount={createEditorMount(
+                    modifiedMarkdownEditorRef,
+                    modifyMarkdown,
+                  )}
+                  options={diffEditorOptions}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  height="100%"
+                />
+              </div>
+
+              <div
+                className={cx(
+                  "absolute inset-0",
+                  editorsTab === "css" ? "block" : "hidden",
+                )}
+              >
+                <DiffEditor
+                  key="css-editor"
+                  language="css"
+                  original={css}
+                  modified={modifiedCss}
+                  keepCurrentOriginalModel={true}
+                  keepCurrentModifiedModel={true}
+                  onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
+                  options={diffEditorOptions}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  height="100%"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Editor Container */}
+          <div className="h-full w-full overflow-hidden flex flex-col border">
+            {/* Desktop Preview Tab Headers */}
+            <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b">
+              <Button
+                className="flex grow"
+                variant={previewTab === "preview" ? "outline" : "ghost"}
+                onClick={() => setPreviewTab("preview")}
+              >
+                Preview
+              </Button>
+              <Button
+                className="flex grow"
+                variant={previewTab === "chat" ? "outline" : "ghost"}
+                onClick={() => setPreviewTab("chat")}
+              >
+                AI Chat
+              </Button>
+            </div>
+
+            {/* Desktop Preview Container */}
+            <div className="flex-1 relative">
+              <div
+                className={cx(
+                  "absolute inset-0 flex flex-col justify-between",
+                  previewTab === "preview" ? "block" : "hidden",
+                )}
+              >
+                <div className="relative flex-1 h-full overflow-hidden">
+                  <LightweightPDFPreview
+                    sanitizedMarkdown={sanitizedMarkdown}
+                    sanitizedCSS={sanitizedCSS}
+                    previewTab={previewTab}
+                    onPageCountChange={handlePageCountChange}
+                  />
+                </div>
+              </div>
+
+              <div
+                className={cx(
+                  "absolute inset-0 flex flex-col justify-between",
+                  previewTab === "chat" ? "block" : "hidden",
+                )}
+              >
+                <div className="flex-1 w-full overflow-y-auto">
+                  <div className="w-full md:max-w-3xl mx-auto p-2">
+                    <Messages
+                      status={status}
+                      messages={messages}
+                      setMessages={setMessages}
+                      reload={reload}
+                    />
+                  </div>
+                </div>
+                <form className="flex mx-auto gap-2 w-full md:max-w-3xl p-2 border-t">
+                  <MultimodalInput
+                    input={input}
+                    setInput={setInput}
+                    handleSubmit={handleSubmit}
+                    status={status}
+                    stop={stop}
+                    attachments={attachments}
+                    setAttachments={setAttachments}
+                    setMessages={setMessages}
+                  />
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Single Column Layout */}
+        <div className="flex md:hidden flex-col min-h-0 h-full w-full border overflow-hidden">
           <div className="flex-1 relative">
-            {/* Always render both editors but control visibility */}
+            {/* Mobile Markdown Editor */}
             <div
               className={cx(
                 "absolute inset-0",
-                editorsTab === "markdown" ? "block" : "hidden",
+                mobileTab === "markdown" ? "block" : "hidden",
               )}
             >
               <DiffEditor
-                key="markdown-editor"
+                key="mobile-markdown-editor"
                 language="markdown"
                 original={markdown}
                 modified={modifiedMarkdown}
@@ -647,14 +799,15 @@ export default function ResumeEditor({
               />
             </div>
 
+            {/* Mobile CSS Editor */}
             <div
               className={cx(
                 "absolute inset-0",
-                editorsTab === "css" ? "block" : "hidden",
+                mobileTab === "css" ? "block" : "hidden",
               )}
             >
               <DiffEditor
-                key="css-editor"
+                key="mobile-css-editor"
                 language="css"
                 original={css}
                 modified={modifiedCss}
@@ -666,52 +819,33 @@ export default function ResumeEditor({
                 height="100%"
               />
             </div>
-          </div>
-        </div>
-        <div className="h-full w-full overflow-hidden flex flex-col border">
-          <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b ">
-            <Button
-              className="flex grow"
-              variant={previewTab === "preview" ? "outline" : "ghost"}
-              onClick={() => setPreviewTab("preview")}
-            >
-              Preview
-            </Button>
-            <Button
-              className="flex grow"
-              variant={previewTab === "chat" ? "outline" : "ghost"}
-              onClick={() => setPreviewTab("chat")}
-            >
-              AI Chat
-            </Button>
-          </div>
 
-          <div className="flex-1 relative">
-            {/* Always render both editors but control visibility */}
+            {/* Mobile Preview */}
             <div
               className={cx(
                 "absolute inset-0 flex flex-col justify-between",
-                previewTab === "preview" ? "block" : "hidden",
+                mobileTab === "preview" ? "block" : "hidden",
               )}
             >
               <div className="relative flex-1 h-full overflow-hidden">
                 <LightweightPDFPreview
                   sanitizedMarkdown={sanitizedMarkdown}
                   sanitizedCSS={sanitizedCSS}
-                  previewTab={previewTab}
+                  previewTab="preview"
                   onPageCountChange={handlePageCountChange}
                 />
               </div>
             </div>
 
+            {/* Mobile Chat */}
             <div
               className={cx(
                 "absolute inset-0 flex flex-col justify-between",
-                previewTab === "chat" ? "block" : "hidden",
+                mobileTab === "chat" ? "block" : "hidden",
               )}
             >
               <div className="flex-1 w-full overflow-y-auto">
-                <div className="w-full md:max-w-3xl mx-auto p-2">
+                <div className="w-full mx-auto p-2">
                   <Messages
                     status={status}
                     messages={messages}
@@ -720,7 +854,7 @@ export default function ResumeEditor({
                   />
                 </div>
               </div>
-              <form className="flex mx-auto gap-2 w-full md:max-w-3xl p-2 border-t">
+              <form className="flex mx-auto gap-2 w-full p-2 border-t">
                 <MultimodalInput
                   input={input}
                   setInput={setInput}

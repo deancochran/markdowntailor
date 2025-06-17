@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("Webhook processed successfully");
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (error) {
     console.error("Webhook endpoint error:", error);

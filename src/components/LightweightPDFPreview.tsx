@@ -184,7 +184,6 @@ export const LightweightPDFPreview: React.FC<{
       !state.pdfDataUrl &&
       !state.isGenerating
     ) {
-      console.log("🎬 Triggering initial PDF generation on page load");
       hasInitialized.current = true;
       generatePDF();
     }
@@ -207,7 +206,6 @@ export const LightweightPDFPreview: React.FC<{
   // Trigger generation when user stops editing (existing logic)
   useEffect(() => {
     if (shouldGenerate && isPreviewActive && !state.isGenerating && !isPaused) {
-      console.log("🔄 Triggering PDF generation after user activity");
       generatePDF();
       resetGeneration();
     }
