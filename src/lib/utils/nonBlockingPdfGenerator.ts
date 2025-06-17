@@ -95,6 +95,15 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Detect device pixel ratio for optimal scaling
+ */
+function getOptimalScale(): number {
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  // Use higher scale for high-DPI displays, but cap it for performance
+  return Math.min(Math.max(devicePixelRatio * 1.5, 2.5), 4);
+}
+
+/**
  * Render HTML to PDF using DOM operations (main thread only)
  */
 async function renderToPdf(requestId: string): Promise<void> {
@@ -113,67 +122,119 @@ async function renderToPdf(requestId: string): Promise<void> {
     const htmlUrl = URL.createObjectURL(htmlBlob);
 
     promise.onProgress?.("Loading content", 40);
-    await sleep(50); // Give time for content to load
+    await sleep(50);
 
-    // Create an iframe to render the content
+    // Create iframe with optimized size for text rendering
+    const scale = getOptimalScale();
+    const baseWidth = 794;
+    const baseHeight = 1123;
+    const scaledWidth = Math.round(baseWidth * scale);
+    const scaledHeight = Math.round(baseHeight * scale);
+
     const iframe = document.createElement("iframe");
     iframe.style.cssText = `
       position: absolute;
-      left: -10000px;
-      top: -10000px;
-      width: 794px;
-      height: 1123px;
+      left: -20000px;
+      top: -20000px;
+      width: ${scaledWidth}px;
+      height: ${scaledHeight}px;
       border: none;
       visibility: hidden;
+      transform: scale(1);
+      transform-origin: 0 0;
     `;
 
     document.body.appendChild(iframe);
     iframe.src = htmlUrl;
 
-    // Wait for iframe to load
+    // Wait for iframe to load with longer timeout for complex content
     await new Promise((resolve) => {
       iframe.onload = resolve;
-      setTimeout(resolve, 1000); // Fallback timeout
+      setTimeout(resolve, 2000); // Increased timeout for better loading
     });
 
-    promise.onProgress?.("Rendering content", 50);
-    await sleep(50);
+    promise.onProgress?.("Optimizing content rendering", 45);
+    await sleep(100); // Allow more time for font loading and rendering
 
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!iframeDoc) {
       throw new Error("Cannot access iframe document");
     }
 
-    // Wait for content to be fully rendered
-    await sleep(100);
-
+    // Force font loading and text rendering
     const bodyElement = iframeDoc.body;
     if (!bodyElement) {
       throw new Error("No body element found");
     }
 
-    promise.onProgress?.("Capturing content", 70);
+    // Add text rendering optimizations to the document
+    const style = iframeDoc.createElement("style");
+    style.textContent = `
+      * {
+        text-rendering: optimizeLegibility !important;
+        -webkit-font-smoothing: subpixel-antialiased !important;
+        -moz-osx-font-smoothing: auto !important;
+        font-smooth: always !important;
+        -webkit-text-stroke: 0.01em transparent !important;
+      }
+    `;
+    iframeDoc.head.appendChild(style);
+
+    // Wait for font loading and layout stabilization
+    await new Promise((resolve) => {
+      if (iframeDoc.fonts && iframeDoc.fonts.ready) {
+        iframeDoc.fonts.ready.then(resolve);
+      }
+      setTimeout(resolve, 300); // Fallback timeout
+    });
+
+    promise.onProgress?.("Capturing high-resolution content", 60);
     await sleep(10);
 
-    // Generate canvas with optimized settings
+    // Enhanced html2canvas settings for maximum text quality
     const canvas = await html2canvas(bodyElement, {
-      scale: 2,
+      scale: scale,
       useCORS: true,
       allowTaint: false,
       backgroundColor: "#ffffff",
       removeContainer: false,
       logging: false,
-      width: 794,
-      height: Math.max(bodyElement.scrollHeight, 1123),
+      width: scaledWidth,
+      height: Math.max(bodyElement.scrollHeight * scale, scaledHeight),
+      // Text rendering optimizations
+      letterRendering: true,
+      foreignObjectRendering: true,
+      imageTimeout: 15000,
+      // Force better text rendering
+      onclone: (clonedDoc) => {
+        const clonedStyle = clonedDoc.createElement("style");
+        clonedStyle.textContent = `
+          * {
+            text-rendering: optimizeLegibility !important;
+            -webkit-font-smoothing: subpixel-antialiased !important;
+            -moz-osx-font-smoothing: auto !important;
+            font-variant-ligatures: none !important;
+            font-kerning: auto !important;
+          }
+
+          /* Ensure fonts are loaded properly */
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        `;
+        clonedDoc.head.appendChild(clonedStyle);
+
+        // Force layout recalculation
+        clonedDoc.body.offsetHeight;
+        return clonedDoc;
+      },
     });
 
     // Cleanup DOM elements
     document.body.removeChild(iframe);
     URL.revokeObjectURL(htmlUrl);
 
-    promise.onProgress?.("Converting to PDF", 75);
+    promise.onProgress?.("Converting to high-quality PDF", 75);
 
-    // Convert canvas to data URL and send to worker for PDF creation
+    // Use higher quality canvas export
     const canvasDataUrl = canvas.toDataURL("image/png", 1.0);
 
     const worker = getPdfWorker();
@@ -196,7 +257,6 @@ async function renderToPdf(requestId: string): Promise<void> {
     workerPromises.delete(requestId);
   }
 }
-
 /**
  * Non-blocking PDF generation with web worker
  */
