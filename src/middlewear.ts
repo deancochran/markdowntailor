@@ -6,7 +6,7 @@ import {
 } from "ai";
 import { NextAuthRequest } from "next-auth";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
-import { aiChatCache, middlewareRateLimiter } from "./lib/upstash";
+import { middlewareRateLimiter, redis } from "./lib/upstash";
 
 const ALPHA_ACCESS_CUTOFF = new Date("2025-08-01T00:00:00Z");
 
@@ -57,7 +57,7 @@ export const cacheMiddleware: LanguageModelV1Middleware = {
   wrapGenerate: async ({ doGenerate, params }) => {
     const cacheKey = JSON.stringify(params);
 
-    const cached = (await aiChatCache.get(cacheKey)) as Awaited<
+    const cached = (await redis.get(cacheKey)) as Awaited<
       ReturnType<LanguageModelV1["doGenerate"]>
     > | null;
 
@@ -75,7 +75,7 @@ export const cacheMiddleware: LanguageModelV1Middleware = {
 
     const result = await doGenerate();
 
-    aiChatCache.set(cacheKey, result);
+    redis.set(cacheKey, result);
 
     return result;
   },
@@ -83,7 +83,7 @@ export const cacheMiddleware: LanguageModelV1Middleware = {
     const cacheKey = JSON.stringify(params);
 
     // Check if the result is in the cache
-    const cached = await aiChatCache.get(cacheKey);
+    const cached = await redis.get(cacheKey);
 
     // If cached, return a simulated ReadableStream that yields the cached result
     if (cached !== null) {
@@ -120,7 +120,7 @@ export const cacheMiddleware: LanguageModelV1Middleware = {
       },
       flush() {
         // Store the full response in the cache after streaming is complete
-        aiChatCache.set(cacheKey, fullResponse);
+        redis.set(cacheKey, fullResponse);
       },
     });
 

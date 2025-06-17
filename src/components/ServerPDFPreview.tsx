@@ -4,26 +4,29 @@ import { useServerPDFGeneration } from "@/hooks/useServerPDFGeneration";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface ServerPDFPreviewProps {
-  sanitizedMarkdown: string;
-  sanitizedCSS: string;
+  resumeId: string;
   previewTab: string;
+  hasUnsavedChanges?: boolean;
   onPageCountChange?: (pageCount: number) => void;
+  onSaveRequired?: () => void;
 }
 
 export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
-  sanitizedMarkdown,
-  sanitizedCSS,
+  resumeId,
   previewTab,
+  hasUnsavedChanges = false,
   onPageCountChange,
+  onSaveRequired,
 }) => {
   const [pdfDataUrl, setPdfDataUrl] = useState<string>("");
   const [hasInitiallyGenerated, setHasInitiallyGenerated] = useState(false);
-  const { generatePDFPreview, isGenerating, error } = useServerPDFGeneration();
+  const { generatePDFPreview, createPDFDataURL, isGenerating, error } =
+    useServerPDFGeneration();
 
-  // Use activity tracker for auto-generation
+  // Use activity tracker based on resume changes
   const { shouldGenerate, resetGeneration } = useActivityTracker(
-    sanitizedMarkdown + sanitizedCSS,
-    2000,
+    resumeId,
+    2000, // Shorter delay since we're tracking resume changes
   );
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -32,22 +35,24 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
 
   // Combined generation function that handles both initial and subsequent generation
   useEffect(() => {
-    const shouldGenerateInitial =
-      isPreviewActive &&
-      !isGenerating &&
-      !hasInitiallyGenerated &&
-      sanitizedMarkdown.trim();
+    if (!isPreviewActive || isGenerating || !resumeId) {
+      return;
+    }
 
-    const shouldGenerateUpdate =
-      shouldGenerate &&
-      isPreviewActive &&
-      !isGenerating &&
-      hasInitiallyGenerated;
+    // Don't generate if there are unsaved changes
+    if (hasUnsavedChanges) {
+      return;
+    }
+
+    // Determine if we should generate
+    const shouldGenerateInitial = !hasInitiallyGenerated;
+    const shouldGenerateUpdate = shouldGenerate && hasInitiallyGenerated;
 
     if (!shouldGenerateInitial && !shouldGenerateUpdate) {
       return;
     }
 
+    // Generate new PDF
     const generatePDF = async () => {
       // Cancel any existing generation
       if (abortControllerRef.current) {
@@ -62,13 +67,13 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
           return;
         }
 
-        const result = await generatePDFPreview(
-          sanitizedMarkdown,
-          sanitizedCSS,
-        );
+        const result = await generatePDFPreview({
+          resumeId,
+        });
 
         if (!controller.signal.aborted) {
-          setPdfDataUrl(result.pdfDataUrl || "");
+          const dataUrl = createPDFDataURL(result.pdfBase64);
+          setPdfDataUrl(dataUrl);
           onPageCountChange?.(result.pageCount);
           resetGeneration();
           setHasInitiallyGenerated(true);
@@ -88,17 +93,18 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     isPreviewActive,
     isGenerating,
     hasInitiallyGenerated,
-    sanitizedMarkdown,
-    sanitizedCSS,
+    resumeId,
+    hasUnsavedChanges,
     shouldGenerate,
     generatePDFPreview,
+    createPDFDataURL,
     onPageCountChange,
     resetGeneration,
   ]);
 
   // Manual retry function for error state
   const retryGeneration = useCallback(async () => {
-    if (isGenerating) return;
+    if (isGenerating || hasUnsavedChanges) return;
 
     // Cancel any existing generation
     if (abortControllerRef.current) {
@@ -113,10 +119,13 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
         return;
       }
 
-      const result = await generatePDFPreview(sanitizedMarkdown, sanitizedCSS);
+      const result = await generatePDFPreview({
+        resumeId,
+      });
 
       if (!controller.signal.aborted) {
-        setPdfDataUrl(result.pdfDataUrl || "");
+        const dataUrl = createPDFDataURL(result.pdfBase64);
+        setPdfDataUrl(dataUrl);
         onPageCountChange?.(result.pageCount);
         resetGeneration();
         setHasInitiallyGenerated(true);
@@ -130,9 +139,10 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
       }
     }
   }, [
-    sanitizedMarkdown,
-    sanitizedCSS,
+    resumeId,
+    hasUnsavedChanges,
     generatePDFPreview,
+    createPDFDataURL,
     onPageCountChange,
     resetGeneration,
     isGenerating,
@@ -146,6 +156,24 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
       }
     };
   }, []);
+
+  // Unsaved changes - require save before preview
+  if (hasUnsavedChanges) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
+        <div className="text-amber-600 text-base font-medium">
+          Save Required for Preview
+        </div>
+        <div className="text-sm text-muted-foreground max-w-md">
+          Please save your resume to generate a PDF preview. This ensures the
+          preview matches your saved version and enables efficient caching.
+        </div>
+        <Button onClick={onSaveRequired} variant="default" className="mt-2">
+          Save Resume
+        </Button>
+      </div>
+    );
+  }
 
   // Initial loading state (no existing PDF)
   if (isGenerating && !hasExistingPDF) {
@@ -171,21 +199,21 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
         <Button
           onClick={retryGeneration}
           variant="outline"
-          disabled={isGenerating}
+          disabled={isGenerating || hasUnsavedChanges}
         >
-          Retry Generation
+          {hasUnsavedChanges ? "Save Required" : "Retry Generation"}
         </Button>
       </div>
     );
   }
 
-  // Empty state
-  if (!pdfDataUrl && !sanitizedMarkdown.trim()) {
+  // Empty state - no resume ID
+  if (!resumeId) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
-        <div className="font-medium">Start editing to see your PDF preview</div>
+        <div className="font-medium">No resume selected</div>
         <div className="text-sm text-muted-foreground">
-          Server-side generation with Playwright for high-quality PDFs
+          Please select or create a resume to see the PDF preview
         </div>
       </div>
     );

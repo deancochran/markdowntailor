@@ -4,10 +4,11 @@ import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
 
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import {
-    createResumeFromVersion,
-    deleteResume,
-    saveResume,
+  createResumeFromVersion,
+  deleteResume,
+  saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { useChat } from "@ai-sdk/react";
@@ -70,14 +71,8 @@ export default function ResumeEditor({
     defaultValues: resume,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
-
-  // State to track the last saved version of the resume
-  const [baselineResume, setBaselineResume] = useState(resume);
-  // State to track if there are unsaved changes
-  const [isDirty, setIsDirty] = useState(false);
   // Replace page estimation with actual page count from PDF
   const [_actualPages, setActualPages] = useState(0);
   const [isExceeding, setIsExceeding] = useState(false);
@@ -112,23 +107,27 @@ export default function ResumeEditor({
       toast.error(`CSS sanitization: ${error}`),
     );
 
-  // Note: We don't sync sanitized content back to the editors to avoid infinite loops
-  // The editors show raw content, but sanitized content is used for saving/preview
-
-  // FIXED: Effect to detect if there are any changes compared to the baseline
-  // Now includes modified content from editors
-  useEffect(() => {
-    const hasChanges =
-      baselineResume.title !== title ||
-      baselineResume.markdown !== modifiedMarkdown ||
-      baselineResume.css !== modifiedCss;
-    setIsDirty(hasChanges);
-  }, [title, modifiedMarkdown, modifiedCss, baselineResume]);
+  // Auto-save functionality
+  const {
+    isSaving,
+    isDirty,
+    hasUnsavedChanges,
+    save: handleSave,
+    resetDirty: _resetDirty,
+  } = useAutoSave({
+    resumeId: id,
+    title: sanitizedTitle,
+    markdown: sanitizedMarkdown,
+    css: sanitizedCSS,
+    saveFunction: saveResume,
+    delay: 3000, // 3 second delay for auto-save
+    enabled: true,
+  });
 
   // Effect to warn user before closing tab with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirty) {
+      if (hasUnsavedChanges) {
         event.preventDefault();
         // Using modern approach instead of deprecated returnValue
         return "";
@@ -140,7 +139,7 @@ export default function ResumeEditor({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isDirty]);
+  }, [hasUnsavedChanges]);
 
   // Refs to store editor instances for proper cleanup
   const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
@@ -208,48 +207,24 @@ export default function ResumeEditor({
     }
   };
 
-  // FIXED: Updated handleSave to use modified content and preserve formatting
-  const handleSave = useCallback(async () => {
+  // Manual save function for button clicks and keyboard shortcuts
+  const handleManualSave = useCallback(async () => {
     if (isSaving || !isDirty || isExceeding) return;
 
-    try {
-      setIsSaving(true);
-      const updatedResume = await saveResume(id, {
-        title: sanitizedTitle,
-        markdown: sanitizedMarkdown,
-        css: sanitizedCSS,
-      });
-      toast.success("Resume saved successfully");
-
-      // Update the baseline to the newly saved resume
-      setBaselineResume(updatedResume);
-
+    const updatedResume = await handleSave();
+    if (updatedResume) {
       // Update form values to match saved content
       setValue("markdown", updatedResume.markdown);
       setValue("css", updatedResume.css);
       setValue("updatedAt", updatedResume.updatedAt);
 
-      // FIXED: Update modified content to match saved content
-      // This ensures the editors show the saved version as the new baseline
+      // Update modified content to match saved content
       modifyMarkdown(updatedResume.markdown);
       modifyCss(updatedResume.css);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to save resume";
-      toast.error(errorMessage);
-    } finally {
-      setIsSaving(false);
+    } else {
+      toast.error("Failed to save resume");
     }
-  }, [
-    id,
-    sanitizedTitle,
-    isSaving,
-    setValue,
-    sanitizedMarkdown,
-    sanitizedCSS,
-    isDirty,
-    isExceeding,
-  ]);
+  }, [handleSave, isSaving, isDirty, isExceeding, setValue]);
 
   // Keyboard shortcuts handler
   useEffect(() => {
@@ -258,7 +233,7 @@ export default function ResumeEditor({
         switch (event.key.toLowerCase()) {
           case "s":
             event.preventDefault();
-            handleSave();
+            handleManualSave();
             break;
           default:
             break;
@@ -270,7 +245,7 @@ export default function ResumeEditor({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleSave]);
+  }, [handleManualSave]);
 
   const [previewTab, setPreviewTab] = useState("preview");
 
@@ -284,6 +259,11 @@ export default function ResumeEditor({
     setActualPages(pageCount);
     setIsExceeding(pageCount > 3);
   }, []);
+
+  // Handle save required from PDF preview
+  const handleSaveRequired = useCallback(() => {
+    handleSave();
+  }, [handleSave]);
 
   // Separate useEffect for page estimation
   // useEffect(() => {
@@ -521,47 +501,20 @@ export default function ResumeEditor({
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
-      <div className="w-full flex flex-col sm:flex-row sm:h-14 items-start sm:items-center justify-between p-3 sm:p-4 gap-3 sm:gap-4 border-b">
-        <div className="flex items-center w-full sm:w-auto">
-          <Input
-            className="text-lg sm:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
-            value={sanitizedTitle}
-            onChange={(e) => setValue("title", e.target.value)}
-            placeholder="Untitled Resume"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-2 w-full sm:w-auto">
-          <div className="flex flex-col items-start sm:items-end text-muted-foreground order-2 sm:order-1">
-            <p className="text-xs leading-none">
-              Updated:{" "}
-              {(() => {
-                const updated = new Date(updatedAt);
-                const now = new Date();
-                const isSameDay =
-                  updated.getFullYear() === now.getFullYear() &&
-                  updated.getMonth() === now.getMonth() &&
-                  updated.getDate() === now.getDate();
-                return isSameDay
-                  ? updated.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : updated.toLocaleDateString();
-              })()}
-            </p>
-            <Button
-              variant="link"
-              className="p-0 h-auto text-xs text-muted-foreground hover:text-foreground"
-              asChild
-            >
-              <Link href={`${pathname}/versions`}>View Versions</Link>
-            </Button>
+      <div className="w-full flex flex-col items-start border-b">
+        <div className="w-full flex flex-row items-start px-4 justify-between">
+          <div className="flex flex-col items-start w-full sm:w-auto gap-1">
+            <Input
+              className="text-lg sm:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+              value={sanitizedTitle}
+              onChange={(e) => setValue("title", e.target.value)}
+              placeholder="Untitled Resume"
+            />
           </div>
 
-          <div className="flex items-center gap-1 order-1 sm:order-2">
+          <div className="flex flex-row items-end ">
             <Button
-              onClick={handleSave}
+              onClick={handleManualSave}
               disabled={isSaving || !isDirty || isExceeding}
               size="sm"
               className="h-8 px-3 gap-1.5"
@@ -598,6 +551,32 @@ export default function ResumeEditor({
               </span>
             </Button>
           </div>
+        </div>
+        <div className="flex flex-row items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            Updated:{" "}
+            {(() => {
+              const updated = new Date(updatedAt);
+              const now = new Date();
+              const isSameDay =
+                updated.getFullYear() === now.getFullYear() &&
+                updated.getMonth() === now.getMonth() &&
+                updated.getDate() === now.getDate();
+              return isSameDay
+                ? updated.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : updated.toLocaleDateString();
+            })()}
+          </span>
+          <Button
+            variant="link"
+            className="inline text-xs text-muted-foreground p-0 hover:text-foreground"
+            asChild
+          >
+            <Link href={`${pathname}/versions`}>View Versions</Link>
+          </Button>
         </div>
       </div>
 
@@ -731,10 +710,11 @@ export default function ResumeEditor({
               >
                 <div className="relative flex-1 h-full overflow-hidden">
                   <ServerPDFPreview
-                    sanitizedMarkdown={sanitizedMarkdown}
-                    sanitizedCSS={sanitizedCSS}
+                    resumeId={resume.id}
                     previewTab={previewTab}
                     onPageCountChange={handlePageCountChange}
+                    hasUnsavedChanges={isDirty}
+                    onSaveRequired={handleSaveRequired}
                   />
                 </div>
               </div>
@@ -829,10 +809,11 @@ export default function ResumeEditor({
             >
               <div className="relative flex-1 h-full overflow-hidden">
                 <ServerPDFPreview
-                  sanitizedMarkdown={sanitizedMarkdown}
-                  sanitizedCSS={sanitizedCSS}
+                  resumeId={resume.id}
                   previewTab={previewTab}
                   onPageCountChange={handlePageCountChange}
+                  hasUnsavedChanges={isDirty}
+                  onSaveRequired={handleSaveRequired}
                 />
               </div>
             </div>

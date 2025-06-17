@@ -1,96 +1,91 @@
-import { useCallback, useState } from "react";
-
-export interface PDFGenerationOptions {
-  format?: "A4" | "Letter";
-  margin?: {
-    top: string;
-    right: string;
-    bottom: string;
-    left: string;
-  };
-}
+import { useCallback, useRef, useState } from "react";
 
 export interface ServerPDFResult {
-  pdfDataUrl?: string;
+  pdfBase64: string;
   pageCount: number;
-  pdfBlob?: Blob;
+  cached?: boolean;
 }
 
 export function useServerPDFGeneration() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string>("");
+  const ongoingRequestsRef = useRef<Map<string, Promise<ServerPDFResult>>>(
+    new Map(),
+  );
 
   const generatePDFPreview = useCallback(
-    async (
-      markdown: string,
-      css: string,
-      options?: PDFGenerationOptions,
-    ): Promise<ServerPDFResult> => {
+    async (request: { resumeId: string }): Promise<ServerPDFResult> => {
+      // Use resumeId as the deduplication key
+      const requestKey = request.resumeId;
+
+      // Check if we already have an ongoing request for this resume
+      const existingRequest = ongoingRequestsRef.current.get(requestKey);
+      if (existingRequest) {
+        return existingRequest;
+      }
+
       setIsGenerating(true);
       setError(""); // Clear any previous errors when starting new generation
 
-      try {
-        const response = await fetch("/api/pdf", {
-          method: "PUT", // Use PUT for preview (returns data URL)
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            markdown,
-            css,
-            options,
-          }),
-        });
+      // Create the request promise
+      const requestPromise = (async (): Promise<ServerPDFResult> => {
+        try {
+          const response = await fetch("/api/pdf", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              resumeId: request.resumeId,
+            }),
+          });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to generate PDF preview");
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error || "Failed to generate PDF preview",
+            );
+          }
+
+          const result = await response.json();
+          return result;
+        } catch (err) {
+          const errorMessage =
+            err instanceof Error ? err.message : "Unknown error occurred";
+          setError(errorMessage);
+          throw new Error(errorMessage);
+        } finally {
+          setIsGenerating(false);
+          // Clean up the request from our tracking
+          ongoingRequestsRef.current.delete(requestKey);
         }
+      })();
 
-        const result = await response.json();
-        return result;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Unknown error occurred";
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      } finally {
-        setIsGenerating(false);
-      }
+      // Store the promise for deduplication
+      ongoingRequestsRef.current.set(requestKey, requestPromise);
+
+      return requestPromise;
     },
     [],
   );
 
   const downloadPDF = useCallback(
-    async (
-      markdown: string,
-      css: string,
-      filename: string,
-      options?: PDFGenerationOptions,
-    ): Promise<void> => {
+    async (resumeId: string, filename: string): Promise<void> => {
       setIsGenerating(true);
       setError(""); // Clear any previous errors when starting new generation
 
       try {
-        const response = await fetch("/api/pdf", {
-          method: "POST", // Use POST for download (returns PDF buffer)
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            markdown,
-            css,
-            options,
-          }),
-        });
+        // Generate or get the PDF
+        const result = await generatePDFPreview({ resumeId });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to generate PDF");
+        // Convert base64 to blob
+        const byteCharacters = atob(result.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-
-        // Create blob from response
-        const pdfBlob = await response.blob();
+        const byteArray = new Uint8Array(byteNumbers);
+        const pdfBlob = new Blob([byteArray], { type: "application/pdf" });
 
         // Create download link
         const url = URL.createObjectURL(pdfBlob);
@@ -110,12 +105,18 @@ export function useServerPDFGeneration() {
         setIsGenerating(false);
       }
     },
-    [],
+    [generatePDFPreview],
   );
+
+  // Helper function to convert base64 PDF to data URL for iframe display
+  const createPDFDataURL = useCallback((pdfBase64: string): string => {
+    return `data:application/pdf;base64,${pdfBase64}`;
+  }, []);
 
   return {
     generatePDFPreview,
     downloadPDF,
+    createPDFDataURL,
     isGenerating,
     error,
   };
