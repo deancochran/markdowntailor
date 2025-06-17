@@ -113,6 +113,14 @@
 
 ---
 
+
+- [ ] Use PDF generation for printing
+  - [ ] remove all download fetures
+  - [ ] remove all htmlgenerator fetures
+
+---
+
+
   - [ ] Testing for Alpha Program
     - [ ] Test Stripe
     - [ ] Test Dynamic Pricing
