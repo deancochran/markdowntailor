@@ -28,9 +28,7 @@ export async function GET() {
         credits: "0.0000",
       });
     }
-    const stripeCredits = await getStripeCreditsBalance({
-      stripeCustomerId: session.user.stripeCustomerId,
-    });
+    const stripeCredits = await getStripeCreditsBalance(session.user);
 
     return NextResponse.json({
       credits: stripeCredits,

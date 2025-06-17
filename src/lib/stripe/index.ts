@@ -41,7 +41,7 @@ export interface CheckoutSessionParams {
 
 export async function createCreditPurchaseCheckoutSession({
   user,
-  amount,
+  amount: _amount,
 }: CheckoutSessionParams): Promise<Stripe.Checkout.Session> {
   try {
     const session = await stripe.checkout.sessions.create({

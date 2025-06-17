@@ -33,8 +33,7 @@ const PurePreviewMessage = ({
   requiresScrollPadding: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
-  // @typescript-eslint/no-unused-vars
-  const [_, copyToClipboard] = useCopyToClipboard();
+  const [_, _copyToClipboard] = useCopyToClipboard();
 
   return (
     <AnimatePresence>

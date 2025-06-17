@@ -113,10 +113,7 @@
 
 ---
 
-
-- [ ] Use PDF generation for printing
-  - [ ] remove all download fetures
-  - [ ] remove all htmlgenerator fetures
+Fix default CSS
 
 ---
 

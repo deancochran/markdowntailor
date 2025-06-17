@@ -10,6 +10,7 @@ export const PreviewAttachment = ({
   // Determine icon based on content type
   const getIcon = () => {
     if (!contentType) return <FileText />;
+    // eslint-disable-next-line jsx-a11y/alt-text
     if (contentType.startsWith("image")) return <Image />;
     if (contentType === "application/pdf") return <FileText />;
     return <FileText />;

@@ -29,8 +29,8 @@ function PureMultimodalInput({
   handleSubmit: UseChatHelpers["handleSubmit"];
 }) {
   const { width } = useWindowSize();
-  const { isAtBottom, scrollToBottom } = useScrollToBottom();
-  const [localInput, setLocalInput] = useLocalStorage("input", "");
+  const { isAtBottom:_isAtBottom, scrollToBottom } = useScrollToBottom();
+  const [_localInput, setLocalInput] = useLocalStorage("input", "");
 
   const submitForm = useCallback(() => {
     handleSubmit(undefined, { experimental_attachments: attachments });

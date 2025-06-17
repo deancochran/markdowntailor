@@ -5,9 +5,9 @@ import { toast } from "sonner";
 
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import {
-  createResumeFromVersion,
-  deleteResume,
-  saveResume,
+    createResumeFromVersion,
+    deleteResume,
+    saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { useChat } from "@ai-sdk/react";
@@ -24,7 +24,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
-import { LightweightPDFPreview } from "./LightweightPDFPreview";
+import { ServerPDFPreview } from "./ServerPDFPreview";
 import { Input } from "./ui/input";
 
 class IRange {
@@ -79,7 +79,7 @@ export default function ResumeEditor({
   // State to track if there are unsaved changes
   const [isDirty, setIsDirty] = useState(false);
   // Replace page estimation with actual page count from PDF
-  const [actualPages, setActualPages] = useState(0);
+  const [_actualPages, setActualPages] = useState(0);
   const [isExceeding, setIsExceeding] = useState(false);
   const [editorsTab, setEditorsTab] = useState("markdown");
   const [mobileTab, setMobileTab] = useState("markdown");
@@ -730,7 +730,7 @@ export default function ResumeEditor({
                 )}
               >
                 <div className="relative flex-1 h-full overflow-hidden">
-                  <LightweightPDFPreview
+                  <ServerPDFPreview
                     sanitizedMarkdown={sanitizedMarkdown}
                     sanitizedCSS={sanitizedCSS}
                     previewTab={previewTab}
@@ -828,10 +828,10 @@ export default function ResumeEditor({
               )}
             >
               <div className="relative flex-1 h-full overflow-hidden">
-                <LightweightPDFPreview
+                <ServerPDFPreview
                   sanitizedMarkdown={sanitizedMarkdown}
                   sanitizedCSS={sanitizedCSS}
-                  previewTab="preview"
+                  previewTab={previewTab}
                   onPageCountChange={handlePageCountChange}
                 />
               </div>
