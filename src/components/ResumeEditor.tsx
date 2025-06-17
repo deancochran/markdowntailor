@@ -9,25 +9,13 @@ import {
   deleteResume,
   saveResume,
 } from "@/lib/actions/resume";
-import { generateHTMLContent } from "@/lib/utils/htmlGenerator";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
-import { printDocument } from "@/lib/utils/printUtils";
-import { estimatePageCount } from "@/lib/utils/resumeUtils";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
 import { cx } from "class-variance-authority";
 import { InferSelectModel } from "drizzle-orm";
-import {
-  ArrowLeft,
-  Copy,
-  Download,
-  Printer,
-  Save,
-  Trash,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
+import { ArrowLeft, Copy, Save, Trash } from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -36,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
+import { PDFPreview } from "./PDFPreview";
 import { Input } from "./ui/input";
 
 class IRange {
@@ -89,11 +78,9 @@ export default function ResumeEditor({
   const [baselineResume, setBaselineResume] = useState(resume);
   // State to track if there are unsaved changes
   const [isDirty, setIsDirty] = useState(false);
-  // State to track if resume exceeds page limit
-  const [estimatedPages, setEstimatedPages] = useState(
-    estimatePageCount(baselineResume.markdown),
-  );
-  const [isExceeding, setIsExceeding] = useState(estimatedPages > 3);
+  // Replace page estimation with actual page count from PDF
+  const [actualPages, setActualPages] = useState(0);
+  const [isExceeding, setIsExceeding] = useState(false);
   const [editorsTab, setEditorsTab] = useState("markdown");
   const { theme } = useTheme();
 
@@ -263,25 +250,6 @@ export default function ResumeEditor({
     isExceeding,
   ]);
 
-  const handleDownloadHTML = () => {
-    try {
-      // Download logic
-      toast.success("HTML file downloaded successfully");
-    } catch {
-      toast.error("Failed to download HTML file");
-    }
-  };
-
-  const handleGeneratePdf = useCallback(() => {
-    try {
-      const htmlContent = generateHTMLContent(sanitizedMarkdown, sanitizedCSS);
-      printDocument(htmlContent);
-      toast.success("PDF generation started");
-    } catch {
-      toast.error("Failed to generate PDF");
-    }
-  }, [sanitizedMarkdown, sanitizedCSS]);
-
   // Keyboard shortcuts handler
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -290,10 +258,6 @@ export default function ResumeEditor({
           case "s":
             event.preventDefault();
             handleSave();
-            break;
-          case "p":
-            event.preventDefault();
-            handleGeneratePdf();
             break;
           default:
             break;
@@ -305,85 +269,27 @@ export default function ResumeEditor({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleSave, handleGeneratePdf]);
+  }, [handleSave]);
 
   const [previewTab, setPreviewTab] = useState("preview");
-  const [zoomLevel, setZoomLevel] = useState(0.6);
 
-  const onZoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 0.1, 2.0));
-  };
+  // Remove zoom-related state and functions
+  // const [zoomLevel, setZoomLevel] = useState(1);
+  // const onZoomIn = () => { ... };
+  // const onZoomOut = () => { ... };
 
-  const onZoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 0.1, 0.1));
-  };
-
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  useEffect(() => {
-    if (previewTab === "preview") {
-      const handle = setTimeout(() => {
-        const iframe = iframeRef.current;
-        if (iframe) {
-          const iframeDoc =
-            iframe.contentDocument || iframe.contentWindow?.document;
-
-          if (iframeDoc) {
-            const htmlContent = generateHTMLContent(
-              sanitizedMarkdown,
-              sanitizedCSS,
-            );
-
-            // Use innerHTML instead of deprecated write method
-            iframeDoc.documentElement.innerHTML = htmlContent;
-
-            // Add click handler for links
-            iframeDoc.addEventListener("click", (event) => {
-              const target = event.target as HTMLAnchorElement;
-              if (target.tagName === "A") {
-                event.preventDefault();
-                window.open(target.href, "_blank");
-              }
-            });
-          }
-        }
-      }, 10);
-
-      return () => clearTimeout(handle);
-    }
-  }, [previewTab, sanitizedMarkdown, sanitizedCSS]);
-
-  // Add an additional useEffect for handling iframe load events
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (iframe && previewTab === "preview") {
-      const handleLoad = () => {
-        const iframeDoc =
-          iframe.contentDocument || iframe.contentWindow?.document;
-
-        if (
-          iframeDoc &&
-          (!iframeDoc.body || iframeDoc.body.innerHTML.trim() === "")
-        ) {
-          const htmlContent = generateHTMLContent(
-            sanitizedMarkdown,
-            sanitizedCSS,
-          );
-          iframeDoc.documentElement.innerHTML = htmlContent;
-        }
-      };
-
-      iframe.addEventListener("load", handleLoad);
-      return () => iframe.removeEventListener("load", handleLoad);
-    }
-  }, [previewTab, sanitizedMarkdown, sanitizedCSS]);
+  // Handle page count updates from PDFPreview
+  const handlePageCountChange = useCallback((pageCount: number) => {
+    setActualPages(pageCount);
+    setIsExceeding(pageCount > 3);
+  }, []);
 
   // Separate useEffect for page estimation
-  useEffect(() => {
-    const newEstimatedPages = estimatePageCount(sanitizedMarkdown);
-    setEstimatedPages(newEstimatedPages);
-    setIsExceeding(newEstimatedPages > 3);
-  }, [sanitizedMarkdown]);
+  // useEffect(() => {
+  //   const newEstimatedPages = estimatePageCount(sanitizedMarkdown);
+  //   setEstimatedPages(newEstimatedPages);
+  //   setIsExceeding(newEstimatedPages > 3);
+  // }, [sanitizedMarkdown]);
 
   // FIXED: Better modification application with formatting preservation
   const applyModification = useCallback((modification: Modification) => {
@@ -674,26 +580,6 @@ export default function ResumeEditor({
           </Button>
 
           <Button
-            onClick={handleGeneratePdf}
-            variant="outline"
-            className="gap-2 "
-            data-testid="export-pdf-button"
-          >
-            <Printer className="h-4 w-4" />
-            Print PDF
-          </Button>
-
-          <Button
-            onClick={handleDownloadHTML}
-            variant="outline"
-            className="gap-2 "
-            data-testid="download-html-button"
-          >
-            <Download className="h-4 w-4" />
-            Download HTML
-          </Button>
-
-          <Button
             onClick={handleDuplicate}
             disabled={isDuplicating || isDirty}
             variant="outline"
@@ -808,56 +694,13 @@ export default function ResumeEditor({
                 previewTab === "preview" ? "block" : "hidden",
               )}
             >
-              <div className="relative flex-1  overflow-hidden">
-                <iframe
-                  ref={iframeRef}
-                  title="Resume Preview"
-                  style={{
-                    width: "210mm",
-                    height: "297mm",
-                    border: "1px solid #ccc",
-                    background: "white",
-                    transform: `scale(${zoomLevel})`,
-                    transformOrigin: "top center",
-                    transition: "transform 0.3s ease-in-out",
-                    overflow: "hidden",
-                  }}
+              <div className="relative flex-1 h-full overflow-hidden">
+                <PDFPreview
+                  sanitizedMarkdown={sanitizedMarkdown}
+                  sanitizedCSS={sanitizedCSS}
+                  previewTab={previewTab}
+                  onPageCountChange={handlePageCountChange}
                 />
-              </div>
-              <div className="bg-muted text-muted-foreground h-10 items-center w-full flex justify-between border-t px-2">
-                <div className="text-sm text-muted-foreground flex flex-row items-center gap-2">
-                  A4 Preview{" "}
-                  <div className="flex items-center gap-1.5">
-                    <span className={"inline rounded font-mono"}>
-                      {isExceeding
-                        ? `Reduce content.`
-                        : `Pages:${estimatedPages}/3`}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onZoomOut}
-                    disabled={zoomLevel <= 0.2}
-                    className=""
-                  >
-                    <ZoomOut className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm">
-                    {Math.round(zoomLevel * 100)}%
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onZoomIn}
-                    disabled={zoomLevel >= 2.0}
-                    className=""
-                  >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </div>
 
