@@ -24,7 +24,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
-import { PDFPreview } from "./PDFPreview";
+// import { PDFPreview } from "./PDFPreview";
+// import { ProgressAwarePDFPreview as PDFPreview } from "./ProgressAwarePDFPreview";
+
+import { LightweightPDFPreview as PDFPreview } from "./LightweightPDFPreview";
+
 import { Input } from "./ui/input";
 
 class IRange {
