@@ -298,7 +298,7 @@ export async function generatePDFContentNonBlocking(
 }
 
 /**
- * Cleanup function
+ * Cleanup function to remove cached iframe
  */
 export function cleanupPDFGenerator(): void {
   if (cachedIframe && document.body.contains(cachedIframe)) {
