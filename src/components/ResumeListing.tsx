@@ -358,7 +358,6 @@ function ResumeDropdownMenu({
       toast.error("Error duplicating resume");
     }
   };
-
   const handleDelete = async () => {
     if (
       window.confirm(
@@ -375,7 +374,9 @@ function ResumeDropdownMenu({
 
           // Remove after a brief delay to show the animation
           setTimeout(() => {
-            updateOptimisticResumes({ type: "REMOVE", id: resumeId });
+            startTransition(() => {
+              updateOptimisticResumes({ type: "REMOVE", id: resumeId });
+            });
           }, 300);
 
           router.refresh();
