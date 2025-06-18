@@ -1,8 +1,4 @@
-import {
-  sanitizeCSS,
-  sanitizeMarkdown,
-  sanitizeText,
-} from "@/lib/utils/sanitization";
+import { sanitizeCSS, sanitizeMarkdown } from "@/lib/utils/sanitization";
 import { useCallback, useMemo } from "react";
 
 type SanitizationType = "markdown" | "css" | "text";
@@ -22,7 +18,7 @@ export function useSanitizedInput(
         case "css":
           return sanitizeCSS(value);
         case "text":
-          return sanitizeText(value);
+          return value;
         default:
           return value;
       }
@@ -43,7 +39,7 @@ export function useSanitizedInput(
           case "css":
             return sanitizeCSS(input);
           case "text":
-            return sanitizeText(input);
+            return input;
           default:
             return input;
         }

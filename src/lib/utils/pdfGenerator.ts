@@ -40,31 +40,24 @@ function generateHTMLContent(markdown: string, css: string): string {
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* Base PDF optimizations */
-        * {
-          box-sizing: border-box;
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-        }
-
         body {
-          margin: 0;
-          padding: 20px;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #333;
-          background: white;
-        }
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+          }
 
-        /* Page break controls */
-        .page-break {
-          page-break-before: always;
-        }
+          /* Page break controls */
+          .page-break {
+            page-break-before: always;
+          }
 
-        .no-break {
-          page-break-inside: avoid;
-        }
+          .no-break {
+            page-break-inside: avoid;
+          }
 
         /* Custom CSS from user */
         ${css}

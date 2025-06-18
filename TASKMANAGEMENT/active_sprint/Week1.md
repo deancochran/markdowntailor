@@ -114,6 +114,8 @@
 ---
 
 Fix default CSS
+Fix Markdown/css editor preview
+- the preview doesn't use the current conent shown in the editors
 
 ---
 

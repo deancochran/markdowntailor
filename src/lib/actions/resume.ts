@@ -25,16 +25,14 @@ export const addResume = withSentry(
       throw new Error("You must be logged in to create a resume");
     }
 
-    // Sanitize input before validation
-    const sanitizedInput = sanitizeResumeInput(values);
-
     const validatedFields = insertResumeSchema
       .omit({ userId: true })
-      .safeParse(sanitizedInput);
+      .safeParse(values);
 
     if (!validatedFields.success) {
       throw new Error("Failed to create Resume");
     }
+    console.log(validatedFields.data);
 
     const [newResume] = await db
       .insert(resume)
