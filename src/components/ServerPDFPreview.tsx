@@ -1,4 +1,5 @@
 import { useServerPDFGeneration } from "@/hooks/useServerPDFGeneration";
+import { Loader2 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 interface ServerPDFPreviewProps {
   resumeId: string;
@@ -60,49 +61,32 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     }
   }, [resumeId, generatePDFPreview, createPDFDataURL, onPageCountChange]);
 
-  // Track save events and regenerate PDF when updatedAt changes
+  // Combined PDF generation effect
   useEffect(() => {
-    // Only regenerate if updatedAt exists and has changed
+    const shouldGenerate =
+      isPreviewActive &&
+      !isGenerating &&
+      resumeId &&
+      !hasUnsavedChanges &&
+      !isSaving;
+
+    if (!shouldGenerate) return;
+
+    // Check if this is initial generation
+    if (!hasInitiallyGenerated) {
+      console.log("Initial PDF generation");
+      generatePDF();
+      return;
+    }
+
+    // Check if updatedAt has changed (for regeneration)
     if (
       updatedAt &&
       (!lastUpdatedAtRef.current ||
         updatedAt.getTime() !== lastUpdatedAtRef.current.getTime())
     ) {
       lastUpdatedAtRef.current = updatedAt;
-
-      // Only proceed if we're in preview tab and not already generating
-      if (
-        isPreviewActive &&
-        !isGenerating &&
-        resumeId &&
-        !hasUnsavedChanges &&
-        !isSaving
-      ) {
-        console.log("Regenerating PDF due to save event");
-        generatePDF();
-      }
-    }
-  }, [
-    updatedAt,
-    isPreviewActive,
-    isGenerating,
-    resumeId,
-    hasUnsavedChanges,
-    isSaving,
-    generatePDF,
-  ]);
-
-  // Initial generation
-  useEffect(() => {
-    if (
-      isPreviewActive &&
-      !hasInitiallyGenerated &&
-      !isGenerating &&
-      resumeId &&
-      !hasUnsavedChanges &&
-      !isSaving
-    ) {
-      console.log("Initial PDF generation");
+      console.log("Regenerating PDF due to save event");
       generatePDF();
     }
   }, [
@@ -112,6 +96,7 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     resumeId,
     hasUnsavedChanges,
     isSaving,
+    updatedAt,
     generatePDF,
   ]);
 
@@ -139,7 +124,7 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
   if (isGenerating && !hasExistingPDF) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin" />
         <div className="font-medium">Generating PDF...</div>
       </div>
     );
@@ -174,9 +159,9 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     <div className="h-full flex flex-col relative">
       {/* Loading overlay when regenerating existing PDF */}
       {isGenerating && hasExistingPDF && (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
+        <div className="absolute inset-0  backdrop-blur-sm flex items-center justify-center z-10">
           <div className="flex flex-col items-center gap-3 bg-card p-6 rounded-lg shadow-lg border">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <Loader2 className="h-6 w-6 animate-spin" />
             <div className="text-sm font-medium">Updating preview...</div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Download,
+  Loader2,
   Printer,
   Save,
   Trash,
@@ -185,7 +186,10 @@ const ResumeEditorLoadingSkeleton = () => {
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span className="text-lg font-medium">Loading Resume Editor</span>
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="text-lg font-medium">Loading Resume Editor</span>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground">
             Preparing your editing environment...

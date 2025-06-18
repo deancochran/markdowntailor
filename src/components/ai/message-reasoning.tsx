@@ -1,5 +1,5 @@
 "use client";
-
+import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { Markdown } from "./markdown";
@@ -35,7 +35,7 @@ export function MessageReasoning({
       {isLoading ? (
         <div className="flex flex-row gap-2 items-center">
           <div className="font-medium">Reasoning</div>
-          <div className="animate-spin">Loading...</div>
+          <Loader2 className="h-4 w-4 animate-spin" />
         </div>
       ) : (
         <div className="flex flex-row gap-2 items-center">
