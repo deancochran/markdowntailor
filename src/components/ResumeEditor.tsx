@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import {
-  createResumeFromVersion,
-  deleteResume,
-  saveResume,
+    createResumeFromVersion,
+    deleteResume,
+    saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { useChat } from "@ai-sdk/react";
@@ -16,11 +16,18 @@ import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
 import { cx } from "class-variance-authority";
 import { InferSelectModel } from "drizzle-orm";
-import { Copy, Save, Trash } from "lucide-react";
+import {
+    CheckCircle,
+    Clock,
+    Copy,
+    History,
+    Loader2,
+    Trash2,
+} from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { redirect, usePathname } from "next/navigation";
+import { redirect } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Messages } from "./ai/messages";
@@ -66,7 +73,6 @@ export default function ResumeEditor({
 }: {
   resume: InferSelectModel<typeof Resume>;
 }) {
-  const pathname = usePathname();
   const { watch, setValue } = useForm({
     defaultValues: resume,
   });
@@ -75,7 +81,7 @@ export default function ResumeEditor({
   const [isDuplicating, setIsDuplicating] = useState(false);
   // Replace page estimation with actual page count from PDF
   const [_actualPages, setActualPages] = useState(0);
-  const [isExceeding, setIsExceeding] = useState(false);
+  const [_isExceeding, setIsExceeding] = useState(false);
   const [editorsTab, setEditorsTab] = useState("markdown");
   const [mobileTab, setMobileTab] = useState("markdown");
   const { theme } = useTheme();
@@ -112,7 +118,7 @@ export default function ResumeEditor({
     isSaving,
     isDirty,
     hasUnsavedChanges,
-    save: handleSave,
+    save: _handleSave,
     resetDirty: _resetDirty,
   } = useAutoSave({
     resumeId: id,
@@ -207,52 +213,10 @@ export default function ResumeEditor({
     }
   };
 
-  // Manual save function for button clicks and keyboard shortcuts
-  const handleManualSave = useCallback(async () => {
-    if (isSaving || !isDirty || isExceeding) return;
-
-    const updatedResume = await handleSave();
-    if (updatedResume) {
-      // Update form values to match saved content
-      setValue("markdown", updatedResume.markdown);
-      setValue("css", updatedResume.css);
-      setValue("updatedAt", updatedResume.updatedAt);
-
-      // Update modified content to match saved content
-      modifyMarkdown(updatedResume.markdown);
-      modifyCss(updatedResume.css);
-    } else {
-      toast.error("Failed to save resume");
-    }
-  }, [handleSave, isSaving, isDirty, isExceeding, setValue]);
-
-  // Keyboard shortcuts handler
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey) {
-        switch (event.key.toLowerCase()) {
-          case "s":
-            event.preventDefault();
-            handleManualSave();
-            break;
-          default:
-            break;
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleManualSave]);
 
   const [previewTab, setPreviewTab] = useState("preview");
 
-  // Remove zoom-related state and functions
-  // const [zoomLevel, setZoomLevel] = useState(1);
-  // const onZoomIn = () => { ... };
-  // const onZoomOut = () => { ... };
+
 
   // Handle page count updates from PDFPreview
   const handlePageCountChange = useCallback((pageCount: number) => {
@@ -260,17 +224,7 @@ export default function ResumeEditor({
     setIsExceeding(pageCount > 3);
   }, []);
 
-  // Handle save required from PDF preview
-  const handleSaveRequired = useCallback(() => {
-    handleSave();
-  }, [handleSave]);
 
-  // Separate useEffect for page estimation
-  // useEffect(() => {
-  //   const newEstimatedPages = estimatePageCount(sanitizedMarkdown);
-  //   setEstimatedPages(newEstimatedPages);
-  //   setIsExceeding(newEstimatedPages > 3);
-  // }, [sanitizedMarkdown]);
 
   // FIXED: Better modification application with formatting preservation
   const applyModification = useCallback((modification: Modification) => {
@@ -501,86 +455,111 @@ export default function ResumeEditor({
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
-      <div className="w-full flex flex-col items-start border-b">
-        <div className="w-full flex flex-row items-start px-4 justify-between">
-          <div className="flex flex-col items-start w-full sm:w-auto gap-1">
+      <div className="w-full flex flex-col p-2">
+        {/* Title Row */}
+        <div className="flex items-center w-full">
+          <div className="flex-grow min-w-0">
             <Input
-              className="text-lg sm:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+              className="text-lg md:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-9 md:h-10"
               value={sanitizedTitle}
               onChange={(e) => setValue("title", e.target.value)}
               placeholder="Untitled Resume"
             />
           </div>
+        </div>
 
-          <div className="flex flex-row items-end ">
-            <Button
-              onClick={handleManualSave}
-              disabled={isSaving || !isDirty || isExceeding}
-              size="sm"
-              className="h-8 px-3 gap-1.5"
+        {/* Info and Actions Row */}
+        <div className="flex flex-wrap items-center justify-between mt-1 gap-y-2">
+          {/* Last updated timestamp and versions link */}
+          <div className="flex items-center text-xs text-muted-foreground gap-x-3">
+            {/* Auto-save indicator */}
+            <div className="flex items-center text-xs text-muted-foreground ml-2 shrink-0">
+              {isSaving ? (
+                <span className="flex items-center text-amber-500">
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Saving...
+                </span>
+              ) : hasUnsavedChanges ? (
+                <span className="flex items-center text-amber-500">
+                  <Clock className="w-3.5 h-3.5 mr-1.5" />
+                  Unsaved changes
+                </span>
+              ) : (
+                <span className="flex items-center text-green-500">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Saved
+                </span>
+              )}
+            </div>
+            <span className="inline-flex items-center">
+              {updatedAt ? (
+                <>
+                  <Clock className="w-3 h-3 mr-1 hidden xs:inline" />
+                  <span className="hidden xs:inline">Updated</span>{" "}
+                  <time
+                    dateTime={new Date(updatedAt).toISOString()}
+                    className="whitespace-nowrap"
+                  >
+                    {new Date(updatedAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </time>
+                </>
+              ) : (
+                "Not saved yet"
+              )}
+            </span>
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            {/* Versions link */}
+            <Link
+              href={`/resumes/${id}/versions`}
+              className="inline-flex items-center text-xs font-medium text-primary hover:underline"
             >
-              <Save className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {isSaving ? "Saving..." : "Save"}
-              </span>
-            </Button>
-
+              <History className="w-3 h-3 mr-1" />
+              Versions
+            </Link>
+            {/* Duplicate button */}
             <Button
+              variant="ghost"
+              size="sm"
               onClick={handleDuplicate}
-              disabled={isDuplicating || isDirty}
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 gap-1.5"
+              disabled={isDuplicating}
+              className="h-8 px-2 sm:px-3"
             >
-              <Copy className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {isDuplicating ? "Duplicating..." : "Duplicate"}
-              </span>
+              {isDuplicating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">Duplicate</span>
             </Button>
 
+            {/* Delete button */}
             <Button
+              variant="ghost"
+              size="sm"
               onClick={handleDelete}
               disabled={isDeleting}
-              variant="outline"
-              size="sm"
-              className="h-8 px-3 gap-1.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              className="h-8 px-2 sm:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              <Trash className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">
-                {isDeleting ? "Deleting..." : "Delete"}
-              </span>
+              {isDeleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              <span className="ml-1.5 hidden sm:inline">Delete</span>
             </Button>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Updated:{" "}
-            {(() => {
-              const updated = new Date(updatedAt);
-              const now = new Date();
-              const isSameDay =
-                updated.getFullYear() === now.getFullYear() &&
-                updated.getMonth() === now.getMonth() &&
-                updated.getDate() === now.getDate();
-              return isSameDay
-                ? updated.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : updated.toLocaleDateString();
-            })()}
-          </span>
-          <Button
-            variant="link"
-            className="inline text-xs text-muted-foreground p-0 hover:text-foreground"
-            asChild
-          >
-            <Link href={`${pathname}/versions`}>View Versions</Link>
-          </Button>
-        </div>
       </div>
 
-      <div className="relative flex flex-col min-h-0 p-4 h-full w-full bg-muted gap-4 overflow-hidden">
+      <div className="relative flex flex-col min-h-0  h-full w-full bg-muted gap-4 overflow-hidden">
         {/* Mobile Tab Bar - visible only on small screens */}
         <div className="flex md:hidden items-center justify-center gap-1 p-2 border bg-background rounded">
           <Button
@@ -714,7 +693,6 @@ export default function ResumeEditor({
                     previewTab={previewTab}
                     onPageCountChange={handlePageCountChange}
                     hasUnsavedChanges={isDirty}
-                    onSaveRequired={handleSaveRequired}
                   />
                 </div>
               </div>
@@ -813,7 +791,6 @@ export default function ResumeEditor({
                   previewTab={previewTab}
                   onPageCountChange={handlePageCountChange}
                   hasUnsavedChanges={isDirty}
-                  onSaveRequired={handleSaveRequired}
                 />
               </div>
             </div>

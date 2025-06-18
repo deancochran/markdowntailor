@@ -8,7 +8,6 @@ interface ServerPDFPreviewProps {
   previewTab: string;
   hasUnsavedChanges?: boolean;
   onPageCountChange?: (pageCount: number) => void;
-  onSaveRequired?: () => void;
 }
 
 export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
@@ -16,7 +15,6 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
   previewTab,
   hasUnsavedChanges = false,
   onPageCountChange,
-  onSaveRequired,
 }) => {
   const [pdfDataUrl, setPdfDataUrl] = useState<string>("");
   const [hasInitiallyGenerated, setHasInitiallyGenerated] = useState(false);
@@ -161,16 +159,11 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
   if (hasUnsavedChanges) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
-        <div className="text-amber-600 text-base font-medium">
-          Save Required for Preview
-        </div>
+        <div className="text-base font-medium">Waiting for Auto Save...</div>
         <div className="text-sm text-muted-foreground max-w-md">
-          Please save your resume to generate a PDF preview. This ensures the
-          preview matches your saved version and enables efficient caching.
+          Please wait for your changes to process. This ensures the preview
+          matches your saved version and enables efficient caching.
         </div>
-        <Button onClick={onSaveRequired} variant="default" className="mt-2">
-          Save Resume
-        </Button>
       </div>
     );
   }
