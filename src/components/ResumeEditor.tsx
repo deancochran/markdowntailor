@@ -544,20 +544,25 @@ export default function ResumeEditor({
           {/* Secondary Actions */}
           <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Versions link */}
-            <Link
-              href={`/resumes/${id}/versions`}
-              className="inline-flex items-center text-xs font-medium text-primary hover:underline"
-            >
-              <History className="w-3 h-3 mr-1" />
-              Versions
-            </Link>
-            {/* Save Button */}
             <Button
               onClick={handleSave}
               disabled={isSaving || !isDirty}
               variant="outline"
               size="sm"
               className="ml-2"
+              asChild
+            >
+              <Link href={`/resumes/${id}/versions`}>
+                <History className="w-3 h-3 mr-1" />
+                Versions
+              </Link>
+            </Button>
+            {/* Save Button */}
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !isDirty}
+              variant="outline"
+              size="sm"
             >
               {isSaving ? (
                 <>
@@ -573,11 +578,10 @@ export default function ResumeEditor({
             </Button>
             {/* Duplicate button */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleDuplicate}
               disabled={isDuplicating}
-              className="h-8 px-2 sm:px-3"
             >
               {isDuplicating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -589,11 +593,11 @@ export default function ResumeEditor({
 
             {/* Delete button */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="h-8 px-2 sm:px-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               {isDeleting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
