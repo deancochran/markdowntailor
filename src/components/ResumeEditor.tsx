@@ -161,6 +161,24 @@ export default function ResumeEditor({
     }
   }, [save]);
 
+  // Add keyboard shortcut for Ctrl+S to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl+S or Cmd+S (for Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault(); // Prevent browser save dialog
+        if (isDirty && !isSaving) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleSave, isDirty, isSaving]);
+
   // Refs to store editor instances for proper cleanup
   const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
     null,
