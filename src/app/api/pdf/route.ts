@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
     try {
       const cachedResult = await redis.hgetall(cacheKey);
       if (cachedResult && cachedResult.pdfBase64 && cachedResult.pageCount) {
+        console.log("CHACHED");
         return NextResponse.json({
           pdfBase64: cachedResult.pdfBase64,
           pageCount: parseInt(cachedResult.pageCount as string),
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.warn("Cache storage error:", error);
     }
-
+    console.log("NOT CHACHED");
     return NextResponse.json({
       pdfBase64,
       pageCount,

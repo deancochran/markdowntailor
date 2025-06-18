@@ -4,11 +4,11 @@ import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
 
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
-import { useAutoSave } from "@/hooks/useAutoSave";
+import { useSaveResume } from "@/hooks/useSaveResume";
 import {
-    createResumeFromVersion,
-    deleteResume,
-    saveResume,
+  createResumeFromVersion,
+  deleteResume,
+  saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { useChat } from "@ai-sdk/react";
@@ -17,12 +17,13 @@ import { Attachment, Message } from "ai";
 import { cx } from "class-variance-authority";
 import { InferSelectModel } from "drizzle-orm";
 import {
-    CheckCircle,
-    Clock,
-    Copy,
-    History,
-    Loader2,
-    Trash2,
+  CheckCircle,
+  Clock,
+  Copy,
+  History,
+  Loader2,
+  Save,
+  Trash2,
 } from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
@@ -113,27 +114,30 @@ export default function ResumeEditor({
       toast.error(`CSS sanitization: ${error}`),
     );
 
-  // Auto-save functionality
-  const {
-    isSaving,
-    isDirty,
-    hasUnsavedChanges,
-    save: _handleSave,
-    resetDirty: _resetDirty,
-  } = useAutoSave({
+  // Manual save functionality (replacing auto-save)
+  const { isSaving, isDirty, save } = useSaveResume({
     resumeId: id,
     title: sanitizedTitle,
     markdown: sanitizedMarkdown,
     css: sanitizedCSS,
     saveFunction: saveResume,
-    delay: 3000, // 3 second delay for auto-save
-    enabled: true,
+    onSaveSuccess: (updatedResume) => {
+      // Update form values
+      setValue("title", updatedResume.title);
+      setValue("markdown", updatedResume.markdown);
+      setValue("css", updatedResume.css);
+      setValue("updatedAt", updatedResume.updatedAt);
+
+      // Update local state variables to stay in sync
+      modifyMarkdown(updatedResume.markdown);
+      modifyCss(updatedResume.css);
+    },
   });
 
   // Effect to warn user before closing tab with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
+      if (isDirty) {
         event.preventDefault();
         // Using modern approach instead of deprecated returnValue
         return "";
@@ -145,7 +149,17 @@ export default function ResumeEditor({
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [hasUnsavedChanges]);
+  }, [isDirty]);
+
+  // Handle manual save
+  const handleSave = useCallback(async () => {
+    try {
+      await save();
+    } catch (error) {
+      // Error is already handled in the save function
+      console.error("Save failed:", error);
+    }
+  }, [save]);
 
   // Refs to store editor instances for proper cleanup
   const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
@@ -213,18 +227,13 @@ export default function ResumeEditor({
     }
   };
 
-
   const [previewTab, setPreviewTab] = useState("preview");
-
-
 
   // Handle page count updates from PDFPreview
   const handlePageCountChange = useCallback((pageCount: number) => {
     setActualPages(pageCount);
     setIsExceeding(pageCount > 3);
   }, []);
-
-
 
   // FIXED: Better modification application with formatting preservation
   const applyModification = useCallback((modification: Modification) => {
@@ -479,7 +488,7 @@ export default function ResumeEditor({
                   <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                   Saving...
                 </span>
-              ) : hasUnsavedChanges ? (
+              ) : isDirty ? (
                 <span className="flex items-center text-amber-500">
                   <Clock className="w-3.5 h-3.5 mr-1.5" />
                   Unsaved changes
@@ -497,10 +506,10 @@ export default function ResumeEditor({
                   <Clock className="w-3 h-3 mr-1 hidden xs:inline" />
                   <span className="hidden xs:inline">Updated</span>{" "}
                   <time
-                    dateTime={new Date(updatedAt).toISOString()}
+                    dateTime={updatedAt.toISOString()}
                     className="whitespace-nowrap"
                   >
-                    {new Date(updatedAt).toLocaleString(undefined, {
+                    {updatedAt.toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",
@@ -524,6 +533,26 @@ export default function ResumeEditor({
               <History className="w-3 h-3 mr-1" />
               Versions
             </Link>
+            {/* Save Button */}
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || !isDirty}
+              variant="outline"
+              size="sm"
+              className="ml-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </>
+              )}
+            </Button>
             {/* Duplicate button */}
             <Button
               variant="ghost"
@@ -693,6 +722,8 @@ export default function ResumeEditor({
                     previewTab={previewTab}
                     onPageCountChange={handlePageCountChange}
                     hasUnsavedChanges={isDirty}
+                    isSaving={isSaving}
+                    updatedAt={updatedAt}
                   />
                 </div>
               </div>
@@ -791,6 +822,8 @@ export default function ResumeEditor({
                   previewTab={previewTab}
                   onPageCountChange={handlePageCountChange}
                   hasUnsavedChanges={isDirty}
+                  isSaving={isSaving}
+                  updatedAt={updatedAt}
                 />
               </div>
             </div>

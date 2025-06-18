@@ -1,109 +1,33 @@
-import { Button } from "@/components/ui/button";
-import { useActivityTracker } from "@/hooks/user-activity-tracker";
 import { useServerPDFGeneration } from "@/hooks/useServerPDFGeneration";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
 interface ServerPDFPreviewProps {
   resumeId: string;
   previewTab: string;
+  isSaving: boolean;
   hasUnsavedChanges?: boolean;
   onPageCountChange?: (pageCount: number) => void;
+  updatedAt?: Date; // Use updatedAt from the resume object instead of saveTimestamp
 }
 
 export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
   resumeId,
   previewTab,
   hasUnsavedChanges = false,
+  isSaving = false,
   onPageCountChange,
+  updatedAt,
 }) => {
   const [pdfDataUrl, setPdfDataUrl] = useState<string>("");
   const [hasInitiallyGenerated, setHasInitiallyGenerated] = useState(false);
   const { generatePDFPreview, createPDFDataURL, isGenerating, error } =
     useServerPDFGeneration();
 
-  // Use activity tracker based on resume changes
-  const { shouldGenerate, resetGeneration } = useActivityTracker(
-    resumeId,
-    2000, // Shorter delay since we're tracking resume changes
-  );
-
   const abortControllerRef = useRef<AbortController | null>(null);
   const isPreviewActive = previewTab === "preview";
   const hasExistingPDF = Boolean(pdfDataUrl);
-
-  // Combined generation function that handles both initial and subsequent generation
-  useEffect(() => {
-    if (!isPreviewActive || isGenerating || !resumeId) {
-      return;
-    }
-
-    // Don't generate if there are unsaved changes
-    if (hasUnsavedChanges) {
-      return;
-    }
-
-    // Determine if we should generate
-    const shouldGenerateInitial = !hasInitiallyGenerated;
-    const shouldGenerateUpdate = shouldGenerate && hasInitiallyGenerated;
-
-    if (!shouldGenerateInitial && !shouldGenerateUpdate) {
-      return;
-    }
-
-    // Generate new PDF
-    const generatePDF = async () => {
-      // Cancel any existing generation
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      try {
-        if (controller.signal.aborted) {
-          return;
-        }
-
-        const result = await generatePDFPreview({
-          resumeId,
-        });
-
-        if (!controller.signal.aborted) {
-          const dataUrl = createPDFDataURL(result.pdfBase64);
-          setPdfDataUrl(dataUrl);
-          onPageCountChange?.(result.pageCount);
-          resetGeneration();
-          setHasInitiallyGenerated(true);
-        }
-      } catch (err) {
-        if (!controller.signal.aborted) {
-          console.error("Server PDF generation error:", err);
-          onPageCountChange?.(0);
-          resetGeneration();
-          setHasInitiallyGenerated(true);
-        }
-      }
-    };
-
-    generatePDF();
-  }, [
-    isPreviewActive,
-    isGenerating,
-    hasInitiallyGenerated,
-    resumeId,
-    hasUnsavedChanges,
-    shouldGenerate,
-    generatePDFPreview,
-    createPDFDataURL,
-    onPageCountChange,
-    resetGeneration,
-  ]);
-
-  // Manual retry function for error state
-  const retryGeneration = useCallback(async () => {
-    if (isGenerating || hasUnsavedChanges) return;
-
+  const lastUpdatedAtRef = useRef<Date | undefined>(updatedAt);
+  // Extract PDF generation to a separate function
+  const generatePDF = useCallback(async () => {
     // Cancel any existing generation
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -125,25 +49,70 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
         const dataUrl = createPDFDataURL(result.pdfBase64);
         setPdfDataUrl(dataUrl);
         onPageCountChange?.(result.pageCount);
-        resetGeneration();
         setHasInitiallyGenerated(true);
       }
     } catch (err) {
       if (!controller.signal.aborted) {
         console.error("Server PDF generation error:", err);
         onPageCountChange?.(0);
-        resetGeneration();
         setHasInitiallyGenerated(true);
       }
     }
+  }, [resumeId, generatePDFPreview, createPDFDataURL, onPageCountChange]);
+
+  // Track save events and regenerate PDF when updatedAt changes
+  useEffect(() => {
+    // Only regenerate if updatedAt exists and has changed
+    if (
+      updatedAt &&
+      (!lastUpdatedAtRef.current ||
+        updatedAt.getTime() !== lastUpdatedAtRef.current.getTime())
+    ) {
+      lastUpdatedAtRef.current = updatedAt;
+
+      // Only proceed if we're in preview tab and not already generating
+      if (
+        isPreviewActive &&
+        !isGenerating &&
+        resumeId &&
+        !hasUnsavedChanges &&
+        !isSaving
+      ) {
+        console.log("Regenerating PDF due to save event");
+        generatePDF();
+      }
+    }
   }, [
+    updatedAt,
+    isPreviewActive,
+    isGenerating,
     resumeId,
     hasUnsavedChanges,
-    generatePDFPreview,
-    createPDFDataURL,
-    onPageCountChange,
-    resetGeneration,
+    isSaving,
+    generatePDF,
+  ]);
+
+  // Initial generation
+  useEffect(() => {
+    if (
+      isPreviewActive &&
+      !hasInitiallyGenerated &&
+      !isGenerating &&
+      resumeId &&
+      !hasUnsavedChanges &&
+      !isSaving
+    ) {
+      console.log("Initial PDF generation");
+      generatePDF();
+    }
+  }, [
+    isPreviewActive,
+    hasInitiallyGenerated,
     isGenerating,
+    resumeId,
+    hasUnsavedChanges,
+    isSaving,
+    generatePDF,
   ]);
 
   // Cleanup on unmount
@@ -155,14 +124,12 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     };
   }, []);
 
-  // Unsaved changes - require save before preview
   if (hasUnsavedChanges) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
-        <div className="text-base font-medium">Waiting for Auto Save...</div>
+        <div className="text-base font-medium">Unsaved Changes</div>
         <div className="text-sm text-muted-foreground max-w-md">
-          Please wait for your changes to process. This ensures the preview
-          matches your saved version and enables efficient caching.
+          Please save your changes to update the PDF preview.
         </div>
       </div>
     );
@@ -173,10 +140,7 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-5 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <div className="font-medium">Generating PDF on server...</div>
-        <div className="text-sm text-muted-foreground">
-          High-quality server-side rendering with Playwright
-        </div>
+        <div className="font-medium">Generating PDF...</div>
       </div>
     );
   }
@@ -189,13 +153,6 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
           PDF Generation Failed
         </div>
         <div className="text-sm text-muted-foreground">{error}</div>
-        <Button
-          onClick={retryGeneration}
-          variant="outline"
-          disabled={isGenerating || hasUnsavedChanges}
-        >
-          {hasUnsavedChanges ? "Save Required" : "Retry Generation"}
-        </Button>
       </div>
     );
   }
