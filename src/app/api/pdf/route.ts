@@ -1,14 +1,16 @@
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
-import { resume, resumeVersions } from "@/db/schema";
+import { resume } from "@/db/schema";
 import { apiRateLimiter, redis } from "@/lib/upstash";
 import { generatePDFServerSide } from "@/lib/utils/pdfGenerator";
-import { desc, eq } from "drizzle-orm";
+import crypto from "crypto";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 // Helper function to create cache key from version ID
-function createCacheKey(versionId: string): string {
-  return `pdf:${versionId}`;
+function generateCacheKey(markdown: string, css: string): string {
+  const content = markdown + css;
+  return crypto.createHash("sha256").update(content).digest("hex");
 }
 
 export async function POST(request: NextRequest) {
@@ -40,46 +42,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Get resume and check ownership
-    const resumeResult = await db
+    const [resumeData] = await db
       .select()
       .from(resume)
-      .where(eq(resume.id, resumeId))
-      .limit(1);
+      .where(eq(resume.id, resumeId));
 
-    if (resumeResult.length === 0) {
+    if (!resumeData) {
       return NextResponse.json({ error: "Resume not found" }, { status: 404 });
     }
 
     // Check authorization
-    if (resumeResult[0].userId !== session.user.id) {
+    if (resumeData.userId !== session.user.id) {
       return NextResponse.json(
         { error: "Unauthorized access to resume" },
         { status: 403 },
       );
     }
 
-    // Try to get the latest version, fall back to main resume
-    const latestVersion = await db
-      .select()
-      .from(resumeVersions)
-      .where(eq(resumeVersions.resumeId, resumeId))
-      .orderBy(desc(resumeVersions.version))
-      .limit(1);
-
-    let resumeData;
-    let cacheVersionId;
-    if (latestVersion.length === 0) {
-      // No versions exist, use main resume
-      resumeData = resumeResult[0];
-      cacheVersionId = resumeId; // Use resume ID as fallback cache key
-    } else {
-      // Use latest version
-      resumeData = latestVersion[0];
-      cacheVersionId = latestVersion[0].id; // Use version ID as cache key
-    }
-
     // Check cache first
-    const cacheKey = createCacheKey(cacheVersionId);
+    const cacheKey = generateCacheKey(resumeData.markdown, resumeData.css);
     try {
       const cachedResult = await redis.hgetall(cacheKey);
       if (cachedResult && cachedResult.pdfBase64 && cachedResult.pageCount) {
