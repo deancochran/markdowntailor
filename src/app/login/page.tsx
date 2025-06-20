@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -109,19 +110,19 @@ function LoginContent() {
         <div className="text-center mt-8 text-xs text-muted-foreground animate-in fade-in duration-700 delay-500">
           <p data-testid="policy-agreement">
             By signing in, you agree to our{" "}
-            <a
-              href="#"
+            <Link
+              href="terms-of-service"
               className="text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
             >
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a
-              href="#"
+            <Link
+              href="/privacy-policy"
               className="text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
             >
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

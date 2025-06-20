@@ -4,6 +4,7 @@ import {
 } from "@/lib/utils/defaults";
 import {
   boolean,
+  decimal,
   integer,
   pgTable,
   primaryKey,
@@ -27,11 +28,18 @@ export const user = pgTable("user", {
   stripeCustomerId: text("stripe_customer_id").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
-  model_preference: text("model_preference").default("o4-mini").notNull(),
-  provider_preference: text("provider_preference").default("openai").notNull(),
+  model_preference: text("model_preference")
+    .default("claude-sonnet-4-20250514")
+    .notNull(),
+  provider_preference: text("provider_preference")
+    .default("anthropic")
+    .notNull(),
   alpha_credits_redeemed: boolean("alpha_credits_redeemed")
     .default(false)
     .notNull(),
+  credits: decimal("credits", { precision: 19, scale: 4 })
+    .notNull()
+    .default("0.00"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -168,20 +176,24 @@ export const resumeVersions = pgTable("resume_versions", {
     .$onUpdate(() => new Date()),
 });
 
-// Single table for all AI tracking
-export const aiRequestLog = pgTable("ai_request_log", {
+export const ai_credit_logs = pgTable("credit_transactions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id")
     .notNull()
-    .references(() => user.id, { onDelete: "set null" }),
-  promptTokens: integer("prompt_tokens").notNull(),
-  completionTokens: integer("completion_tokens").notNull(),
+    .references(() => user.id, { onDelete: "cascade" }),
+  amount: decimal("amount", { precision: 19, scale: 4 }).notNull(),
   model: text("model").notNull(),
-  modelProvider: text("model_provider").notNull(),
-  status: text("status").notNull().default("success"),
+  provider: text("provider").notNull(),
+  inputTokens: integer("input_tokens").notNull(),
+  outputTokens: integer("output_tokens").notNull(),
+  totalTokens: integer("total_tokens").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const selectUserSchema = createSelectSchema(user);
@@ -189,12 +201,6 @@ export type SelectUserSchema = typeof selectUserSchema;
 
 export const insertUserSchema = createInsertSchema(user);
 export type InsertUserSchema = typeof insertUserSchema;
-
-export const insertAiRequestLogSchema = createInsertSchema(aiRequestLog);
-export type InsertAiRequestLogSchema = typeof insertAiRequestLogSchema;
-
-export const selectAiRequestLogSchema = createSelectSchema(aiRequestLog);
-export type SelectAiRequestLogSchema = typeof selectAiRequestLogSchema;
 
 export const insertResumeSchema = createInsertSchema(resume);
 export type InsertResumeSchema = typeof insertResumeSchema;

@@ -2,6 +2,7 @@ import {
   boolean,
   foreignKey,
   integer,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -380,29 +381,6 @@ export const session = pgTable(
   ],
 );
 
-export const aiRequestLog = pgTable(
-  "ai_request_log",
-  {
-    id: text().primaryKey().notNull(),
-    userId: text("user_id").notNull(),
-    promptTokens: integer("prompt_tokens").notNull(),
-    completionTokens: integer("completion_tokens").notNull(),
-    model: text().notNull(),
-    modelProvider: text("model_provider").notNull(),
-    status: text().default("success").notNull(),
-    createdAt: timestamp("created_at", { mode: "string" })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [user.id],
-      name: "ai_request_log_user_id_user_id_fk",
-    }).onDelete("set null"),
-  ],
-);
-
 export const user = pgTable(
   "user",
   {
@@ -423,9 +401,37 @@ export const user = pgTable(
     alphaCreditsRedeemed: boolean("alpha_credits_redeemed")
       .default(false)
       .notNull(),
+    credits: numeric({ precision: 19, scale: 4 }).default("0.00"),
   },
   (table) => [
     unique("user_email_unique").on(table.email),
     unique("user_stripe_customer_id_unique").on(table.stripeCustomerId),
+  ],
+);
+
+export const creditTransactions = pgTable(
+  "credit_transactions",
+  {
+    id: text().primaryKey().notNull(),
+    userId: text("user_id").notNull(),
+    amount: numeric({ precision: 19, scale: 4 }).notNull(),
+    model: text().notNull(),
+    provider: text().notNull(),
+    inputTokens: integer("input_tokens").notNull(),
+    outputTokens: integer("output_tokens").notNull(),
+    totalTokens: integer("total_tokens").notNull(),
+    createdAt: timestamp("created_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [user.id],
+      name: "credit_transactions_user_id_user_id_fk",
+    }).onDelete("cascade"),
   ],
 );

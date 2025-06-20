@@ -1,9 +1,9 @@
 // Updated version of your Stripe integration
 import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
-import { addStripeCredits } from "@/lib/stripe/billing";
 import { StripeAgentToolkit } from "@stripe/agent-toolkit/ai-sdk";
-import { eq } from "drizzle-orm";
+import Decimal from "decimal.js";
+import { and, eq, sql } from "drizzle-orm";
 import { User } from "next-auth";
 import Stripe from "stripe";
 // Validate required environment variables
@@ -27,47 +27,30 @@ export const stripeAgentToolkit = new StripeAgentToolkit({
     },
   },
 });
-export const ALPHA_PRODUCT_ID = "prod_SU9j9hBWrOFvuJ";
-export const ALPHA_CREDIT_AMOUNT = 5; // 5 credits for $5
-export const ALPHA_METER_EVENT_NAME = "api_ai_chat";
+export const ALPHA_PRODUCT_ID = "prod_SXA2y1INLaH5se";
+export const ALPHA_PRICE_ID = "price_1Rc5iOIhODsTDweweITC2vcw";
 
 /**
  * Creates a Stripe checkout session for credit purchases
  */
 export interface CheckoutSessionParams {
   user: User;
-  amount: number; // Amount in credits/dollars
 }
 
 export async function createCreditPurchaseCheckoutSession({
   user,
-  amount: _amount,
 }: CheckoutSessionParams): Promise<Stripe.Checkout.Session> {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            // product_data: {
-            //   name: `${amount} AI Credits`,
-            //   description: `Purchase ${amount} credits for AI-powered resume building`,
-            // },
-            // unit_amount: new Decimal(amount).mul(100).toNumber(),
-            product: ALPHA_PRODUCT_ID,
-            unit_amount: 0, // Free for alpha
-          },
+          price: ALPHA_PRICE_ID,
           quantity: 1,
         },
       ],
-      invoice_creation: {
-        enabled: true,
-        invoice_data: {
-          metadata: {
-            user_id: user.id,
-          },
-        },
+      consent_collection: {
+        terms_of_service: "required",
       },
       metadata: {
         user_id: user.id,
@@ -78,9 +61,9 @@ export async function createCreditPurchaseCheckoutSession({
         ? { customer: user.stripeCustomerId }
         : {
             customer_email: user.email,
-            customer_creation: "always",
           }),
     });
+
     console.log("✅ Successfully handled customer.created");
     return session;
   } catch (error) {
@@ -90,68 +73,6 @@ export async function createCreditPurchaseCheckoutSession({
         ? error.message
         : "Failed to create checkout session",
     );
-  }
-}
-
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (!invoice.customer || !invoice.metadata?.user_id) {
-    console.warn("Invoice missing required metadata or customer ID");
-    return;
-  }
-  let [dbUser] = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, invoice.metadata.user_id));
-
-  if (!dbUser) {
-    console.warn("User not found");
-    return;
-  }
-
-  // Handle case where user doesn't have stripeCustomerId yet (race condition)
-  // Extract customer ID from the invoice and update the user record
-  const customerId =
-    typeof invoice.customer === "string"
-      ? invoice.customer
-      : invoice.customer.id;
-
-  if (!dbUser.stripeCustomerId) {
-    console.log(
-      `🔄 Setting missing Stripe customer ID: ${customerId} for user: ${invoice.metadata.user_id}`,
-    );
-    [dbUser] = await db
-      .update(user)
-      .set({ stripeCustomerId: customerId })
-      .where(eq(user.id, invoice.metadata.user_id))
-      .returning();
-  }
-
-  try {
-    // Handle alpha program
-    if (dbUser.alpha_credits_redeemed) {
-      console.warn("User has already redeemed their alpha credits");
-      return;
-    }
-
-    await db.transaction(async (tx) => {
-      const [_user] = await tx
-        .update(user)
-        .set({ alpha_credits_redeemed: true })
-        .where(eq(user.id, invoice.metadata!.user_id))
-        .returning();
-
-      await addStripeCredits(
-        _user,
-        ALPHA_CREDIT_AMOUNT.toString(),
-        "promotional",
-      );
-    });
-    console.log(
-      `✅ Successfully handled invoice.payment_succeeded.. Granted $${ALPHA_CREDIT_AMOUNT} to user: ${invoice.metadata.user_id}`,
-    );
-  } catch (error) {
-    console.error("❌ Failed to grant credits", error);
-    return;
   }
 }
 
@@ -178,18 +99,28 @@ async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
 ) {
   // Update user with Stripe customer ID if available
-  if (session.metadata?.user_id) {
-    console.log(`💳 Updating customer ID: ${session.customer}`);
-    await db
-      .update(user)
-      .set({ stripeCustomerId: session.customer as string })
-      .where(eq(user.id, session.metadata.user_id));
-    console.log(
-      `✅ Customer Created: ${session.customer} for user: ${session.metadata?.user_id}`,
-    );
-  } else {
-    console.log(`❌ No user_id found in session metadata`);
+  if (!session.metadata?.user_id) {
+    throw new Error("Missing user_id");
   }
+  if (!session.amount_subtotal) {
+    throw new Error("Missing amount_subtotal");
+  }
+  console.log(`💳 Updating customer ID: ${session.customer}`);
+  await db
+    .update(user)
+    .set({
+      credits: sql`${user.credits} + ${sql.raw(Decimal(session.amount_subtotal).toString())}`,
+    })
+    .where(
+      and(
+        eq(user.id, session.metadata.user_id),
+        eq(user.stripeCustomerId, session.customer as string),
+      ),
+    );
+  console.log(
+    `✅ Customer Created: ${session.customer} for user: ${session.metadata?.user_id}`,
+  );
+  console.log(`💰 Amount Subtotal: ${session.amount_subtotal} cents`);
 }
 
 /**
@@ -213,10 +144,6 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
         break;
       case "customer.deleted":
         await handleCustomerDeleted(event.data.object);
-        break;
-
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(event.data.object);
         break;
 
       default:

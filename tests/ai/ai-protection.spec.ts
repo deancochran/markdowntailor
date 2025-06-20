@@ -1,31 +1,6 @@
-import { db } from "@/db/drizzle";
-import { aiRequestLog } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { authTest } from "../utils/auth";
 
 authTest.describe("AI Actions Unit Tests", () => {
-  authTest.beforeEach(async ({ authenticatedUser }) => {
-    // Clean up any existing test data for this user
-    await db
-      .delete(aiRequestLog)
-      .where(eq(aiRequestLog.userId, authenticatedUser.id));
-  });
-
-  authTest.afterEach(async ({ authenticatedUser }) => {
-    // Clean up test data
-    await db
-      .delete(aiRequestLog)
-      .where(eq(aiRequestLog.userId, authenticatedUser.id));
-  });
-
-  authTest(
-    "logAIRequest - should log request correctly",
-    async () => {
-      throw new Error("Not implemented");
-    });
-    },
-  );
-
   authTest("cleanInput - should sanitize malicious content", async () => {
     throw new Error("Not implemented");
   });

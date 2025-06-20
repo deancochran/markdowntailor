@@ -1,8 +1,6 @@
 import { auth } from "@/auth";
-
-import { CreditClaimSection } from "@/components/settings/CreditClaimSection";
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
-import { StripeBillingCredits } from "@/components/settings/StripeBillingCredits";
+import { PurchaseCreditsForm } from "@/components/settings/PurchaseCreditsForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, CreditCard } from "lucide-react";
+import Decimal from "decimal.js";
+import { AlertCircle, CheckCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function SettingsPage({
@@ -90,47 +89,26 @@ export default async function SettingsPage({
           </CardContent>
         </Card>
 
-        {/* AI Credits Section - Inline Form */}
-
         <Card>
           <CardHeader>
-            <CardTitle>AI Credits</CardTitle>
+            <CardTitle>Purchase Credits</CardTitle>
             <CardDescription>
-              Get credits to power your AI-assisted resume building
+              Buy credits to power your AI-assisted resume building.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {/* Current Balance */}
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span className="text-sm font-medium">Current Balance</span>
-              </div>
-
-              <StripeBillingCredits />
-
-              <p className="text-sm text-muted-foreground">
-                Available AI credits
-              </p>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col w-full items-center justify-between gap-2">
+              <span className="text-sm text-muted-foreground">
+                Your Credit Amount:
+              </span>{" "}
+              <span className="font-semibold text-3xl">
+                ${" "}
+                {session.user?.credits
+                  ? new Decimal(session.user.credits).div(100).toFixed(2)
+                  : "0.00"}
+              </span>
             </div>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Free $5.00 Credit Package
-                </CardTitle>
-                <CardDescription>
-                  Perfect for trying out AI resume enhancements and optimization
-                  features
-                </CardDescription>
-              </CardHeader>
-
-              <CreditClaimSection
-                initialAlphaCreditsRedeemed={
-                  session.user.alpha_credits_redeemed || false
-                }
-              />
-            </Card>
+            <PurchaseCreditsForm />
           </CardContent>
         </Card>
 

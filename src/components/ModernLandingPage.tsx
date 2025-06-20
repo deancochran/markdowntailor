@@ -3,14 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowRight,
-  Brain,
-  FileDown,
-  FileEdit,
-  GitFork,
-  Palette,
-  Sparkles,
-  Star,
+    ArrowRight,
+    Brain,
+    FileDown,
+    FileEdit,
+    GitFork,
+    Palette,
+    Sparkles,
+    Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -482,10 +482,10 @@ export default function ModernLandingPage() {
                 <ul className="space-y-2">
                   <li>
                     <Link
-                      href="#features"
+                      href="#"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
-                      Features
+                      Features (coming soon)
                     </Link>
                   </li>
                   <li>
@@ -493,15 +493,7 @@ export default function ModernLandingPage() {
                       href="#"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
-                      Templates
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
-                    >
-                      Pricing
+                      Pricing (coming soon)
                     </Link>
                   </li>
                 </ul>
@@ -514,7 +506,7 @@ export default function ModernLandingPage() {
                       href="#"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
-                      Blog
+                      Blog (coming soon)
                     </Link>
                   </li>
                   <li>
@@ -522,7 +514,7 @@ export default function ModernLandingPage() {
                       href="#"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
-                      About Us
+                      About Us (coming soon)
                     </Link>
                   </li>
                   <li>
@@ -530,7 +522,7 @@ export default function ModernLandingPage() {
                       href="#"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
-                      Contact
+                      Contact Us (coming soon)
                     </Link>
                   </li>
                 </ul>
@@ -540,7 +532,7 @@ export default function ModernLandingPage() {
                 <ul className="space-y-2">
                   <li>
                     <Link
-                      href="#"
+                      href="/privacy-policy"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Privacy Policy
@@ -548,7 +540,7 @@ export default function ModernLandingPage() {
                   </li>
                   <li>
                     <Link
-                      href="#"
+                      href="/terms-of-service"
                       className="text-sm text-muted-foreground hover:text-primary"
                     >
                       Terms of Service

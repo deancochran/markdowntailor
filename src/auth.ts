@@ -92,6 +92,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
               model_preference: currentUser.model_preference,
               provider_preference: currentUser.provider_preference,
               alpha_credits_redeemed: currentUser.alpha_credits_redeemed,
+              credits: currentUser.credits,
               createdAt: currentUser.createdAt,
               updatedAt: currentUser.updatedAt,
             };

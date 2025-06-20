@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { resume } from "@/db/schema";
-import { getPreferredModelObject } from "@/lib/ai";
-import { logAIRequestWithStripeCredits } from "@/lib/ai/credits";
+import { deductCreditsFromUser, getPreferredModelObject } from "@/lib/ai";
 import { apiRateLimiter } from "@/lib/upstash";
 import {
   InvalidToolArgumentsError,
@@ -11,6 +10,7 @@ import {
   tool,
   ToolExecutionError,
 } from "ai";
+import Decimal from "decimal.js";
 import { z } from "zod";
 
 // Streamlined modification schema for batch operations
@@ -215,6 +215,10 @@ export async function POST(req: Request) {
       return new Response("Too Many Requests", { status: 429 });
     }
 
+    if (Decimal(session.user.credits).lt(0)) {
+      return new Response("Insufficient credits", { status: 402 });
+    }
+
     // Prepare dynamic system prompt
     const systemPrompt = SYSTEM_PROMPT.replace(
       "{RESUME_MARKDOWN}",
@@ -232,18 +236,12 @@ export async function POST(req: Request) {
       system: systemPrompt,
       maxSteps: 8,
       experimental_continueSteps: true,
-      temperature: 0.3, // Lower temperature for more consistent, professional outputs
-      // forward the abort signal:
+      temperature: 0.3,
       abortSignal: req.signal,
-      onFinish: async ({ usage, finishReason }) => {
-        await logAIRequestWithStripeCredits(
-          {
-            status: finishReason === "stop" ? "success" : finishReason,
-            promptTokens: usage.promptTokens,
-            completionTokens: usage.completionTokens,
-          },
-          session.user,
-        );
+      maxTokens: 33_000,
+      onFinish: async (data) => {
+        // Update user credits after successful completion
+        await deductCreditsFromUser(session.user, modelSelection, data.usage);
       },
     });
 

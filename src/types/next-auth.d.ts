@@ -14,6 +14,7 @@ declare module "next-auth" {
       model_preference: string;
       provider_preference: string;
       alpha_credits_redeemed: boolean;
+      credits: string;
       createdAt: Date;
       updatedAt: Date;
       image: string | null;
@@ -32,6 +33,7 @@ declare module "next-auth" {
     model_preference: string;
     provider_preference: string;
     alpha_credits_redeemed: boolean;
+    credits: string;
     createdAt: Date;
     updatedAt: Date;
     image: string | null;

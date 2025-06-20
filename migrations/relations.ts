@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { user, account, authenticator, resume, resumeVersions, session, aiRequestLog } from "./schema";
+import { user, account, authenticator, resume, resumeVersions, session, creditTransactions } from "./schema";
 
 export const accountRelations = relations(account, ({one}) => ({
 	user: one(user, {
@@ -13,7 +13,7 @@ export const userRelations = relations(user, ({many}) => ({
 	authenticators: many(authenticator),
 	resumes: many(resume),
 	sessions: many(session),
-	aiRequestLogs: many(aiRequestLog),
+	creditTransactions: many(creditTransactions),
 }));
 
 export const authenticatorRelations = relations(authenticator, ({one}) => ({
@@ -45,9 +45,9 @@ export const sessionRelations = relations(session, ({one}) => ({
 	}),
 }));
 
-export const aiRequestLogRelations = relations(aiRequestLog, ({one}) => ({
+export const creditTransactionsRelations = relations(creditTransactions, ({one}) => ({
 	user: one(user, {
-		fields: [aiRequestLog.userId],
+		fields: [creditTransactions.userId],
 		references: [user.id]
 	}),
 }));

@@ -1,0 +1,1 @@
+DROP TABLE "ai_request_log" CASCADE;
