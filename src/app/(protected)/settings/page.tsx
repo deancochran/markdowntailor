@@ -66,11 +66,11 @@ export default async function SettingsPage({
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={session.user?.image || undefined}
-                  alt={session.user?.name || "User"}
+                  src={session.user.image || undefined}
+                  alt={session.user.name || "User"}
                 />
                 <AvatarFallback className="text-2xl">
-                  {session.user?.name
+                  {session.user.name
                     ?.split(" ")
                     .map((n) => n[0])
                     .join("")
@@ -79,10 +79,10 @@ export default async function SettingsPage({
               </Avatar>
               <div>
                 <p className="text-lg font-semibold">
-                  {session.user?.name || "No name set"}
+                  {session.user.name || "No name set"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {session.user?.email}
+                  {session.user.email}
                 </p>
               </div>
             </div>
@@ -103,9 +103,10 @@ export default async function SettingsPage({
               </span>{" "}
               <span className="font-semibold text-3xl">
                 ${" "}
-                {session.user?.credits
-                  ? new Decimal(session.user.credits).div(100).toFixed(2)
-                  : "0.00"}
+                {new Decimal(session.user.credits)
+                  .div(100)
+                  .toDecimalPlaces(2, Decimal.ROUND_DOWN)
+                  .toFixed(2)}
               </span>
             </div>
             <PurchaseCreditsForm />
@@ -127,7 +128,7 @@ export default async function SettingsPage({
                 Permanently delete your account and all associated data. This
                 action cannot be undone.
               </p>
-              <DeleteAccountDialog userEmail={session.user?.email || ""} />
+              <DeleteAccountDialog userEmail={session.user.email || ""} />
             </div>
           </CardContent>
         </Card>

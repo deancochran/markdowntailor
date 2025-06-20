@@ -4,6 +4,7 @@ import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
 
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
+import { useUser } from "@/hooks/use-user";
 import { useSaveResume } from "@/hooks/useSaveResume";
 import {
   createResumeFromVersion,
@@ -15,6 +16,7 @@ import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
 import { cx } from "class-variance-authority";
+import Decimal from "decimal.js";
 import { InferSelectModel } from "drizzle-orm";
 import {
   CheckCircle,
@@ -35,6 +37,7 @@ import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
 import { ServerPDFPreview } from "./ServerPDFPreview";
 import { Input } from "./ui/input";
+import { Separator } from "./ui/separator";
 
 class IRange {
   endColumn: number;
@@ -77,6 +80,7 @@ export default function ResumeEditor({
   const { watch, setValue } = useForm({
     defaultValues: resume,
   });
+  const { user, mutate } = useUser();
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -472,6 +476,7 @@ export default function ResumeEditor({
     onFinish: (message) => {
       // console.log("onFinish:", message);
       processToolInvocations(message);
+      mutate();
     },
     onResponse() {
       // console.log("onResponse:", response);
@@ -766,7 +771,22 @@ export default function ResumeEditor({
                     />
                   </div>
                 </div>
-                <form className="flex mx-auto gap-2 w-full md:max-w-3xl p-2 border-t">
+
+                <form className="flex flex-col mx-auto gap-2 w-full md:max-w-3xl p-2">
+                  <div className="w-full h-fit flex items-center justify-end">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      Your Credit Amount: ${" "}
+                      {user ? (
+                        new Decimal(user.credits)
+                          .div(100)
+                          .toDecimalPlaces(2, Decimal.ROUND_DOWN)
+                          .toFixed(2)
+                      ) : (
+                        <Loader2 className="animate-spin inline" />
+                      )}
+                    </span>
+                  </div>
+                  <Separator />
                   <MultimodalInput
                     input={input}
                     setInput={setInput}
@@ -867,7 +887,10 @@ export default function ResumeEditor({
                   />
                 </div>
               </div>
-              <form className="flex mx-auto gap-2 w-full p-2 border-t">
+              <form className="flex flex-col mx-auto gap-2 w-full p-2 border-t">
+                <div className="w-full h-fit flex items-center justify-end">
+                  Credits Display
+                </div>
                 <MultimodalInput
                   input={input}
                   setInput={setInput}

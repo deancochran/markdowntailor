@@ -45,7 +45,7 @@ export function deductCreditsFromUser(
 
   db.transaction(async (tx) => {
     await tx.update(user).set({
-      credits: sql`${user.credits} + ${sql.raw(credit_usage)}`,
+      credits: sql`${user.credits} - ${sql.raw(credit_usage)}`,
     });
 
     await tx.insert(ai_credit_logs).values({
