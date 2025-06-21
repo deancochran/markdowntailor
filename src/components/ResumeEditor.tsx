@@ -487,79 +487,74 @@ export default function ResumeEditor({
 
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
-      <div className="w-full flex flex-col p-2">
-        {/* Title Row */}
-        <div className="flex items-center w-full">
-          <div className="flex-grow min-w-0">
-            <Input
-              className="text-lg md:text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2 h-9 md:h-10"
-              value={sanitizedTitle}
-              onChange={(e) => setValue("title", e.target.value)}
-              placeholder="Untitled Resume"
-            />
-          </div>
-        </div>
-
-        {/* Info and Actions Row */}
-        <div className="flex flex-wrap items-center justify-between mt-1 gap-y-2">
-          {/* Last updated timestamp and versions link */}
-          <div className="flex items-center text-xs text-muted-foreground gap-x-3">
-            {/* Auto-save indicator */}
-            <div className="flex items-center text-xs text-muted-foreground ml-2 shrink-0">
-              {isSaving ? (
-                <span className="flex items-center text-amber-500">
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  Saving...
-                </span>
-              ) : isDirty ? (
-                <span className="flex items-center text-amber-500">
-                  <Clock className="w-3.5 h-3.5 mr-1.5" />
-                  Unsaved changes
-                </span>
-              ) : (
-                <span className="flex items-center text-green-500">
-                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                  Saved
-                </span>
-              )}
+      <div className="w-full flex flex-row items-center justify-between p-2 gap-8">
+        <Input
+          className="w-full text-xl font-semibold bg-transparent border-none focus-visible:ring-0 focus-visible:ring-offset-0 px-2"
+          value={sanitizedTitle}
+          onChange={(e) => setValue("title", e.target.value)}
+          placeholder="Untitled Resume"
+        />
+        <div className="flex flex-col w-full items-end justify-end gap-1">
+          {/* Info and Actions Row */}
+          <div className="flex items-center gap-1">
+            {/* Last updated timestamp and versions link */}
+            <div className="flex items-center text-xs text-muted-foreground gap-x-3">
+              {/* Auto-save indicator */}
+              <div className="flex items-center text-xs text-muted-foreground ml-2 shrink-0">
+                {isSaving ? (
+                  <span className="flex items-center text-amber-500">
+                    <Loader2 className="w-3.5 h-3.5  animate-spin" />
+                    Saving...
+                  </span>
+                ) : isDirty ? (
+                  <span className="flex items-center text-amber-500">
+                    <Clock className="w-3.5 h-3.5 mr-1.5" />
+                    Unsaved changes
+                  </span>
+                ) : (
+                  <span className="flex items-center text-green-500">
+                    <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                    Saved
+                  </span>
+                )}
+              </div>
+              <span className="inline-flex items-center">
+                {updatedAt ? (
+                  <>
+                    <Clock className="w-3 h-3 mr-1 hidden xs:inline" />
+                    <span className="hidden xs:inline">Updated</span>{" "}
+                    <time
+                      dateTime={updatedAt.toISOString()}
+                      className="whitespace-nowrap"
+                    >
+                      {updatedAt.toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </>
+                ) : (
+                  "Not saved yet"
+                )}
+              </span>
             </div>
-            <span className="inline-flex items-center">
-              {updatedAt ? (
-                <>
-                  <Clock className="w-3 h-3 mr-1 hidden xs:inline" />
-                  <span className="hidden xs:inline">Updated</span>{" "}
-                  <time
-                    dateTime={updatedAt.toISOString()}
-                    className="whitespace-nowrap"
-                  >
-                    {updatedAt.toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </>
-              ) : (
-                "Not saved yet"
-              )}
-            </span>
           </div>
-
           {/* Secondary Actions */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
+          <div className="flex items-center gap-1">
             {/* Versions link */}
             <Button
               onClick={handleSave}
               disabled={isSaving || !isDirty}
               variant="outline"
               size="sm"
-              className="ml-2"
               asChild
             >
               <Link href={`/resumes/${id}/versions`}>
-                <History className="w-3 h-3 mr-1" />
-                Versions
+                <History className="w-3 h-3" />
+
+                <span className="hidden sm:inline">Versions</span>
               </Link>
             </Button>
             {/* Save Button */}
@@ -570,16 +565,11 @@ export default function ResumeEditor({
               size="sm"
             >
               {isSaving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
-                </>
+                <Save className="w-4 h-4" />
               )}
+              <span className="hidden sm:inline">Save</span>
             </Button>
             {/* Duplicate button */}
             <Button
@@ -593,7 +583,7 @@ export default function ResumeEditor({
               ) : (
                 <Copy className="w-4 h-4" />
               )}
-              <span className="ml-1.5 hidden sm:inline">Duplicate</span>
+              <span className="hidden sm:inline">Duplicate</span>
             </Button>
 
             {/* Delete button */}
@@ -609,7 +599,7 @@ export default function ResumeEditor({
               ) : (
                 <Trash2 className="w-4 h-4" />
               )}
-              <span className="ml-1.5 hidden sm:inline">Delete</span>
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           </div>
         </div>
@@ -889,8 +879,19 @@ export default function ResumeEditor({
               </div>
               <form className="flex flex-col mx-auto gap-2 w-full p-2 border-t">
                 <div className="w-full h-fit flex items-center justify-end">
-                  Credits Display
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    Your Credit Amount: ${" "}
+                    {user ? (
+                      new Decimal(user.credits)
+                        .div(100)
+                        .toDecimalPlaces(2, Decimal.ROUND_DOWN)
+                        .toFixed(2)
+                    ) : (
+                      <Loader2 className="animate-spin inline" />
+                    )}
+                  </span>
                 </div>
+                <Separator />
                 <MultimodalInput
                   input={input}
                   setInput={setInput}

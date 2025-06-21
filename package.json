@@ -66,6 +66,7 @@
     "jspdf": "^3.0.1",
     "lucide-react": "^0.509.0",
     "marked": "^15.0.12",
+    "monaco-editor": "^0.52.2",
     "motion": "^12.18.1",
     "next": "15.3.2",
     "next-auth": "5.0.0-beta.28",

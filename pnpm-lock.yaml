@@ -146,6 +146,9 @@ importers:
       marked:
         specifier: ^15.0.12
         version: 15.0.12
+      monaco-editor:
+        specifier: ^0.52.2
+        version: 0.52.2
       motion:
         specifier: ^12.18.1
         version: 12.18.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

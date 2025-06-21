@@ -5,7 +5,8 @@ import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 
 import { withSentry } from "@/lib/utils/sentry";
-import { eq } from "drizzle-orm";
+import Decimal from "decimal.js";
+import { eq, sql } from "drizzle-orm";
 import { stripe } from "../stripe";
 
 /**
@@ -28,10 +29,25 @@ export async function updateUserWithStripeCustomerId(
   userId: string,
   stripeCustomerId: string,
 ) {
-  await db
+  const [dbUser] = await db
     .update(user)
     .set({
       stripeCustomerId,
     })
-    .where(eq(user.id, userId));
+    .where(eq(user.id, userId))
+    .returning();
+
+  if (!dbUser) {
+    throw new Error("User not found");
+  }
+  if (dbUser.alpha_credits_redeemed == false) {
+    await db
+      .update(user)
+      .set({
+        alpha_credits_redeemed: true,
+        credits: sql`${user.credits} + ${sql.raw(new Decimal("25").toString())}`,
+      })
+      .where(eq(user.id, dbUser.id))
+      .returning();
+  }
 }

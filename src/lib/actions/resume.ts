@@ -32,7 +32,6 @@ export const addResume = withSentry(
     if (!validatedFields.success) {
       throw new Error("Failed to create Resume");
     }
-    console.log(validatedFields.data);
 
     const [newResume] = await db
       .insert(resume)
