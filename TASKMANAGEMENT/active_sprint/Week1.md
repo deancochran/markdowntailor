@@ -112,11 +112,3 @@
     - [x] Ensure no SQL injection attacks
 
 ---
-
-
-  - [ ] Testing for Alpha Program
-    - [ ] Test Stripe
-    - [ ] Test Dynamic Pricing
-    - [ ] Test Email Access Policies
-    - [ ] Alpha Program Access Policies
----
