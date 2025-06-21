@@ -27,7 +27,7 @@ export function calculateRequestCost(
   return input.plus(output).toString(); // Use toString() instead of toFixed(4) for full precision
 }
 
-export function deductCreditsFromUser(
+export async function deductCreditsFromUser(
   _user: User,
   model: ModelObject,
   data: LanguageModelUsage,
@@ -43,7 +43,7 @@ export function deductCreditsFromUser(
 
   console.log("AI Request Cost: $" + credit_usage);
 
-  db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await tx.update(user).set({
       credits: sql`${user.credits} - ${sql.raw(credit_usage)}`,
     });

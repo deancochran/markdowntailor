@@ -74,7 +74,6 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
 
     // Check if this is initial generation
     if (!hasInitiallyGenerated) {
-      console.log("Initial PDF generation");
       generatePDF();
       return;
     }

@@ -82,6 +82,15 @@ export default function ResumeEditor({
   });
   const { user, mutate } = useUser();
 
+  const [featureDisabled, setFeatureDisabled] = useState(
+    new Decimal(user.credits).div(100).lt(0),
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    setFeatureDisabled(new Decimal(user.credits).div(100).lt(0));
+  }, [user]);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   // Replace page estimation with actual page count from PDF
@@ -754,6 +763,7 @@ export default function ResumeEditor({
                 <div className="flex-1 w-full overflow-y-auto">
                   <div className="w-full md:max-w-3xl mx-auto p-2">
                     <Messages
+                      featureDisabled={featureDisabled}
                       status={status}
                       messages={messages}
                       setMessages={setMessages}
@@ -765,19 +775,26 @@ export default function ResumeEditor({
                 <form className="flex flex-col mx-auto gap-2 w-full md:max-w-3xl p-2">
                   <div className="w-full h-fit flex items-center justify-end">
                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      Your Credit Amount: ${" "}
-                      {user ? (
-                        new Decimal(user.credits)
-                          .div(100)
-                          .toDecimalPlaces(2, Decimal.ROUND_DOWN)
-                          .toFixed(2)
+                      {featureDisabled ? (
+                        "Feature Disabled: Insufficent Credits"
                       ) : (
-                        <Loader2 className="animate-spin inline" />
+                        <>
+                          Your Credit Amount: ${" "}
+                          {user ? (
+                            new Decimal(user.credits)
+                              .div(100)
+                              .toDecimalPlaces(2, Decimal.ROUND_DOWN)
+                              .toFixed(2)
+                          ) : (
+                            <Loader2 className="animate-spin inline" />
+                          )}
+                        </>
                       )}
                     </span>
                   </div>
                   <Separator />
                   <MultimodalInput
+                    featureDisabled={featureDisabled}
                     input={input}
                     setInput={setInput}
                     handleSubmit={handleSubmit}
@@ -870,6 +887,7 @@ export default function ResumeEditor({
               <div className="flex-1 w-full overflow-y-auto">
                 <div className="w-full mx-auto p-2">
                   <Messages
+                    featureDisabled={featureDisabled}
                     status={status}
                     messages={messages}
                     setMessages={setMessages}
@@ -880,19 +898,26 @@ export default function ResumeEditor({
               <form className="flex flex-col mx-auto gap-2 w-full p-2 border-t">
                 <div className="w-full h-fit flex items-center justify-end">
                   <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    Your Credit Amount: ${" "}
-                    {user ? (
-                      new Decimal(user.credits)
-                        .div(100)
-                        .toDecimalPlaces(2, Decimal.ROUND_DOWN)
-                        .toFixed(2)
+                    {featureDisabled ? (
+                      "Feature Disabled: Insufficent Credits"
                     ) : (
-                      <Loader2 className="animate-spin inline" />
+                      <>
+                        Your Credit Amount: ${" "}
+                        {user ? (
+                          new Decimal(user.credits)
+                            .div(100)
+                            .toDecimalPlaces(2, Decimal.ROUND_DOWN)
+                            .toFixed(2)
+                        ) : (
+                          <Loader2 className="animate-spin inline" />
+                        )}
+                      </>
                     )}
                   </span>
                 </div>
                 <Separator />
                 <MultimodalInput
+                  featureDisabled={featureDisabled}
                   input={input}
                   setInput={setInput}
                   handleSubmit={handleSubmit}

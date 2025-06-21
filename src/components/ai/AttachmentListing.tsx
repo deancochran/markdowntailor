@@ -6,11 +6,13 @@ import { PreviewAttachment } from "./preview-attachment";
 interface AttachmentListingProps {
   attachments: Attachment[];
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
+  featureDisabled: boolean;
 }
 
 export function AttachmentListing({
   attachments,
   setAttachments,
+  featureDisabled,
 }: AttachmentListingProps) {
   if (attachments.length === 0) return null;
 
@@ -23,6 +25,7 @@ export function AttachmentListing({
       {attachments.map((att) => (
         <div key={att.url} className="relative flex-shrink-0">
           <button
+            disabled={featureDisabled}
             onClick={() => removeAttachment(att.url)}
             className="absolute -top-2 -right-2 size-5 flex items-center justify-center bg-gray-200 dark:bg-zinc-700 rounded-full hover:bg-gray-300 dark:hover:bg-zinc-600 z-10"
           >

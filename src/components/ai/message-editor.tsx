@@ -11,6 +11,7 @@ export type MessageEditorProps = {
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   setMessages: UseChatHelpers["setMessages"];
   reload: UseChatHelpers["reload"];
+  featureDisabled: boolean;
 };
 
 export function MessageEditor({
@@ -18,6 +19,7 @@ export function MessageEditor({
   setMode,
   setMessages,
   reload,
+  featureDisabled,
 }: MessageEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -48,6 +50,7 @@ export function MessageEditor({
         data-testid="message-editor"
         ref={textareaRef}
         className="bg-transparent outline-none overflow-hidden resize-none !text-base rounded-xl w-full"
+        disabled={featureDisabled}
         value={draftContent}
         onChange={handleInput}
       />
@@ -66,7 +69,7 @@ export function MessageEditor({
           data-testid="message-editor-send-button"
           variant="default"
           className="h-fit py-2 px-3 "
-          disabled={isSubmitting}
+          disabled={isSubmitting || featureDisabled}
           onClick={async () => {
             setIsSubmitting(true);
 

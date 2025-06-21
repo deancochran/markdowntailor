@@ -11,6 +11,7 @@ import { memo, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 function PureMultimodalInput({
+  featureDisabled,
   input,
   setInput,
   status,
@@ -19,6 +20,7 @@ function PureMultimodalInput({
   setAttachments,
   handleSubmit,
 }: {
+  featureDisabled: boolean;
   input: UseChatHelpers["input"];
   setInput: UseChatHelpers["setInput"];
   status: UseChatHelpers["status"];
@@ -29,7 +31,7 @@ function PureMultimodalInput({
   handleSubmit: UseChatHelpers["handleSubmit"];
 }) {
   const { width } = useWindowSize();
-  const { isAtBottom:_isAtBottom, scrollToBottom } = useScrollToBottom();
+  const { isAtBottom: _isAtBottom, scrollToBottom } = useScrollToBottom();
   const [_localInput, setLocalInput] = useLocalStorage("input", "");
 
   const submitForm = useCallback(() => {
@@ -83,6 +85,7 @@ function PureMultimodalInput({
         autoFocus
         value={input}
         ref={textareaRef}
+        disabled={featureDisabled}
         onChange={handleInput}
         onKeyDown={(event) => {
           if (
@@ -111,6 +114,7 @@ function PureMultimodalInput({
               e.preventDefault();
               stop();
             }}
+            disabled={featureDisabled}
           >
             <Square />
           </Button>
@@ -120,7 +124,7 @@ function PureMultimodalInput({
               e.preventDefault();
               submitForm();
             }}
-            disabled={input.length === 0}
+            disabled={input.length === 0 || featureDisabled}
           >
             <SendHorizontal />
           </Button>
