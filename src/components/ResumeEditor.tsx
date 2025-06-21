@@ -82,9 +82,7 @@ export default function ResumeEditor({
   });
   const { user, mutate } = useUser();
 
-  const [featureDisabled, setFeatureDisabled] = useState(
-    new Decimal(user.credits).div(100).lt(0),
-  );
+  const [featureDisabled, setFeatureDisabled] = useState(true);
 
   useEffect(() => {
     if (!user) return;
