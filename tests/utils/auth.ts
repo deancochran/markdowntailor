@@ -4,6 +4,7 @@ import { Page, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { User } from "next-auth";
 import { v4 } from "uuid";
+import { DataFactory } from "./data-factory";
 
 export class AuthHelper {
   private page: Page;
@@ -17,19 +18,19 @@ export class AuthHelper {
    * Creates a test user with proper accounts linking for credentials auth
    */
   async createAndAuthenticateUser(): Promise<User> {
-    // Create user with unique ID and email
-    const uniqueEmail = `test-${v4()}@example.com`;
-    const userId = v4();
-
-    const testUser = {
-      id: userId,
-      email: uniqueEmail,
-      name: "Test User",
+    const id = v4();
+    const testUserData = DataFactory.createUserData({
+      id: id,
+      name: `test-${id}`,
+      email: `test-${id}@example.com`,
       emailVerified: new Date(),
       image: "https://avatars.githubusercontent.com/u/67470890?s=200&v=4",
-    };
+    });
 
-    const [createdUser] = await db.insert(user).values(testUser).returning();
+    const [createdUser] = await db
+      .insert(user)
+      .values(testUserData)
+      .returning();
 
     // Create the corresponding accounts entry (this is crucial for credentials auth)
     await db.insert(accounts).values({
