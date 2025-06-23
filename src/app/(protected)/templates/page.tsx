@@ -187,6 +187,7 @@ export default function Templates() {
               <Search className="absolute text-muted-foreground h-9 p-1" />
               <Input
                 placeholder="Search templates..."
+                data-testid={`template-search`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ paddingLeft: "24px" }}
@@ -220,6 +221,7 @@ export default function Templates() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        datatype="template-clear-filters"
                         onClick={() => setSelectedTags([])}
                         className="h-auto p-0 text-xs text-muted-foreground  hover:text-foreground"
                       >
@@ -240,6 +242,7 @@ export default function Templates() {
                           <Checkbox
                             id={key}
                             checked={isSelected}
+                            data-testid={`template-filter`}
                             onCheckedChange={() =>
                               toggleTag(key as TemplateTag)
                             }
@@ -319,7 +322,10 @@ export default function Templates() {
 
 function TemplateCard({ template }: { template: Template }) {
   return (
-    <Card className="group transition-all duration-200 hover:shadow-lg hover:border-primary/20 h-full flex flex-col">
+    <Card
+      data-testid="template-card"
+      className="group transition-all duration-200 hover:shadow-lg hover:border-primary/20 h-full flex flex-col"
+    >
       <CardHeader className="flex-shrink-0">
         <div className="flex flex-col items-start justify-between gap-1">
           <div className="flex flex-wrap w-full gap-6 items-center justify-between">
@@ -401,7 +407,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   const handleCreateFromTemplate = async () => {
     setIsCreating(true);
     try {
-      const newResumeId = await addResume({
+      await addResume({
         title: `${template.title} (Copy)`,
         markdown: templateContent.markdown,
         css: templateContent.css,
@@ -409,7 +415,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
 
       toast.success(`Resume "${template.title} (Copy)" created successfully!`);
       setIsOpen(false);
-      router.push(`/resumes/${newResumeId}`);
+      router.push(`/resumes`);
     } catch (error) {
       console.error("Failed to create resume:", error);
       toast.error("Failed to create resume from template");
@@ -421,7 +427,7 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-testid="template-card-preview">
           <Eye className="h-4 w-4   mr-2" />
           Preview
         </Button>
@@ -467,8 +473,12 @@ function TemplatePreviewDialog({ template }: { template: Template }) {
           >
             <div className="flex-shrink-0 w-full overflow-hidden">
               <TabsList className="flex flex-row gap-4 w-full">
-                <TabsTrigger value="markdown">Markdown</TabsTrigger>
-                <TabsTrigger value="css">CSS</TabsTrigger>
+                <TabsTrigger data-testid="preview-tab-css" value="markdown">
+                  Markdown
+                </TabsTrigger>
+                <TabsTrigger data-testid="preview-tab-markdown" value="css">
+                  CSS
+                </TabsTrigger>
               </TabsList>
             </div>
 

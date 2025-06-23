@@ -31,7 +31,6 @@ type Resume = {
   title: string;
   markdown: string;
   css: string;
-  content: string;
   createdAt: Date;
   updatedAt: Date;
   _isOptimistic?: boolean;
@@ -199,6 +198,7 @@ function ResumeCard({
   return (
     <motion.div variants={{ cardVariants }} whileHover="hover" whileTap="tap">
       <Card
+        data-testid="resume-card"
         className={`
         group transition-all duration-200 border bg-card
         ${resume._isOptimistic ? "bg-blue-50/50 border-blue-200" : "hover:shadow-lg hover:border-primary/20"}
@@ -341,7 +341,6 @@ function ResumeDropdownMenu({
         title: `${resumeTitle} (Copy)`,
         markdown: "",
         css: "",
-        content: "",
         createdAt: new Date(),
         updatedAt: new Date(),
         _isOptimistic: true,

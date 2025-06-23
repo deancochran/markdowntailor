@@ -8,7 +8,7 @@ test.describe("Logout Test User", () => {
     await page.getByText("TU", { exact: true }).click();
     await expect(page.getByRole("button", { name: "Sign Out" })).toBeVisible();
     await page.getByRole("button", { name: "Sign Out" }).click();
-    await page.waitForNavigation({ waitUntil: "networkidle" });
+    await page.waitForURL("/", { waitUntil: "networkidle" });
     await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible();
     await page.getByRole("link", { name: "Sign In" }).click();
     await expect(page.getByTestId("policy-agreement")).toBeVisible();
