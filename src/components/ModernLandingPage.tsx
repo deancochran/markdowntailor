@@ -3,14 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    ArrowRight,
-    Brain,
-    FileDown,
-    FileEdit,
-    GitFork,
-    Palette,
-    Sparkles,
-    Star,
+  ArrowRight,
+  Brain,
+  FileDown,
+  FileEdit,
+  GitFork,
+  Palette,
+  Sparkles,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -29,7 +29,7 @@ function AlphaProgramBanner() {
   const [mounted, setMounted] = useState(false);
 
   // Set your alpha program dates here - memoized to prevent unnecessary re-renders
-  const ALPHA_START_DATE = useMemo(() => new Date("2025-07-01T00:00:00Z"), []);
+  const ALPHA_START_DATE = useMemo(() => new Date("2025-06-01T00:00:00Z"), []);
   const ALPHA_END_DATE = useMemo(() => new Date("2025-07-31T23:59:59Z"), []);
 
   useEffect(() => {
