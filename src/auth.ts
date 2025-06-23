@@ -7,6 +7,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import { user } from "./db/schema";
+import { setUserContext } from "./lib/utils/sentry";
 
 const providers = [GitHub, LinkedIn, Google];
 if (process.env.NODE_ENV === "development") {
@@ -63,30 +64,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (token.sub) {
         try {
           // Fetch fresh, complete user data from database
-          const dbUser = await db
+          const [currentUser] = await db
             .select()
             .from(user)
             .where(eq(user.id, token.sub))
             .limit(1);
 
-          if (dbUser.length > 0) {
-            const currentUser = dbUser[0];
-
-            // Include all data in session (server-side only)
-            session.user = {
-              ...session.user,
-              id: currentUser.id,
-              name: currentUser.name,
-              email: currentUser.email,
-              stripeCustomerId: currentUser.stripeCustomerId,
-              model_preference: currentUser.model_preference,
-              provider_preference: currentUser.provider_preference,
-              alpha_credits_redeemed: currentUser.alpha_credits_redeemed,
-              credits: currentUser.credits,
-              createdAt: currentUser.createdAt,
-              updatedAt: currentUser.updatedAt,
-            };
+          if (!currentUser) {
+            throw new Error("User not found");
           }
+          setUserContext(currentUser);
+
+          // Include all data in session (server-side only)
+          session.user = {
+            ...session.user,
+            ...currentUser,
+          };
         } catch (error) {
           console.error("Error fetching user data:", error);
           // Handle error appropriately

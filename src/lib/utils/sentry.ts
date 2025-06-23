@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { User } from "next-auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withSentry<T extends (...args: any[]) => Promise<any>>(
@@ -35,18 +36,6 @@ export function captureError(error: Error, context?: Record<string, unknown>) {
   });
 }
 
-export function setUserContext(user?: {
-  id?: string;
-  email?: string;
-  username?: string;
-}) {
-  Sentry.setUser(
-    user
-      ? {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-        }
-      : null,
-  );
+export function setUserContext(user: User) {
+  Sentry.setUser(user ?? null);
 }
