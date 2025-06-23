@@ -21,8 +21,6 @@ const nextConfig = {
       },
     },
   },
-  // Add transpilePackages to handle @uiw/react-md-editor
-  transpilePackages: ["@uiw/react-md-editor"],
 };
 
 export default withSentryConfig(nextConfig, {

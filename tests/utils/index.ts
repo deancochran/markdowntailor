@@ -1,12 +1,9 @@
+import { test as base } from "@playwright/test";
 import { User } from "next-auth";
-import { APIRequestContext, Page } from "playwright";
-import { test as base } from "playwright/test";
 import { cleanupTestUser, createTestUser } from "./data-factory";
 
 type AppFixtures = {
   user: User;
-  authedPage: Page;
-  authedRequest: APIRequestContext;
 };
 
 // Extend the base Playwright `test` object with our custom fixtures.
