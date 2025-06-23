@@ -200,7 +200,6 @@ export const resume = pgTable(
 `,
       )
       .notNull(),
-    content: text().default("").notNull(),
     createdAt: timestamp("created_at", { mode: "string" })
       .defaultNow()
       .notNull(),
@@ -395,13 +394,17 @@ export const user = pgTable(
     updatedAt: timestamp("updated_at", { mode: "string" })
       .defaultNow()
       .notNull(),
-    modelPreference: text("model_preference").default("o4-mini").notNull(),
-    providerPreference: text("provider_preference").default("openai").notNull(),
+    modelPreference: text("model_preference")
+      .default("claude-sonnet-4-20250514")
+      .notNull(),
+    providerPreference: text("provider_preference")
+      .default("anthropic")
+      .notNull(),
     stripeCustomerId: text("stripe_customer_id"),
     alphaCreditsRedeemed: boolean("alpha_credits_redeemed")
       .default(false)
       .notNull(),
-    credits: numeric({ precision: 19, scale: 4 }).default("0.00"),
+    credits: numeric({ precision: 19, scale: 4 }).default("0.00").notNull(),
   },
   (table) => [
     unique("user_email_unique").on(table.email),

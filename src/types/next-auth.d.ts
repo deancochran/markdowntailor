@@ -10,6 +10,7 @@ declare module "next-auth" {
       id: string;
       name: string;
       email: string;
+      emailVerified: Date | null;
       stripeCustomerId: string | null;
       model_preference: string;
       provider_preference: string;
@@ -29,6 +30,7 @@ declare module "next-auth" {
     id: string;
     name: string;
     email: string;
+    emailVerified: Date | null;
     stripeCustomerId: string | null;
     model_preference: string;
     provider_preference: string;

@@ -150,7 +150,6 @@ export const resume = pgTable("resume", {
   title: text("title").notNull(),
   markdown: text("markdown").notNull().default(DEFAULT_RESUME_MARKDOWN),
   css: text("css").notNull().default(DEFAULT_RESUME_CSS),
-  content: text("content").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

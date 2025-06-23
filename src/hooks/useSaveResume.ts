@@ -15,7 +15,6 @@ interface SaveResumeOptions {
     title: string;
     markdown: string;
     css: string;
-    content: string;
     createdAt: Date;
     updatedAt: Date;
   }>;
@@ -26,7 +25,6 @@ interface SaveResumeOptions {
     title: string;
     markdown: string;
     css: string;
-    content: string;
     createdAt: Date;
     updatedAt: Date;
   }) => void;

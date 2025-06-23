@@ -6,19 +6,9 @@ import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
-import z, { ZodError } from "zod";
 import { user } from "./db/schema";
 
 const providers = [GitHub, LinkedIn, Google];
-
-const testSignInSchema = z.object({
-  email: z
-    .string({ required_error: "Email is required" })
-    .email("Invalid email"),
-  password: z
-    .string({ required_error: "Password is required" })
-    .min(1, "Password is required"),
-});
 if (process.env.NODE_ENV === "development") {
   providers.push(
     //@ts-expect-error issue https://github.com/nextauthjs/next-auth/issues/6174
@@ -29,28 +19,28 @@ if (process.env.NODE_ENV === "development") {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, _request) {
-        try {
-          const { password: _password, email } =
-            await testSignInSchema.parseAsync(credentials);
-
-          const dbUser = await db
-            .select()
-            .from(user)
-            .where(eq(user.email, email))
-            .limit(1);
-
-          if (dbUser.length === 0) {
-            return null;
-          }
-          const currentUser = dbUser[0];
-          return { ...currentUser } as User;
-        } catch (error) {
-          if (error instanceof ZodError) {
-            return null;
-          }
+      async authorize(credentials) {
+        if (
+          !credentials ||
+          typeof credentials.password !== "string" ||
+          !credentials.email
+        ) {
+          return null;
         }
-        return null;
+
+        const email = credentials.email as string;
+        const dbUser = await db
+          .select()
+          .from(user)
+          .where(eq(user.email, email))
+          .limit(1);
+
+        if (dbUser.length === 0) {
+          return null;
+        }
+
+        const currentUser = dbUser[0];
+        return { ...currentUser } as User;
       },
     }),
   );
