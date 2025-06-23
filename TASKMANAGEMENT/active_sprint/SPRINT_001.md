@@ -56,6 +56,10 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
   - [ ] Configure automated testing
   - [ ] Configure automated deployment
   - [ ] Configure AI integration for debugging
+- [ ] Test CI/CD pipelines with real commits and changes
+- [ ] Test CI/CD pipelines with db migrations
+
+
 
 ### Week 4 (June 30 - July 1)
 - [ ] README.md updates and documentation
