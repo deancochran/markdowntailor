@@ -2,22 +2,18 @@ import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
 import { resume } from "@/db/schema";
 import { apiRateLimiter, redis } from "@/lib/upstash";
-import { generatePDFServerSide } from "@/lib/utils/pdfGenerator";
-import crypto from "crypto";
+import {
+  generateCacheKey,
+  generatePDFServerSide,
+} from "@/lib/utils/pdfGenerator";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-
-// Helper function to create cache key from version ID
-function generateCacheKey(markdown: string, css: string): string {
-  const content = markdown + css;
-  return crypto.createHash("sha256").update(content).digest("hex");
-}
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const session = await auth();
-    if (!session?.user) {
+    if (!session) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 },

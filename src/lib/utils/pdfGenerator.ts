@@ -1,7 +1,14 @@
+import crypto from "crypto";
 import { marked } from "marked";
 import { Browser, chromium } from "playwright";
 
 let browserInstance: Browser | null = null;
+
+// Helper function to create cache key from version ID
+export function generateCacheKey(markdown: string, css: string): string {
+  const content = markdown + css;
+  return crypto.createHash("sha256").update(content).digest("hex");
+}
 
 /**
  * Get or create a browser instance for PDF generation

@@ -210,13 +210,16 @@ export async function POST(req: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
+    if (Decimal(session.user.credits).lt(0)) {
+      return new Response("Insufficient credits", { status: 402 });
+    }
+    if (!session.user.stripeCustomerId) {
+      return new Response("User not subscribed", { status: 402 });
+    }
+
     const rateLimit = await apiRateLimiter.limit(session.user.id);
     if (!rateLimit.success) {
       return new Response("Too Many Requests", { status: 429 });
-    }
-
-    if (Decimal(session.user.credits).lt(0)) {
-      return new Response("Insufficient credits", { status: 402 });
     }
 
     // Prepare dynamic system prompt

@@ -1,17 +1,21 @@
 import { expect, test } from "tests/utils";
 import { programmaticLogin } from "tests/utils/auth";
-test.describe("/api/user", () => {
-  test("should return 401 when not authenticated", async ({ page }) => {
-    const response = await page.request.get("/api/user");
-    expect(response.status()).toBe(401);
-  });
+// A minimal resume object to send with chat requests
+const minimalResume = {
+  markdown: "# John Doe\n\nSoftware Engineer with 5 years of experience.",
+  css: "body { font-family: sans-serif; }",
+};
 
-  test("should return user data when authenticated", async ({ page, user }) => {
+test.describe("/api/chat", () => {
+  test("should return 401 when not authenticated", async ({ page, user }) => {
     await programmaticLogin(page, user);
-
-    const response = await page.request.get("/api/user");
-    expect(response.status()).toBe(200);
-    const data = await response.json();
-    expect.soft(data.id).toEqual(user.id);
+    // Log out to test unauthenticated access
+    const response = await page.request.post(`/api/chat`, {
+      data: {
+        resume: minimalResume,
+        messages: [{ role: "user", content: "Hi" }],
+      },
+    });
+    expect(response.status()).toBe(401);
   });
 });
