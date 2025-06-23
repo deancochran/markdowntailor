@@ -8,17 +8,17 @@ import { User } from "next-auth";
 import Stripe from "stripe";
 // Validate required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY is required");
+  console.warn("STRIPE_SECRET_KEY is required");
 }
 
 if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  throw new Error("STRIPE_WEBHOOK_SECRET is required");
+  console.warn("STRIPE_WEBHOOK_SECRET is required");
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const stripeAgentToolkit = new StripeAgentToolkit({
-  secretKey: process.env.STRIPE_SECRET_KEY,
+  secretKey: process.env.STRIPE_SECRET_KEY as string,
   configuration: {
     actions: {
       paymentLinks: {
