@@ -30,7 +30,11 @@ function AlphaProgramBanner() {
 
   // Set your alpha program dates here - memoized to prevent unnecessary re-renders
   const ALPHA_START_DATE = useMemo(() => new Date("2025-06-01T00:00:00Z"), []);
-  const ALPHA_END_DATE = useMemo(() => new Date("2025-07-31T23:59:59Z"), []);
+  const ALPHA_END_DATE = useMemo(
+    () =>
+      new Date(process.env.ALPHA_ACCESS_CUTOFF_DATE ?? "2025-08-01T00:00:00Z"),
+    [],
+  );
 
   useEffect(() => {
     setMounted(true);

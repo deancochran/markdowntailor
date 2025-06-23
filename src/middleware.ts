@@ -8,15 +8,12 @@ import { NextAuthRequest } from "next-auth";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { middlewareRateLimiter, redis } from "./lib/upstash";
 
-const ALPHA_ACCESS_CUTOFF = new Date("2025-08-01T00:00:00Z");
-
 export default async function middleware(
   request: NextRequest,
   _event: NextFetchEvent,
 ): Promise<Response | undefined> {
-  const pathname = request.nextUrl.pathname;
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
-
+  const pathname = request.nextUrl.pathname;
   // Apply general rate limiter (API has its own)
   const { success } = await middlewareRateLimiter.limit(ip);
   if (!success) {
@@ -24,8 +21,12 @@ export default async function middleware(
   }
 
   // Only apply alpha cutoff to protected routes
-  const isProtected = pathname.startsWith("/(protected)");
-  if (isProtected && new Date() > ALPHA_ACCESS_CUTOFF) {
+  const protectedPaths = ["/resumes", "/settings", "/templates", "/api"];
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
+  if (
+    isProtected &&
+    new Date() > new Date(process.env.ALPHA_ACCESS_CUTOFF_DATE as string)
+  ) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
