@@ -31,15 +31,14 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
       # Sentry environment variables for source map upload and release creation
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      # Database URL for PostgreSQL service
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
       # Upstash Redis environment variables
       UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
       # Stripe environment variables
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-
+      # Auth.js secret for encryption
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
