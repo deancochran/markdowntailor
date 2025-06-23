@@ -12,6 +12,7 @@
     "test": "pnpm exec playwright test",
     "test:ui": "pnpm exec playwright test --ui",
     "test:failed": "npx playwright test --last-failed",
+    "codegen": "npx playwright codegen http://localhost:3000",
     "show-report": "pnpm exec playwright show-report",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate:pg",
