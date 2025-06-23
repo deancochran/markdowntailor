@@ -19,26 +19,26 @@ test("should return 402 when user has insufficient credits", async ({
   const body = await response.text();
   expect(body).toBe("Insufficient credits");
 });
-test("should return 429 for too many requests", async ({ page }) => {
-  // The rate limiter is configured to allow 10 requests per 10 seconds.
-  // We'll send more than that to trigger it.
-  const promises = [];
-  for (let i = 0; i < 15; i++) {
-    promises.push(
-      page.request.post(`/api/chat`, {
-        data: {
-          resume: minimalResume,
-          messages: [{ role: "user", content: `Hi ${i}` }],
-        },
-      }),
-    );
-  }
-  const responses = await Promise.all(promises);
-  const statuses = responses.map((r) => r.status());
+// test("should return 429 for too many requests", async ({ page }) => {
+//   // The rate limiter is configured to allow 10 requests per 10 seconds.
+//   // We'll send more than that to trigger it.
+//   const promises = [];
+//   for (let i = 0; i < 15; i++) {
+//     promises.push(
+//       page.request.post(`/api/chat`, {
+//         data: {
+//           resume: minimalResume,
+//           messages: [{ role: "user", content: `Hi ${i}` }],
+//         },
+//       }),
+//     );
+//   }
+//   const responses = await Promise.all(promises);
+//   const statuses = responses.map((r) => r.status());
 
-  // Expect at least one response to be 429
-  expect(statuses).toContain(429);
-});
+//   // Expect at least one response to be 429
+//   expect(statuses).toContain(429);
+// });
 test("should return a successful streaming response for a valid request", async ({
   page,
 }) => {

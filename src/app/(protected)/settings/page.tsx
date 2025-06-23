@@ -39,7 +39,7 @@ export default async function SettingsPage({
 
         {/* Payment Status Alerts */}
         {payment === "success" && (
-          <Alert>
+          <Alert data-testid="payment-success-alert">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               Payment successful! Your credits have been added to your account.
@@ -64,7 +64,7 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
+              <Avatar className="h-20 w-20" data-testid="profile-avatar">
                 <AvatarImage
                   src={session.user.image || undefined}
                   alt={session.user.name || "User"}
@@ -78,7 +78,7 @@ export default async function SettingsPage({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-lg font-semibold">
+                <p className="text-lg font-semibold" data-testid="profile-name">
                   {session.user.name || "No name set"}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -98,7 +98,10 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col w-full items-center justify-between gap-2">
-              <span className="text-sm text-muted-foreground">
+              <span
+                className="text-sm text-muted-foreground"
+                data-testid="credit-amount"
+              >
                 Your Credit Amount:
               </span>{" "}
               <span className="font-semibold text-3xl">

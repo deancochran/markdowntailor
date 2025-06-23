@@ -1,14 +1,14 @@
-name: CI
+name: CICD
 
 on:
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
     branches: [main]
 
 jobs:
   build-and-test:
-    name: Build & Lint
+    name: Build & Test
     runs-on: ubuntu-latest
 
     services:
@@ -19,7 +19,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: resumeforge
+          POSTGRES_DB: db
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -27,7 +27,7 @@ jobs:
           --health-retries 5
 
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/resumeforge
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
 
     steps:
       - name: Checkout code
@@ -63,3 +63,94 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+  deploy:
+    name: Deploy to Production
+    # This job only runs if the 'build-and-test' job succeeds.
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # This condition ensures the deploy job only runs for pushes to the 'main' branch
+    # AND if the 'build-and-test' job passed successfully.
+    if: success() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # Use AWS_REGION from GitHub Secrets
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          # Use ECR_REPOSITORY from GitHub Secrets
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build a docker container and push it to ECR
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+        working-directory: ./terraform
+        env:
+          TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve -input=false
+        working-directory: ./terraform
+        env:
+          TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
+
+      - name: Get Terraform Outputs for Migrations
+        id: terraform-outputs
+        run: |
+          echo "migration_subnet_id=$(terraform output -raw migration_subnet_id)" >> $GITHUB_OUTPUT
+          echo "migration_security_group_id=$(terraform output -raw migration_security_group_id)" >> $GITHUB_OUTPUT
+        working-directory: ./terraform
+
+      - name: Run database migrations
+        run: |
+          # Get the ECS task definition and run a one-time migration task
+          aws ecs run-task \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
+            --overrides '{
+              "containerOverrides": [{
+                "name": "${{ secrets.ECR_REPOSITORY }}", # Use ECR_REPOSITORY from secrets for the container name
+                "command": ["npx", "drizzle-kit", "migrate"]
+              }]
+            }' \
+            --launch-type FARGATE \
+            --network-configuration '{
+              "awsvpcConfiguration": {
+                # Use subnet ID from Terraform outputs
+                "subnets": ["${{ steps.terraform-outputs.outputs.migration_subnet_id }}"],
+                # Use security group ID from Terraform outputs
+                "securityGroups": ["${{ steps.terraform-outputs.outputs.migration_security_group_id }}"]
+              }
+            }'

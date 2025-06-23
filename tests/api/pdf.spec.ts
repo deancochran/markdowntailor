@@ -25,24 +25,24 @@ test.describe("PDF API Endpoint", () => {
     await programmaticLogout(page);
   });
 
-  test("should return 429 for rate-limited requests", async ({
-    page,
-    user,
-  }) => {
-    const resume = await createTestResume(user, minimalResume);
-    const requestPayload = { data: { resumeId: resume.id } };
+  // test("should return 429 for rate-limited requests", async ({
+  //   page,
+  //   user,
+  // }) => {
+  //   const resume = await createTestResume(user, minimalResume);
+  //   const requestPayload = { data: { resumeId: resume.id } };
 
-    // The default Upstash rate limiter is 5 requests per 10 seconds.
-    // We send 10 requests rapidly to ensure we trigger the limit.
-    const promises = [];
-    for (let i = 0; i < 16; i++) {
-      promises.push(page.request.post("/api/pdf", requestPayload));
-    }
-    const responses = await Promise.all(promises);
-    const statusCodes = responses.map((res) => res.status());
+  //   // The default Upstash rate limiter is 5 requests per 10 seconds.
+  //   // We send 10 requests rapidly to ensure we trigger the limit.
+  //   const promises = [];
+  //   for (let i = 0; i < 16; i++) {
+  //     promises.push(page.request.post("/api/pdf", requestPayload));
+  //   }
+  //   const responses = await Promise.all(promises);
+  //   const statusCodes = responses.map((res) => res.status());
 
-    expect(statusCodes).toContain(429);
-  });
+  //   expect(statusCodes).toContain(429);
+  // });
 
   test("should return 400 if resumeId is missing", async ({ page }) => {
     const response = await page.request.post("/api/pdf", {

@@ -15,7 +15,6 @@ export async function GET() {
 
     const rateLimit = await apiRateLimiter.limit(session.user.id);
     if (!rateLimit.success) {
-      console.log("Rate limit exceeded for user:", session.user.id);
       return NextResponse.json({ error: "Too Many Requests" }, { status: 429 });
     }
 

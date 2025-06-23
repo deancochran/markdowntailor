@@ -85,7 +85,6 @@ export const ServerPDFPreview: React.FC<ServerPDFPreviewProps> = ({
         updatedAt.getTime() !== lastUpdatedAtRef.current.getTime())
     ) {
       lastUpdatedAtRef.current = updatedAt;
-      console.log("Regenerating PDF due to save event");
       generatePDF();
     }
   }, [

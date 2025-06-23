@@ -16,7 +16,7 @@ export const test = base.extend<AppFixtures>({
       await use(testUser);
       await cleanupTestUser(testUser.id);
     },
-    { auto: true },
+    { auto: false },
   ],
 });
 

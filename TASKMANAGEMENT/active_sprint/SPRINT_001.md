@@ -68,6 +68,18 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
 - [ ] Setup Email Provider
 - [ ] Work out budget
 
+
+### Tasks To ReAssess
+### Week 3 (June 23-29)
+
+- [ ] Testing for Resume Editing with Playwright
+  - *Rationale: Create TDD for future features and sprints*
+  - [ ]   Creating a new resume.
+  - [ ]   Editing an existing resume.
+  - [ ]   Deleting a resume.
+  - [ ]   Viewing a list of all resumes.
+  - [ ]   The functionality of the resume editor itself (e.g., adding sections, changing templates, etc.).
+
 ## Technical Specifications
 
 ### Infrastructure Requirements

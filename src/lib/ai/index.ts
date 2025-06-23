@@ -41,8 +41,6 @@ export async function deductCreditsFromUser(
     data.totalTokens,
   );
 
-  console.log("AI Request Cost: $" + credit_usage);
-
   await db.transaction(async (tx) => {
     await tx.update(user).set({
       credits: sql`${user.credits} - ${sql.raw(credit_usage)}`,
