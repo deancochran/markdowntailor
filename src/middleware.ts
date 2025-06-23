@@ -26,9 +26,7 @@ export default async function middleware(
   // Only apply alpha cutoff to protected routes
   const isProtected = pathname.startsWith("/(protected)");
   if (isProtected && new Date() > ALPHA_ACCESS_CUTOFF) {
-    return new Response("Alpha access ended. Thank you for testing!", {
-      status: 403,
-    });
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
