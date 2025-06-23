@@ -133,7 +133,7 @@ export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
     const event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      process.env.STRIPE_WEBHOOK_SECRET as string,
     );
 
     console.log(`📨 Stripe Webhook ${event.id}: ${event.type}`);

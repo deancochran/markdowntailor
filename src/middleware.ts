@@ -25,7 +25,11 @@ export default async function middleware(
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   if (
     isProtected &&
-    new Date() > new Date(process.env.ALPHA_ACCESS_CUTOFF_DATE as string)
+    new Date() >
+      new Date(
+        process.env.ALPHA_ACCESS_CUTOFF_DATE ??
+          ("2025-08-01T00:00:00Z" as string),
+      )
   ) {
     return NextResponse.redirect(new URL("/", request.url));
   }

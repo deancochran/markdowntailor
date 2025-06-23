@@ -27,7 +27,16 @@ jobs:
           --health-retries 5
 
     env:
+      # Database URL for PostgreSQL service
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
+      # Sentry environment variables for source map upload and release creation
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      # Upstash Redis environment variables
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      # Stripe environment variables
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     steps:
       - name: Checkout code
@@ -37,8 +46,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          # Removed the 'cache: "npm"' line.
+          # This prevents the action from looking for a lockfile to generate cache keys,
+          # which is necessary when using 'pnpm install --no-lockfile'.
+          # Dependencies will be installed fresh each time.
 
       - name: Install dependencies
+        # The --no-lockfile flag tells pnpm to ignore the lockfile
+        # and install packages directly based on package.json.
+        # Be aware that this can lead to inconsistent builds if new
+        # versions of dependencies are released.
         run: npm install -g pnpm && pnpm install --no-lockfile
 
       - name: Lint
@@ -141,7 +158,7 @@ jobs:
             --overrides '{
               "containerOverrides": [{
                 "name": "${{ secrets.ECR_REPOSITORY }}", # Use ECR_REPOSITORY from secrets for the container name
-                "command": ["npx", "drizzle-kit", "migrate"]
+                "command": ["pnpm", "db:push"]
               }]
             }' \
             --launch-type FARGATE \
