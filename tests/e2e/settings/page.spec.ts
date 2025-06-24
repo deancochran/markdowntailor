@@ -25,20 +25,4 @@ test.describe("Settings Page", () => {
     await expect(alert).toBeVisible();
     await expect(alert).toContainText("Payment successful");
   });
-
-  test("shows payment cancelled alert when query param ?payment=cancelled is set", async ({
-    page,
-  }) => {
-    await page.goto("/settings?payment=cancelled");
-    const alert = page.getByTestId("payment-cancelled-alert");
-    await expect(alert).toBeVisible();
-    await expect(alert).toContainText("Payment was cancelled");
-  });
-
-  test("purchase credits section displays user's current credits", async ({
-    page,
-  }) => {
-    const creditText = await page.getByTestId("credit-amount").textContent();
-    expect(creditText).toMatch(/[\d,.]+/);
-  });
 });

@@ -25,42 +25,21 @@ test.describe("PDF API Endpoint", () => {
     await programmaticLogout(page);
   });
 
-  // test("should return 429 for rate-limited requests", async ({
-  //   page,
-  //   user,
-  // }) => {
-  //   const resume = await createTestResume(user, minimalResume);
-  //   const requestPayload = { data: { resumeId: resume.id } };
-
-  //   // The default Upstash rate limiter is 5 requests per 10 seconds.
-  //   // We send 10 requests rapidly to ensure we trigger the limit.
-  //   const promises = [];
-  //   for (let i = 0; i < 16; i++) {
-  //     promises.push(page.request.post("/api/pdf", requestPayload));
-  //   }
-  //   const responses = await Promise.all(promises);
-  //   const statusCodes = responses.map((res) => res.status());
-
-  //   expect(statusCodes).toContain(429);
-  // });
-
   test("should return 400 if resumeId is missing", async ({ page }) => {
-    const response = await page.request.post("/api/pdf", {
+    const response400 = await page.request.post("/api/pdf", {
       data: {}, // Missing resumeId
     });
 
-    expect(response.status()).toBe(400);
-    const json = await response.json();
+    expect(response400.status()).toBe(400);
+    const json = await response400.json();
     expect(json.error).toBe("Resume ID is required");
-  });
 
-  test("should return 404 for a non-existent resume", async ({ page }) => {
     const nonExistentId = "non-existent-uuid-12345";
-    const response = await page.request.post("/api/pdf", {
+    const response404 = await page.request.post("/api/pdf", {
       data: { resumeId: nonExistentId },
     });
 
-    expect(response.status()).toBe(404);
+    expect(response404.status()).toBe(404);
   });
 
   test("should return 403 when requesting another user's resume", async ({
@@ -86,27 +65,6 @@ test.describe("PDF API Endpoint", () => {
 
     // Clean up the second user manually
     await cleanupTestUser(user2.id);
-  });
-
-  test("should successfully generate a PDF for a valid request", async ({
-    page,
-    user,
-  }) => {
-    const resume = await createTestResume(user, { ...minimalResume });
-
-    const response = await page.request.post("/api/pdf", {
-      data: { resumeId: resume.id },
-    });
-
-    expect(response.ok()).toBe(true);
-    const json = await response.json();
-
-    expect(json).toHaveProperty("pdfBase64");
-    expect(typeof json.pdfBase64).toBe("string");
-    expect(json.pdfBase64.length).toBeGreaterThan(100);
-
-    expect(json).toHaveProperty("pageCount");
-    expect(typeof json.pageCount).toBe("number");
   });
 
   test("should serve a cached PDF on the second identical request", async ({

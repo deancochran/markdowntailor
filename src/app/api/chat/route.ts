@@ -214,7 +214,7 @@ export async function POST(req: Request) {
       return new Response("Insufficient credits", { status: 402 });
     }
     if (!session.user.stripeCustomerId) {
-      return new Response("User not subscribed", { status: 402 });
+      return new Response("No Stripe Id", { status: 402 });
     }
 
     const rateLimit = await apiRateLimiter.limit(session.user.id);

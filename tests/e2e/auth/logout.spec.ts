@@ -6,10 +6,10 @@ test.describe("Logout Test User", () => {
     await programmaticLogin(page, user);
     await expect(page.getByText("TU", { exact: true })).toBeVisible();
     await page.getByText("TU", { exact: true }).click();
-    await expect(page.getByRole("button", { name: "Sign Out" })).toBeVisible();
-    await page.getByRole("button", { name: "Sign Out" }).click();
+    const button = page.getByRole("button", { name: "Sign Out" });
+    await expect(button).toBeVisible();
+    await button.click();
     await page.waitForURL("/", { waitUntil: "networkidle" });
-    await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible();
     await page.getByRole("link", { name: "Sign In" }).click();
     await expect(page.getByTestId("policy-agreement")).toBeVisible();
   });

@@ -48,7 +48,7 @@ export default async function SettingsPage({
         )}
 
         {payment === "cancelled" && (
-          <Alert className="border">
+          <Alert data-testid="payment-cancelled-alert">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Payment was cancelled. You can try again anytime.
@@ -98,10 +98,7 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col w-full items-center justify-between gap-2">
-              <span
-                className="text-sm text-muted-foreground"
-                data-testid="credit-amount"
-              >
+              <span className="text-sm text-muted-foreground">
                 Your Credit Amount:
               </span>{" "}
               <span className="font-semibold text-3xl">

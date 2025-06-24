@@ -47,7 +47,7 @@ export const addResume = withSentry(
 export const getResume = withSentry("get-resume", async (resumeId: string) => {
   const session = await auth();
 
-  if (!session?.user?.id) {
+  if (!session) {
     throw new Error("Unauthorized");
   }
 

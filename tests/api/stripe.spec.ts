@@ -49,29 +49,6 @@ test.describe("Stripe API Endpoints", () => {
       expect(response.status()).toBe(401);
     });
 
-    // test("should return 429 for rate-limited requests", async ({
-    //   page,
-    //   user,
-    // }) => {
-    //   await programmaticLogin(page, user);
-    //   const requestUrl = "/api/stripe/checkout";
-
-    //   // The default Upstash rate limiter is 5 requests per 10 seconds.
-    //   // We send 10 requests rapidly to ensure we trigger the limit.
-    //   const promises = [];
-    //   for (let i = 0; i < 16; i++) {
-    //     promises.push(page.request.get(requestUrl));
-    //   }
-    //   const responses = await Promise.all(promises);
-    //   const statusCodes = responses.map((res) => res.status());
-
-    //   expect(statusCodes).toContain(429);
-    //   // It's good practice to ensure not all requests failed, showing the limiter works correctly
-    //   expect(statusCodes).toContain(200);
-
-    //   await programmaticLogout(page);
-    // });
-
     // This test verifies that the server-side logic for creating a Stripe checkout
     // session is working correctly for an authenticated user. It mocks the final
     // step, as it cannot interact with the external Stripe service directly.

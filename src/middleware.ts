@@ -6,21 +6,21 @@ import {
 } from "ai";
 import { NextAuthRequest } from "next-auth";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
-import { middlewareRateLimiter, redis } from "./lib/upstash";
+import { redis } from "./lib/upstash";
 
 export default async function middleware(
   request: NextRequest,
   _event: NextFetchEvent,
 ): Promise<Response | undefined> {
-  const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
-  const pathname = request.nextUrl.pathname;
-  // Apply general rate limiter (API has its own)
-  const { success } = await middlewareRateLimiter.limit(ip);
-  if (!success) {
-    return NextResponse.redirect(new URL("/blocked", request.url));
-  }
+  // const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+  // // Apply general rate limiter (API has its own)
+  // const { success } = await middlewareRateLimiter.limit(ip);
+  // if (!success) {
+  //   return NextResponse.redirect(new URL("/blocked", request.url));
+  // }
 
   // Only apply alpha cutoff to protected routes
+  const pathname = request.nextUrl.pathname;
   const protectedPaths = ["/resumes", "/settings", "/templates", "/api"];
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   if (
