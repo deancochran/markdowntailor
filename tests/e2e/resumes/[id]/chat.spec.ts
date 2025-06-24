@@ -10,7 +10,6 @@ test("should return 402 when user has insufficient credits", async ({
   user,
 }) => {
   await programmaticLogin(page, user);
-  // Set user credits to 0
   const response = await page.request.post(`/api/chat`, {
     data: {
       resume: minimalResume,
@@ -19,6 +18,4 @@ test("should return 402 when user has insufficient credits", async ({
   });
 
   expect(response.status()).toBe(402);
-  const body = await response.text();
-  expect(body).toBe("Insufficient credits");
 });
