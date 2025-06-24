@@ -72,29 +72,12 @@ variable "next_public_base_url" {
   sensitive   = true
 }
 
-variable "database_url" {
-  description = "Database connection string"
-  type        = string
-  sensitive   = true
-}
-
-variable "auth_drizzle_url" {
-  description = "Drizzle Auth URL"
-  type        = string
-  sensitive   = true
-}
-
 variable "auth_secret" {
   description = "Auth secret"
   type        = string
   sensitive   = true
 }
 
-variable "auth_trust_host" {
-  description = "Auth trust host"
-  type        = string
-  sensitive   = true
-}
 
 variable "auth_github_id" {
   description = "GitHub Auth ID"
@@ -192,7 +175,7 @@ variable "stripe_input_meter" {
   sensitive   = true
 }
 
-variable "stripe_ouput_meter" {
+variable "stripe_output_meter" {
   description = "Stripe Output Meter"
   type        = string
   sensitive   = true

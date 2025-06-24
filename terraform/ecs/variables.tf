@@ -75,12 +75,6 @@ variable "next_public_base_url" {
   sensitive   = true
 }
 
-variable "auth_drizzle_url" {
-  description = "Drizzle Auth URL"
-  type        = string
-  sensitive   = true
-}
-
 variable "auth_secret" {
   description = "Auth secret"
   type        = string

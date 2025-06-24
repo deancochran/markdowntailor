@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 30
     name: Build & Deploy
     runs-on: ubuntu-latest
-    environment: production # Use the production environment defined in GitHub
+    environment: production
 
     steps:
       - name: Checkout code
@@ -38,6 +38,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and tag Docker image
@@ -53,17 +54,50 @@ jobs:
       - name: Run db:migrate
         id: migrate
         run: |
-          pnpm exec db:migrate --url ${{ secrets.DB_CONNECTION_URL }}  # Replace with your connection URL secret
-        continue-on-error: false # This will cause the workflow to fail on error
+          pnpm exec db:migrate --url ${{ secrets.DB_CONNECTION_URL }}
+        continue-on-error: false
 
       - name: Check Migration Success
         if: steps.migrate.outcome == 'failure'
         run: |
           echo "Migration failed! Exiting the workflow."
-          exit 1  # This will stop the workflow
+          exit 1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+
+      - name: Write terraform.tfvars securely
+        working-directory: ./terraform
+        run: |
+          cat <<EOF > terraform.tfvars
+          project_name             = ${{ secrets.PROJECT_NAME }}
+          environment              = ${{ secrets.environment }}
+          aws_region               = ${{ secrets.aws_region }}
+          domain_name              = ${{ secrets.domain_name }}
+          db_name                  = ${{ secrets.db_name }}
+          db_username              = ${{ secrets.db_username }}
+          db_password              = ${{ secrets.db_password }}
+          next_public_base_url     = ${{ secrets.next_public_base_url }}
+          auth_secret              = ${{ secrets.auth_secret }}
+          auth_github_id           = ${{ secrets.auth_github_id }}
+          auth_github_secret       = ${{ secrets.auth_github_secret }}
+          auth_linkedin_id         = ${{ secrets.auth_linkedin_id }}
+          auth_linkedin_secret     = ${{ secrets.auth_linkedin_secret }}
+          auth_google_id           = ${{ secrets.auth_google_id }}
+          auth_google_secret       = ${{ secrets.auth_google_secret }}
+          anthropic_api_key        = ${{ secrets.anthropic_api_key }}
+          upstash_redis_rest_url   = ${{ secrets.upstash_redis_rest_url }}
+          upstash_redis_rest_token = ${{ secrets.upstash_redis_rest_token }}
+          sentry_auth_token        = ${{ secrets.sentry_auth_token }}
+          sentry_org               = ${{ secrets.sentry_org }}
+          sentry_project           = ${{ secrets.sentry_project }}
+          stripe_secret_key        = ${{ secrets.stripe_secret_key }}
+          stripe_public_key        = ${{ secrets.stripe_public_key }}
+          stripe_webhook_secret    = ${{ secrets.stripe_webhook_secret }}
+          stripe_input_meter       = ${{ secrets.stripe_input_meter }}
+          stripe_output_meter      = ${{ secrets.stripe_output_meter }}
+          alpha_access_cutoff_date = "2025-08-01T00:00:00Z"
+          EOF
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -71,8 +105,13 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./terraform
-        run: terraform plan -var="image_tag=${{ github.sha }}"
+        run: terraform plan -var-file="terraform.tfvars"
 
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
+        run: terraform apply -auto-approve -var-file="terraform.tfvars"
+
+      - name: Clean up tfvars
+        if: always()
+        working-directory: ./terraform
+        run: rm -f terraform.tfvars

@@ -105,7 +105,6 @@ module "ecs" {
   image_tag                = var.image_tag
   database_url             = module.rds.db_connection_string
   next_public_base_url     = var.next_public_base_url
-  auth_drizzle_url         = var.auth_drizzle_url
   auth_secret              = var.auth_secret
   auth_github_id           = var.auth_github_id
   auth_github_secret       = var.auth_github_secret
@@ -123,7 +122,7 @@ module "ecs" {
   stripe_public_key        = var.stripe_public_key
   stripe_webhook_secret    = var.stripe_webhook_secret
   stripe_input_meter       = var.stripe_input_meter
-  stripe_ouput_meter       = var.stripe_ouput_meter
+  stripe_output_meter      = var.stripe_output_meter
   alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
   depends_on = [module.vpc, module.alb, module.rds]
