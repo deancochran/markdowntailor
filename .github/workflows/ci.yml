@@ -1,4 +1,4 @@
-name: CICD
+name: CI - Build, Lint, Typecheck, Test, Dockerize
 
 on:
   push:
@@ -7,170 +7,36 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: Build
+  build-test-containerize:
+    name: Validate PR with pnpm
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
+      - name: Install pnpm
+        run: npm install -g pnpm
+
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: pnpm install
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
+
+      - name: Run tests
+        run: pnpm run test
 
       - name: Build app
-        run: npm run build
+        run: pnpm run build
 
-  # deploy:
-  #   name: Deploy to Production
-  #   # This job only runs if the 'build-and-test' job succeeds.
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   # This condition ensures the deploy job only runs for pushes to the 'main' branch
-  #   # AND if the 'build-and-test' job passed successfully.
-  #   if: success() && github.ref == 'refs/heads/main'
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         # Use AWS_REGION from GitHub Secrets
-  #         aws-region: ${{ secrets.AWS_REGION }}
-
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v2
-
-  #     - name: Build, tag, and push image to Amazon ECR
-  #       id: build-image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         # Use ECR_REPOSITORY from GitHub Secrets
-  #         ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-  #         IMAGE_TAG: ${{ github.sha }}
-  #       run: |
-  #         # Build a docker container and push it to ECR
-  #         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-  #         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: 1.5.0
-
-  #     - name: Terraform Init
-  #       run: terraform init
-  #       working-directory: ./terraform
-
-  #     - name: Terraform Plan
-  #       run: terraform plan -input=false
-  #       working-directory: ./terraform
-  #       env:
-  #         TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
-  #         # Pass production environment variables to Terraform for the ECS Task Definition
-  #         TF_VAR_node_env: "production" # Explicitly set NODE_ENV for production
-  #         TF_VAR_alpha_access_cutoff_date: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
-  #         TF_VAR_postgres_user: ${{ secrets.PROD_POSTGRES_USER }}
-  #         TF_VAR_postgres_password: ${{ secrets.PROD_POSTGRES_PASSWORD }}
-  #         TF_VAR_postgres_db: ${{ secrets.PROD_POSTGRES_DB }}
-  #         TF_VAR_database_url: ${{ secrets.PROD_DATABASE_URL }}
-  #         TF_VAR_next_public_base_url: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-  #         TF_VAR_auth_trust_host: ${{ secrets.AUTH_TRUST_HOST }}
-  #         TF_VAR_auth_secret: ${{ secrets.PROD_AUTH_SECRET }} # Using PROD_AUTH_SECRET
-  #         TF_VAR_auth_drizzle_url: ${{ secrets.PROD_AUTH_DRIZZLE_URL }} # Using PROD_AUTH_DRIZZLE_URL
-  #         TF_VAR_auth_github_id: ${{ secrets.AUTH_GITHUB_ID }}
-  #         TF_VAR_auth_github_secret: ${{ secrets.AUTH_GITHUB_SECRET }}
-  #         TF_VAR_auth_linkedin_id: ${{ secrets.AUTH_LINKEDIN_ID }}
-  #         TF_VAR_auth_linkedin_secret: ${{ secrets.AUTH_LINKEDIN_SECRET }}
-  #         TF_VAR_auth_google_id: ${{ secrets.AUTH_GOOGLE_ID }}
-  #         TF_VAR_auth_google_secret: ${{ secrets.AUTH_GOOGLE_SECRET }}
-  #         TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }} # Using generic Anthropic key for production
-  #         TF_VAR_upstash_redis_rest_url: ${{ secrets.PROD_UPSTASH_REDIS_REST_URL }} # Using PROD_UPSTASH_REDIS_REST_URL
-  #         TF_VAR_upstash_redis_rest_token: ${{ secrets.PROD_UPSTASH_REDIS_REST_TOKEN }} # Using PROD_UPSTASH_REDIS_REST_TOKEN
-  #         TF_VAR_sentry_auth_token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }} # Using PROD_SENTRY_AUTH_TOKEN for runtime
-  #         TF_VAR_stripe_secret_key: ${{ secrets.PROD_STRIPE_SECRET_KEY }} # Using PROD_STRIPE_SECRET_KEY
-  #         TF_VAR_stripe_public_key: ${{ secrets.STRIPE_PUBLIC_KEY }}
-  #         TF_VAR_stripe_webhook_secret: ${{ secrets.PROD_STRIPE_WEBHOOK_SECRET }} # Using PROD_STRIPE_WEBHOOK_SECRET
-  #         TF_VAR_stripe_input_meter: ${{ secrets.PROD_STRIPE_INPUT_METER }}
-  #         TF_VAR_stripe_output_meter: ${{ secrets.PROD_STRIPE_OUPUT_METER }}
-
-  #     - name: Terraform Apply
-  #       if: github.ref == 'refs/heads/main'
-  #       run: terraform apply -auto-approve -input=false
-  #       working-directory: ./terraform
-  #       env:
-  #         TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
-  #         # Pass production environment variables to Terraform for the ECS Task Definition
-  #         TF_VAR_node_env: "production" # Explicitly set NODE_ENV for production
-  #         TF_VAR_alpha_access_cutoff_date: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
-  #         TF_VAR_postgres_user: ${{ secrets.PROD_POSTGRES_USER }}
-  #         TF_VAR_postgres_password: ${{ secrets.PROD_POSTGRES_PASSWORD }}
-  #         TF_VAR_postgres_db: ${{ secrets.PROD_POSTGRES_DB }}
-  #         TF_VAR_database_url: ${{ secrets.PROD_DATABASE_URL }}
-  #         TF_VAR_next_public_base_url: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-  #         TF_VAR_auth_trust_host: ${{ secrets.AUTH_TRUST_HOST }}
-  #         TF_VAR_auth_secret: ${{ secrets.PROD_AUTH_SECRET }} # Using PROD_AUTH_SECRET
-  #         TF_VAR_auth_drizzle_url: ${{ secrets.PROD_AUTH_DRIZZLE_URL }} # Using PROD_AUTH_DRIZZLE_URL
-  #         TF_VAR_auth_github_id: ${{ secrets.AUTH_GITHUB_ID }}
-  #         TF_VAR_auth_github_secret: ${{ secrets.AUTH_GITHUB_SECRET }}
-  #         TF_VAR_auth_linkedin_id: ${{ secrets.AUTH_LINKEDIN_ID }}
-  #         TF_VAR_auth_linkedin_secret: ${{ secrets.AUTH_LINKEDIN_SECRET }}
-  #         TF_VAR_auth_google_id: ${{ secrets.AUTH_GOOGLE_ID }}
-  #         TF_VAR_auth_google_secret: ${{ secrets.AUTH_GOOGLE_SECRET }}
-  #         TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }} # Using generic Anthropic key for production
-  #         TF_VAR_upstash_redis_rest_url: ${{ secrets.PROD_UPSTASH_REDIS_REST_URL }} # Using PROD_UPSTASH_REDIS_REST_URL
-  #         TF_VAR_upstash_redis_rest_token: ${{ secrets.PROD_UPSTASH_REDIS_REST_TOKEN }} # Using PROD_UPSTASH_REDIS_REST_TOKEN
-  #         TF_VAR_sentry_auth_token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }} # Using PROD_SENTRY_AUTH_TOKEN for runtime
-  #         TF_VAR_stripe_secret_key: ${{ secrets.PROD_STRIPE_SECRET_KEY }} # Using PROD_STRIPE_SECRET_KEY
-  #         TF_VAR_stripe_public_key: ${{ secrets.STRIPE_PUBLIC_KEY }}
-  #         TF_VAR_stripe_webhook_secret: ${{ secrets.PROD_STRIPE_WEBHOOK_SECRET }} # Using PROD_STRIPE_WEBHOOK_SECRET
-  #         TF_VAR_stripe_input_meter: ${{ secrets.STRIPE_INPUT_METER }}
-  #         TF_VAR_stripe_output_meter: ${{ secrets.STRIPE_OUPUT_METER }}
-
-  #     - name: Get Terraform Outputs for Migrations
-  #       id: terraform-outputs
-  #       run: |
-  #         echo "migration_subnet_id=$(terraform output -raw migration_subnet_id)" >> $GITHUB_OUTPUT
-  #         echo "migration_security_group_id=$(terraform output -raw migration_security_group_id)" >> $GITHUB_OUTPUT
-  #       working-directory: ./terraform
-
-  #     - name: Run database migrations
-  #       run: |
-  #         # Get the ECS task definition and run a one-time migration task
-  #         aws ecs run-task \
-  #           --cluster ${{ secrets.ECS_CLUSTER }} \
-  #           --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
-  #           --overrides '{
-  #             "containerOverrides": [{
-  #               "name": "${{ secrets.ECR_REPOSITORY }}", # Use ECR_REPOSITORY from secrets for the container name
-  #               "command": ["pnpm", "db:push"]
-  #             }]
-  #           }' \
-  #           --launch-type FARGATE \
-  #           --network-configuration '{
-  #             "awsvpcConfiguration": {
-  #               # Use subnet ID from Terraform outputs
-  #               "subnets": ["${{ steps.terraform-outputs.outputs.migration_subnet_id }}"],
-  #               # Use security group ID from Terraform outputs
-  #               "securityGroups": ["${{ steps.terraform-outputs.outputs.migration_security_group_id }}"]
-  #             }
-  #           }'
+      - name: Docker build (no push)
+        run: docker build -t markdowntailor .
