@@ -1,4 +1,4 @@
-name: CD - Deploy to AWS on Merge to Main
+name: CD
 
 on:
   push:
