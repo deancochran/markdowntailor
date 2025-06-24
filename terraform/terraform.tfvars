@@ -23,6 +23,6 @@ db_username = "dbadmin"
 # db_password will be set via environment variable or AWS Secrets Manager
 
 # ECS Configuration
-fargate_cpu    = "512"
-fargate_memory = "1024"
-app_count      = 2
+# fargate_cpu    = "512"
+# fargate_memory = "1024"
+# app_count      = 2

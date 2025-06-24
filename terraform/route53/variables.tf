@@ -4,21 +4,21 @@ variable "domain_name" {
 }
 
 variable "project_name" {
-  description = "Name of the project"
+  description = "The name of the project"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name"
+  description = "The environment name"
   type        = string
 }
 
 variable "alb_dns_name" {
-  description = "DNS name of the ALB"
+  description = "The DNS name of the ALB"
   type        = string
 }
 
 variable "alb_zone_id" {
-  description = "Zone ID of the ALB"
+  description = "The Zone ID of the ALB"
   type        = string
 }

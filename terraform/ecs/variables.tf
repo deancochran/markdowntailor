@@ -1,10 +1,10 @@
 variable "project_name" {
-  description = "Name of the project"
+  description = "The name of the project"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name"
+  description = "The environment name"
   type        = string
 }
 
@@ -14,66 +14,66 @@ variable "vpc_id" {
 }
 
 variable "private_subnets" {
-  description = "List of private subnet IDs"
+  description = "The list of private subnet IDs"
   type        = list(string)
 }
 
 variable "alb_target_group_arn" {
-  description = "ARN of the ALB target group"
+  description = "The ARN of the ALB target group"
   type        = string
 }
 
 variable "alb_security_group_id" {
-  description = "ID of the ALB security group"
+  description = "The ID of the ALB security group"
   type        = string
 }
 
 variable "ecr_repository_url" {
-  description = "URL of the ECR repository"
+  description = "The URL of the ECR repository"
   type        = string
 }
 
 variable "image_tag" {
-  description = "Docker image tag"
+  description = "The Docker image tag"
   type        = string
   default     = "latest"
 }
 
 variable "fargate_cpu" {
-  description = "Fargate instance CPU units to provision (1 vCPU = 1024 CPU units)"
+  description = "The Fargate instance CPU units to provision (1 vCPU = 1024 CPU units)"
   type        = string
   default     = "256"
 }
 
 variable "fargate_memory" {
-  description = "Fargate instance memory to provision (in MiB)"
+  description = "The Fargate instance memory to provision (in MiB)"
   type        = string
   default     = "512"
 }
 
 variable "app_count" {
-  description = "Number of docker containers to run"
+  description = "The number of Docker containers to run"
   type        = number
   default     = 2
 }
 
 variable "db_host" {
-  description = "Database host"
+  description = "The database host"
   type        = string
 }
 
 variable "db_name" {
-  description = "Database name"
+  description = "The database name"
   type        = string
 }
 
 variable "db_username" {
-  description = "Database username"
+  description = "The database username"
   type        = string
 }
 
 variable "db_password" {
-  description = "Database password"
+  description = "The database password"
   type        = string
   sensitive   = true
 }

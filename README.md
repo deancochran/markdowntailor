@@ -325,15 +325,22 @@ docs/                   # Additional documentation
 ```
 
 ## Deployment IaC (Terraform)
-1. Initial Setup & Prerequisites
-AWS Prerequisites
 
-AWS CLI installed and configured
-AWS account with appropriate permissions
-Domain name registered (for Route53)
-S3 bucket for Terraform state (recommended)
+Initializing the Database Password
 
-Create Terraform Backend Configuration
+To initialize the database password in AWS Secrets Manager, you would typically do it in one of the following ways:
+
+1. **Manually via AWS Console:**
+   - Navigate to AWS Secrets Manager in the AWS Management Console.
+   - Create a new secret for the database password and enter the desired password manually.
+
+2. **Using an Initialization Script:**
+   - If you'd like to automate the setup, you can create a script (e.g., using AWS CLI or SDK) to create the secret with the desired password during your infrastructure provisioning process or during a CI/CD pipeline execution.
+
+Example of setting the secret via AWS CLI:
+```
+aws secretsmanager create-secret --name "your_project_name-your_env-db-password" --secret-string "your_secure_password"
+```
 
 ## 🤝 Contributing
 

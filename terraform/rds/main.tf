@@ -1,10 +1,20 @@
+locals {
+  common_tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-${var.environment}-db-subnet-group"
   subnet_ids = var.private_subnets
 
-  tags = {
-    Name = "${var.project_name}-${var.environment}-db-subnet-group"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-${var.environment}-db-subnet-group"
+    }
+  )
 }
 
 resource "aws_security_group" "rds" {
@@ -12,8 +22,8 @@ resource "aws_security_group" "rds" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 5432
-    to_port         = 5432
+    from_port       = var.db_port
+    to_port         = var.db_port
     protocol        = "tcp"
     security_groups = [var.ecs_security_group_id]
   }
@@ -25,13 +35,25 @@ resource "aws_security_group" "rds" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-${var.environment}-rds-sg"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-${var.environment}-rds-sg"
+    }
+  )
 
   lifecycle {
     create_before_destroy = true
   }
+}
+resource "aws_secretsmanager_secret" "db_password" {
+  name        = "${var.project_name}-${var.environment}-db-password"
+  description = "Secret for RDS database password"
+}
+
+resource "aws_secretsmanager_secret_version" "db_password_version" {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = var.db_password # Set this during the secret creation. Do not hardcode it.
 }
 
 resource "aws_db_instance" "main" {
@@ -39,23 +61,23 @@ resource "aws_db_instance" "main" {
 
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.max_allocated_storage
-  storage_type          = "gp2"
+  storage_type          = var.storage_type
   storage_encrypted     = true
 
-  engine         = "postgres"
-  engine_version = "15.4"
-  instance_class = var.instance_class
+  engine         = var.db_engine
+  engine_version = var.db_engine_version
+  instance_class = var.db_instance_class
 
   db_name  = var.db_name
   username = var.db_username
-  password = var.db_password
+  password = data.aws_secretsmanager_secret_version.db_password_version.secret_string # Keep this line only.
 
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
 
   backup_retention_period = var.backup_retention_period
-  backup_window           = "03:00-04:00"
-  maintenance_window      = "sun:04:00-sun:05:00"
+  backup_window           = var.backup_window
+  maintenance_window      = var.maintenance_window
 
   skip_final_snapshot = var.skip_final_snapshot
   deletion_protection = var.deletion_protection
@@ -64,9 +86,12 @@ resource "aws_db_instance" "main" {
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.rds_enhanced_monitoring.arn
 
-  tags = {
-    Name = "${var.project_name}-${var.environment}-db"
-  }
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-${var.environment}-db"
+    }
+  )
 }
 
 resource "aws_iam_role" "rds_enhanced_monitoring" {
@@ -86,7 +111,11 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
   })
 }
 
+data "aws_iam_policy" "rds_enhanced_monitoring_policy" {
+  name = "AmazonRDSEnhancedMonitoringRole"
+}
+
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
   role       = aws_iam_role.rds_enhanced_monitoring.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+  policy_arn = data.aws_iam_policy.rds_enhanced_monitoring_policy.arn
 }
