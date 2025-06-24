@@ -66,3 +66,4 @@ Thumbs.db
 .husky/*
 TASKMANAGEMENT
 TASKMANAGEMENT/*
+pnpm-lock.yaml
