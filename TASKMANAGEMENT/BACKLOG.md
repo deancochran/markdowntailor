@@ -67,7 +67,7 @@ This backlog contains all planned tasks for the markdowntailor application, orga
     - [ ] Test resume import/export
 ---
 
-- [ ] Configure resume builder title/name (Low Complexity)
+- [ ] Configure markdowntailor title/name (Low Complexity)
   - *Rationale: Core application identity component*
   - [ ] Update application name globally
     - [ ] Change package.json name

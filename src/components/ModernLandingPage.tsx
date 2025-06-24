@@ -179,7 +179,7 @@ export default function ModernLandingPage() {
       name: "Sarah Chen",
       role: "Software Engineer",
       company: "Google",
-      text: "Landed 3 interviews in my first week using this resume builder. The ATS optimization really works!",
+      text: "Landed 3 interviews in my first week using markdowntailor. The ATS optimization really works!",
       rating: 5,
     },
     {

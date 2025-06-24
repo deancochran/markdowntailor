@@ -48,7 +48,7 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
 ### Week 3 (June 23-29)
 - [ ] Incorporate testing into each page of the application
 - [ ] Set up IaC with Terraform
-  - [ ] Configure resume builder title/name
+  - [ ] Configure markdowntailor title/name
 - [ ] Setup CICD Pipelines
   - [ ] Set up environments (dev, staging, production, alpha)
   - [ ] Configure Release Strategy

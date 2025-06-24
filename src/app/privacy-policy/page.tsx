@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
               </h2>
               <div className="space-y-4">
                 <h3 className="text-xl font-medium">Personal Information</h3>
-                <p>When you use our resume builder service, we may collect:</p>
+                <p>When you use our markdowntailor service, we may collect:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Account information (email address, username)</li>
                   <li>

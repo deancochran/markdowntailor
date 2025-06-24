@@ -1,5 +1,5 @@
 {
-  "name": "resume-builder",
+  "name": "markdowntailor",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,10 @@
     "codegen": "npx playwright codegen http://localhost:3000",
     "show-report": "pnpm exec playwright show-report",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate:pg",
+    "db:push": "drizzle-kit push",
+    "db:pull": "drizzle-kit pull",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "prepare": "husky",
     "stripe-webhook": "stripe listen --forward-to localhost:3000/api/stripe/webhook"

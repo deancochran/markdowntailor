@@ -25,14 +25,14 @@ export default function TermsOfServicePage() {
               </h2>
               <div className="space-y-3">
                 <p>
-                  By accessing and using our resume builder service
+                  By accessing and using our markdowntailor service
                   (&quot;Service&quot;), you accept and agree to be bound by the
                   terms and provision of this agreement. If you do not agree to
                   abide by the above, please do not use this service.
                 </p>
                 <p>
                   These Terms of Service (&quot;Terms&quot;) govern your use of
-                  our website and services operated by Resume Builder
+                  our website and services operated by markdowntailor
                   (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;).
                 </p>
               </div>

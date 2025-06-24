@@ -167,6 +167,14 @@ resource "aws_ecs_service" "main" {
   desired_count   = var.app_count
   launch_type     = "FARGATE"
 
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 50
+
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
     subnets          = var.private_subnets
@@ -178,6 +186,9 @@ resource "aws_ecs_service" "main" {
     container_name   = "${var.project_name}-container"
     container_port   = 80
   }
+
+
+  health_check_grace_period_seconds = 300
 
   depends_on = [var.alb_target_group_arn]
 

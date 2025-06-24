@@ -87,7 +87,7 @@ pnpm exec playwright test auth.spec.ts
 ```
 tests/
 ├── auth.spec.ts          # Authentication flows
-├── resume-builder.spec.ts # Resume creation/editing
+├── markdowntailor.spec.ts # Resume creation/editing
 ├── ai-suggestions.spec.ts # AI integration tests
 └── fixtures/            # Test data and utilities
 ```
@@ -229,7 +229,7 @@ Using conventional commits:
 feat: add AI suggestion endpoint
 fix: resolve Monaco editor crash
 docs: update deployment guide
-test: add resume builder e2e tests
+test: add markdowntailor e2e tests
 ```
 
 ### Pull Request Process
