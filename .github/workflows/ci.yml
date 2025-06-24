@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-test-containerize:
-    timeout-minutes: 10
+    timeout-minutes: 30
     name: Validate PR with pnpm
     runs-on: ubuntu-latest
     environment: development # Uses development environment variables

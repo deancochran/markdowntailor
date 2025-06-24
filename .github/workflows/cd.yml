@@ -14,7 +14,7 @@ env:
 
 jobs:
   deploy:
-    timeout-minutes: 10
+    timeout-minutes: 30
     name: Build & Deploy
     runs-on: ubuntu-latest
 
