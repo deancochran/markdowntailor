@@ -324,6 +324,17 @@ tests/                  # Playwright tests
 docs/                   # Additional documentation
 ```
 
+## Deployment IaC (Terraform)
+1. Initial Setup & Prerequisites
+AWS Prerequisites
+
+AWS CLI installed and configured
+AWS account with appropriate permissions
+Domain name registered (for Route53)
+S3 bucket for Terraform state (recommended)
+
+Create Terraform Backend Configuration
+
 ## 🤝 Contributing
 
 ### Prerequisites
