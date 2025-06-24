@@ -187,16 +187,14 @@ resource "aws_ecs_service" "main" {
     container_port   = 80
   }
 
-
   health_check_grace_period_seconds = 300
 
-  depends_on = [var.alb_target_group_arn]
+  depends_on = [aws_ecs_task_definition.app] # Ensure the service waits for the task definition to be created
 
   tags = {
     Name = "${var.project_name}-${var.environment}-service"
   }
 }
-
 # -- Auto Scaling --
 
 resource "aws_appautoscaling_target" "ecs_target" {

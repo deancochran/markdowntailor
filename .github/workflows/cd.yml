@@ -33,9 +33,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.2.1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # Use stored Credentials
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # Use stored Credentials
-          aws-region: ${{ secrets.AWS_REGION }} # Environment variable stored in Secrets
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -50,31 +50,17 @@ jobs:
         run: |
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO_NAME }}:${{ github.sha }}
 
-      - name: Run db:migrate on the new image in ECS
-        id: run_migrate
+      - name: Run db:migrate
+        id: migrate
         run: |
-          export CLUSTER_NAME=${{ secrets.ECS_CLUSTER }}  # Use GitHub secret
-          export TASK_DEF=$(aws ecs describe-task-definition --task-definition ${{ secrets.ECS_TASK_DEFINITION }} | jq -r '.taskDefinition.taskDefinitionArn')
+          pnpm exec db:migrate --url ${{ secrets.DB_CONNECTION_URL }}  # Replace with your connection URL secret
+        continue-on-error: false # This will cause the workflow to fail on error
 
-          # Run the ECS Task for migration
-          MIGRATION_TASK=$(aws ecs run-task \
-            --cluster "$CLUSTER_NAME" \
-            --launch-type FARGATE \
-            --task-definition "$TASK_DEF" \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.AWS_SUBNETS }}],securityGroups=[${{ secrets.AWS_SECURITY_GROUP }}],assignPublicIp=DISABLED}" \
-            --overrides '{"containerOverrides": [{"name": "markdowntailor-container","command":["pnpm","exec","db:migrate"]}]}' \
-            --count 1 \
-            | jq -r '.tasks[0].taskArn')
-
-          # Wait for migration task to complete
-          aws ecs wait tasks-stopped --cluster "$CLUSTER_NAME" --tasks "$MIGRATION_TASK"
-          EXIT_CODE=$(aws ecs describe-tasks --cluster "$CLUSTER_NAME" --tasks "$MIGRATION_TASK" | jq -r '.tasks[0].containers[0].exitCode')
-          if [ "$EXIT_CODE" != "0" ]; then
-            echo "Migration failed! exit code $EXIT_CODE"
-            exit 1
-          else
-            echo "Migration succeeded!"
-          fi
+      - name: Check Migration Success
+        if: steps.migrate.outcome == 'failure'
+        run: |
+          echo "Migration failed! Exiting the workflow."
+          exit 1  # This will stop the workflow
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -82,6 +68,10 @@ jobs:
       - name: Terraform Init
         working-directory: ./terraform
         run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: terraform plan -var="image_tag=${{ github.sha }}"
 
       - name: Terraform Apply
         working-directory: ./terraform
