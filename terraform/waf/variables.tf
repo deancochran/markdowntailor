@@ -11,4 +11,5 @@ variable "environment" {
 variable "alb_arn" {
   description = "The ARN of the Application Load Balancer"
   type        = string
+  sensitive   = true
 }

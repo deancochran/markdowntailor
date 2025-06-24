@@ -125,20 +125,92 @@ resource "aws_ecs_task_definition" "app" {
           value = "production"
         },
         {
-          name  = "DB_HOST"
-          value = var.db_host
+          name  = "NEXT_PUBLIC_BASE_URL"
+          value = var.next_public_base_url
         },
         {
-          name  = "DB_NAME"
-          value = var.db_name
+          name      = "DATABASE_URL"
+          valueFrom = var.database_url
         },
         {
-          name  = "DB_USER"
-          value = var.db_username
+          name      = "AUTH_DRIZZLE_URL"
+          valueFrom = var.database_url
         },
         {
-          name  = "DB_PASSWORD"
-          value = var.db_password
+          name  = "AUTH_SECRET"
+          value = var.auth_secret
+        },
+        {
+          name  = "AUTH_GITHUB_ID"
+          value = var.auth_github_id
+        },
+        {
+          name  = "AUTH_GITHUB_SECRET"
+          value = var.auth_github_secret
+        },
+        {
+          name  = "AUTH_LINKEDIN_ID"
+          value = var.auth_linkedin_id
+        },
+        {
+          name  = "AUTH_LINKEDIN_SECRET"
+          value = var.auth_linkedin_secret
+        },
+        {
+          name  = "AUTH_GOOGLE_ID"
+          value = var.auth_google_id
+        },
+        {
+          name  = "AUTH_GOOGLE_SECRET"
+          value = var.auth_google_secret
+        },
+        {
+          name  = "ANTHROPIC_API_KEY"
+          value = var.anthropic_api_key
+        },
+        {
+          name  = "UPSTASH_REDIS_REST_URL"
+          value = var.upstash_redis_rest_url
+        },
+        {
+          name  = "UPSTASH_REDIS_REST_TOKEN"
+          value = var.upstash_redis_rest_token
+        },
+        {
+          name  = "SENTRY_AUTH_TOKEN"
+          value = var.sentry_auth_token
+        },
+        {
+          name  = "SENTRY_ORG"
+          value = var.sentry_org
+        },
+        {
+          name  = "SENTRY_PROJECT"
+          value = var.sentry_project
+        },
+        {
+          name  = "STRIPE_SECRET_KEY"
+          value = var.stripe_secret_key
+        },
+        {
+          name  = "STRIPE_PUBLIC_KEY"
+          value = var.stripe_public_key
+        },
+        {
+          name  = "STRIPE_WEBHOOK_SECRET"
+          value = var.stripe_webhook_secret
+        },
+        {
+          name  = "STRIPE_INPUT_METER"
+          value = var.stripe_input_meter
+        },
+        {
+          name  = "STRIPE_OUPUT_METER"
+          value = var.stripe_ouput_meter
+        },
+        {
+          name  = "ALPHA_ACCESS_CUTOFF_DATE"
+          value = var.alpha_access_cutoff_date
         }
       ]
 

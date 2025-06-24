@@ -1,32 +1,38 @@
 variable "project_name" {
   description = "The name of the project"
   type        = string
+  sensitive   = true
 }
 
 variable "environment" {
   description = "The environment name"
   type        = string
+  sensitive   = true
 }
 
 variable "vpc_id" {
   description = "The ID of the VPC"
   type        = string
+  sensitive   = true
 }
 
 variable "private_subnets" {
   description = "The list of private subnet IDs"
   type        = list(string)
+  sensitive   = true
 }
 
 variable "ecs_security_group_id" {
   description = "The ID of the ECS security group"
   type        = string
+  sensitive   = true
 }
 
 variable "db_port" {
   description = "The port for the database"
   type        = number
   default     = 5432
+  sensitive   = true
 }
 
 variable "allocated_storage" {
@@ -68,6 +74,7 @@ variable "db_instance_class" {
 variable "db_name" {
   description = "The name of the database"
   type        = string
+  sensitive   = true
 }
 
 variable "db_username" {

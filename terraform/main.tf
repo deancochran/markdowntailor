@@ -95,18 +95,36 @@ module "route53" {
 module "ecs" {
   source = "./modules/ecs"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  vpc_id                = module.vpc.vpc_id
-  private_subnets       = module.vpc.private_subnets
-  alb_target_group_arn  = module.alb.target_group_arn
-  alb_security_group_id = module.alb.alb_security_group_id
-  ecr_repository_url    = aws_ecr_repository.app_repo.repository_url
-  image_tag             = var.image_tag
-  db_host               = module.rds.db_endpoint
-  db_name               = var.db_name
-  db_username           = var.db_username
-  db_password           = var.db_password
+  project_name             = var.project_name
+  environment              = var.environment
+  vpc_id                   = module.vpc.vpc_id
+  private_subnets          = module.vpc.private_subnets
+  alb_target_group_arn     = module.alb.target_group_arn
+  alb_security_group_id    = module.alb.alb_security_group_id
+  ecr_repository_url       = aws_ecr_repository.app_repo.repository_url
+  image_tag                = var.image_tag
+  database_url             = module.rds.db_connection_string
+  next_public_base_url     = var.next_public_base_url
+  auth_drizzle_url         = var.auth_drizzle_url
+  auth_secret              = var.auth_secret
+  auth_github_id           = var.auth_github_id
+  auth_github_secret       = var.auth_github_secret
+  auth_linkedin_id         = var.auth_linkedin_id
+  auth_linkedin_secret     = var.auth_linkedin_secret
+  auth_google_id           = var.auth_google_id
+  auth_google_secret       = var.auth_google_secret
+  anthropic_api_key        = var.anthropic_api_key
+  upstash_redis_rest_url   = var.upstash_redis_rest_url
+  upstash_redis_rest_token = var.upstash_redis_rest_token
+  sentry_auth_token        = var.sentry_auth_token
+  sentry_org               = var.sentry_org
+  sentry_project           = var.sentry_project
+  stripe_secret_key        = var.stripe_secret_key
+  stripe_public_key        = var.stripe_public_key
+  stripe_webhook_secret    = var.stripe_webhook_secret
+  stripe_input_meter       = var.stripe_input_meter
+  stripe_ouput_meter       = var.stripe_ouput_meter
+  alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
   depends_on = [module.vpc, module.alb, module.rds]
 }
