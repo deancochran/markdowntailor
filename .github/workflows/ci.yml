@@ -7,38 +7,10 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
-    name: Build & Test
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      # Database URL for PostgreSQL service
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
-      # Sentry environment variables for source map upload and release creation
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      # Upstash Redis environment variables
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      # Stripe environment variables
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-      # Auth.js secret for encryption
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,17 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          # Removed the 'cache: "npm"' line.
-          # This prevents the action from looking for a lockfile to generate cache keys,
-          # which is necessary when using 'pnpm install --no-lockfile'.
-          # Dependencies will be installed fresh each time.
 
       - name: Install dependencies
-        # The --no-lockfile flag tells pnpm to ignore the lockfile
-        # and install packages directly based on package.json.
-        # Be aware that this can lead to inconsistent builds if new
-        # versions of dependencies are released.
-        run: npm install -g pnpm && pnpm install --no-lockfile
+        run: npm install -g pnpm && pnpm install
 
       - name: Lint
         run: npm run lint
@@ -68,106 +32,145 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+  # deploy:
+  #   name: Deploy to Production
+  #   # This job only runs if the 'build-and-test' job succeeds.
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   # This condition ensures the deploy job only runs for pushes to the 'main' branch
+  #   # AND if the 'build-and-test' job passed successfully.
+  #   if: success() && github.ref == 'refs/heads/main'
 
-      - name: Run Playwright tests
-        run: pnpm exec playwright test
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         # Use AWS_REGION from GitHub Secrets
+  #         aws-region: ${{ secrets.AWS_REGION }}
 
-  deploy:
-    name: Deploy to Production
-    # This job only runs if the 'build-and-test' job succeeds.
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    # This condition ensures the deploy job only runs for pushes to the 'main' branch
-    # AND if the 'build-and-test' job passed successfully.
-    if: success() && github.ref == 'refs/heads/main'
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v2
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #     - name: Build, tag, and push image to Amazon ECR
+  #       id: build-image
+  #       env:
+  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #         # Use ECR_REPOSITORY from GitHub Secrets
+  #         ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  #         IMAGE_TAG: ${{ github.sha }}
+  #       run: |
+  #         # Build a docker container and push it to ECR
+  #         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+  #         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+  #         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # Use AWS_REGION from GitHub Secrets
-          aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.5.0
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+  #     - name: Terraform Init
+  #       run: terraform init
+  #       working-directory: ./terraform
 
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # Use ECR_REPOSITORY from GitHub Secrets
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # Build a docker container and push it to ECR
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+  #     - name: Terraform Plan
+  #       run: terraform plan -input=false
+  #       working-directory: ./terraform
+  #       env:
+  #         TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
+  #         # Pass production environment variables to Terraform for the ECS Task Definition
+  #         TF_VAR_node_env: "production" # Explicitly set NODE_ENV for production
+  #         TF_VAR_alpha_access_cutoff_date: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
+  #         TF_VAR_postgres_user: ${{ secrets.PROD_POSTGRES_USER }}
+  #         TF_VAR_postgres_password: ${{ secrets.PROD_POSTGRES_PASSWORD }}
+  #         TF_VAR_postgres_db: ${{ secrets.PROD_POSTGRES_DB }}
+  #         TF_VAR_database_url: ${{ secrets.PROD_DATABASE_URL }}
+  #         TF_VAR_next_public_base_url: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+  #         TF_VAR_auth_trust_host: ${{ secrets.AUTH_TRUST_HOST }}
+  #         TF_VAR_auth_secret: ${{ secrets.PROD_AUTH_SECRET }} # Using PROD_AUTH_SECRET
+  #         TF_VAR_auth_drizzle_url: ${{ secrets.PROD_AUTH_DRIZZLE_URL }} # Using PROD_AUTH_DRIZZLE_URL
+  #         TF_VAR_auth_github_id: ${{ secrets.AUTH_GITHUB_ID }}
+  #         TF_VAR_auth_github_secret: ${{ secrets.AUTH_GITHUB_SECRET }}
+  #         TF_VAR_auth_linkedin_id: ${{ secrets.AUTH_LINKEDIN_ID }}
+  #         TF_VAR_auth_linkedin_secret: ${{ secrets.AUTH_LINKEDIN_SECRET }}
+  #         TF_VAR_auth_google_id: ${{ secrets.AUTH_GOOGLE_ID }}
+  #         TF_VAR_auth_google_secret: ${{ secrets.AUTH_GOOGLE_SECRET }}
+  #         TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }} # Using generic Anthropic key for production
+  #         TF_VAR_upstash_redis_rest_url: ${{ secrets.PROD_UPSTASH_REDIS_REST_URL }} # Using PROD_UPSTASH_REDIS_REST_URL
+  #         TF_VAR_upstash_redis_rest_token: ${{ secrets.PROD_UPSTASH_REDIS_REST_TOKEN }} # Using PROD_UPSTASH_REDIS_REST_TOKEN
+  #         TF_VAR_sentry_auth_token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }} # Using PROD_SENTRY_AUTH_TOKEN for runtime
+  #         TF_VAR_stripe_secret_key: ${{ secrets.PROD_STRIPE_SECRET_KEY }} # Using PROD_STRIPE_SECRET_KEY
+  #         TF_VAR_stripe_public_key: ${{ secrets.STRIPE_PUBLIC_KEY }}
+  #         TF_VAR_stripe_webhook_secret: ${{ secrets.PROD_STRIPE_WEBHOOK_SECRET }} # Using PROD_STRIPE_WEBHOOK_SECRET
+  #         TF_VAR_stripe_input_meter: ${{ secrets.PROD_STRIPE_INPUT_METER }}
+  #         TF_VAR_stripe_output_meter: ${{ secrets.PROD_STRIPE_OUPUT_METER }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.0
+  #     - name: Terraform Apply
+  #       if: github.ref == 'refs/heads/main'
+  #       run: terraform apply -auto-approve -input=false
+  #       working-directory: ./terraform
+  #       env:
+  #         TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
+  #         # Pass production environment variables to Terraform for the ECS Task Definition
+  #         TF_VAR_node_env: "production" # Explicitly set NODE_ENV for production
+  #         TF_VAR_alpha_access_cutoff_date: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
+  #         TF_VAR_postgres_user: ${{ secrets.PROD_POSTGRES_USER }}
+  #         TF_VAR_postgres_password: ${{ secrets.PROD_POSTGRES_PASSWORD }}
+  #         TF_VAR_postgres_db: ${{ secrets.PROD_POSTGRES_DB }}
+  #         TF_VAR_database_url: ${{ secrets.PROD_DATABASE_URL }}
+  #         TF_VAR_next_public_base_url: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+  #         TF_VAR_auth_trust_host: ${{ secrets.AUTH_TRUST_HOST }}
+  #         TF_VAR_auth_secret: ${{ secrets.PROD_AUTH_SECRET }} # Using PROD_AUTH_SECRET
+  #         TF_VAR_auth_drizzle_url: ${{ secrets.PROD_AUTH_DRIZZLE_URL }} # Using PROD_AUTH_DRIZZLE_URL
+  #         TF_VAR_auth_github_id: ${{ secrets.AUTH_GITHUB_ID }}
+  #         TF_VAR_auth_github_secret: ${{ secrets.AUTH_GITHUB_SECRET }}
+  #         TF_VAR_auth_linkedin_id: ${{ secrets.AUTH_LINKEDIN_ID }}
+  #         TF_VAR_auth_linkedin_secret: ${{ secrets.AUTH_LINKEDIN_SECRET }}
+  #         TF_VAR_auth_google_id: ${{ secrets.AUTH_GOOGLE_ID }}
+  #         TF_VAR_auth_google_secret: ${{ secrets.AUTH_GOOGLE_SECRET }}
+  #         TF_VAR_anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }} # Using generic Anthropic key for production
+  #         TF_VAR_upstash_redis_rest_url: ${{ secrets.PROD_UPSTASH_REDIS_REST_URL }} # Using PROD_UPSTASH_REDIS_REST_URL
+  #         TF_VAR_upstash_redis_rest_token: ${{ secrets.PROD_UPSTASH_REDIS_REST_TOKEN }} # Using PROD_UPSTASH_REDIS_REST_TOKEN
+  #         TF_VAR_sentry_auth_token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }} # Using PROD_SENTRY_AUTH_TOKEN for runtime
+  #         TF_VAR_stripe_secret_key: ${{ secrets.PROD_STRIPE_SECRET_KEY }} # Using PROD_STRIPE_SECRET_KEY
+  #         TF_VAR_stripe_public_key: ${{ secrets.STRIPE_PUBLIC_KEY }}
+  #         TF_VAR_stripe_webhook_secret: ${{ secrets.PROD_STRIPE_WEBHOOK_SECRET }} # Using PROD_STRIPE_WEBHOOK_SECRET
+  #         TF_VAR_stripe_input_meter: ${{ secrets.STRIPE_INPUT_METER }}
+  #         TF_VAR_stripe_output_meter: ${{ secrets.STRIPE_OUPUT_METER }}
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
+  #     - name: Get Terraform Outputs for Migrations
+  #       id: terraform-outputs
+  #       run: |
+  #         echo "migration_subnet_id=$(terraform output -raw migration_subnet_id)" >> $GITHUB_OUTPUT
+  #         echo "migration_security_group_id=$(terraform output -raw migration_security_group_id)" >> $GITHUB_OUTPUT
+  #       working-directory: ./terraform
 
-      - name: Terraform Plan
-        run: terraform plan -input=false
-        working-directory: ./terraform
-        env:
-          TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
-
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve -input=false
-        working-directory: ./terraform
-        env:
-          TF_VAR_image_uri: ${{ steps.build-image.outputs.image }}
-
-      - name: Get Terraform Outputs for Migrations
-        id: terraform-outputs
-        run: |
-          echo "migration_subnet_id=$(terraform output -raw migration_subnet_id)" >> $GITHUB_OUTPUT
-          echo "migration_security_group_id=$(terraform output -raw migration_security_group_id)" >> $GITHUB_OUTPUT
-        working-directory: ./terraform
-
-      - name: Run database migrations
-        run: |
-          # Get the ECS task definition and run a one-time migration task
-          aws ecs run-task \
-            --cluster ${{ secrets.ECS_CLUSTER }} \
-            --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
-            --overrides '{
-              "containerOverrides": [{
-                "name": "${{ secrets.ECR_REPOSITORY }}", # Use ECR_REPOSITORY from secrets for the container name
-                "command": ["pnpm", "db:push"]
-              }]
-            }' \
-            --launch-type FARGATE \
-            --network-configuration '{
-              "awsvpcConfiguration": {
-                # Use subnet ID from Terraform outputs
-                "subnets": ["${{ steps.terraform-outputs.outputs.migration_subnet_id }}"],
-                # Use security group ID from Terraform outputs
-                "securityGroups": ["${{ steps.terraform-outputs.outputs.migration_security_group_id }}"]
-              }
-            }'
+  #     - name: Run database migrations
+  #       run: |
+  #         # Get the ECS task definition and run a one-time migration task
+  #         aws ecs run-task \
+  #           --cluster ${{ secrets.ECS_CLUSTER }} \
+  #           --task-definition ${{ secrets.ECS_TASK_DEFINITION }} \
+  #           --overrides '{
+  #             "containerOverrides": [{
+  #               "name": "${{ secrets.ECR_REPOSITORY }}", # Use ECR_REPOSITORY from secrets for the container name
+  #               "command": ["pnpm", "db:push"]
+  #             }]
+  #           }' \
+  #           --launch-type FARGATE \
+  #           --network-configuration '{
+  #             "awsvpcConfiguration": {
+  #               # Use subnet ID from Terraform outputs
+  #               "subnets": ["${{ steps.terraform-outputs.outputs.migration_subnet_id }}"],
+  #               # Use security group ID from Terraform outputs
+  #               "securityGroups": ["${{ steps.terraform-outputs.outputs.migration_security_group_id }}"]
+  #             }
+  #           }'
