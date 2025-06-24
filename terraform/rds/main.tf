@@ -82,9 +82,10 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot = var.skip_final_snapshot
   deletion_protection = var.deletion_protection
 
-  performance_insights_enabled = true
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_enhanced_monitoring.arn
+  performance_insights_enabled    = true
+  monitoring_interval             = 60
+  monitoring_role_arn             = aws_iam_role.rds_enhanced_monitoring.arn
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade", "error"]
 
   tags = merge(
     local.common_tags,
@@ -118,4 +119,55 @@ data "aws_iam_policy" "rds_enhanced_monitoring_policy" {
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
   role       = aws_iam_role.rds_enhanced_monitoring.name
   policy_arn = data.aws_iam_policy.rds_enhanced_monitoring_policy.arn
+}
+
+resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
+  alarm_name          = "${var.project_name}-${var.environment}-rds-cpu-utilization-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/RDS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 80
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.main.id
+  }
+
+  alarm_description = "High RDS CPU utilization"
+}
+
+resource "aws_cloudwatch_metric_alarm" "rds_free_storage_low" {
+  alarm_name          = "${var.project_name}-${var.environment}-rds-free-storage-low"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "FreeStorageSpace"
+  namespace           = "AWS/RDS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 5368709120 # 5GB in bytes
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.main.id
+  }
+
+  alarm_description = "Low RDS free storage space"
+}
+
+resource "aws_cloudwatch_metric_alarm" "rds_connections_high" {
+  alarm_name          = "${var.project_name}-${var.environment}-rds-db-connections-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "DatabaseConnections"
+  namespace           = "AWS/RDS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 90
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.main.id
+  }
+
+  alarm_description = "High number of RDS DB connections"
 }

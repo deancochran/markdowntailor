@@ -60,10 +60,6 @@
 
 
 
-
-  ### 7. **Monitoring and Logging**
-  - Ensure CloudWatch alarms and logs are implemented for key resources like ECS services and RDS instances to monitor performance and detect issues effectively.
-
   ### 8. **Rollback Mechanism**
   - Consider implementing a strategy for rolling back to previous states if a deployment fails. This can include scripts or automated processes as part of your deployment pipeline.
 

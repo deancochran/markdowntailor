@@ -271,3 +271,37 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_low" {
 
   alarm_actions = [aws_appautoscaling_policy.ecs_scale_in.arn]
 }
+
+resource "aws_cloudwatch_metric_alarm" "ecs_memory_high" {
+  alarm_name          = "${var.project_name}-${var.environment}-memory-utilization-high"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 75
+  alarm_description   = "High ECS service memory utilization"
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.main.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "ecs_memory_low" {
+  alarm_name          = "${var.project_name}-${var.environment}-memory-utilization-low"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods  = 2
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 25
+  alarm_description   = "Low ECS service memory utilization"
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.main.name
+  }
+}
