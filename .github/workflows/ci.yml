@@ -11,19 +11,6 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
     environment: development
-    env:
-      NODE_ENV: development
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      DRIZZLE_AUTH_URL: postgres://postgres:postgres@localhost:5432/db
-      ALPHA_ACCESS_CUTOFF_DATE: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
-      NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-      AUTH_TRUST_HOST: ${{ secrets.AUTH_TRUST_HOST }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     services:
       postgres:
@@ -39,6 +26,19 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      DRIZZLE_AUTH_URL: postgres://postgres:postgres@localhost:5432/db
+      ALPHA_ACCESS_CUTOFF_DATE: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
+      NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+      AUTH_TRUST_HOST: ${{ secrets.AUTH_TRUST_HOST }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     steps:
       - name: Checkout code
