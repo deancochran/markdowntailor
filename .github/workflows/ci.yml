@@ -11,6 +11,19 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
     environment: development
+    env:
+      NODE_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      DRIZZLE_AUTH_URL: postgres://postgres:postgres@localhost:5432/db
+      ALPHA_ACCESS_CUTOFF_DATE: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
+      NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+      AUTH_TRUST_HOST: ${{ secrets.AUTH_TRUST_HOST }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
     services:
       postgres:
@@ -26,21 +39,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-    env:
-      # Database URL for PostgreSQL service (for local testing during build)
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
-      AUTH_DRIZZLE_URL: postgres://postgres:postgres@localhost:5432/db
-      # Sentry environment variables for source map upload and release creation
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      # Upstash Redis environment variables
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      # Stripe environment variables
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-      # Auth.js secret for encryption
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
 
     steps:
       - name: Checkout code
