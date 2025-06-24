@@ -27,3 +27,7 @@ output "alb_security_group_id" {
   description = "ID of the ALB security group"
   value       = aws_security_group.alb.id
 }
+output "alb_target_group_health_check_path" {
+  description = "Health check path for target group"
+  value       = aws_lb_target_group.app.health_check[0].path
+}

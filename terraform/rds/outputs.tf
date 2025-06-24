@@ -17,3 +17,8 @@ output "db_security_group_id" {
   description = "ID of the database security group"
   value       = aws_security_group.rds.id
 }
+
+output "db_connection_string" {
+  description = "PostgreSQL connection string"
+  value       = "postgres://${var.db_username}:${var.db_password}@${aws_db_instance.main.endpoint}:${aws_db_instance.main.port}/${var.db_name}"
+}

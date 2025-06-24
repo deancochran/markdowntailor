@@ -5,18 +5,12 @@ on:
     branches:
       - main
 
-env:
-  AWS_REGION: us-east-1
-  ECR_REPO_NAME: my-app-repo # 🔁 CHANGE to your ECR repo name
-  CONTAINER_NAME: my-app-container # 🔁 CHANGE to match your Dockerfile image name
-  TF_DIR: terraform # 🔁 CHANGE if your Terraform is in another dir
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
   deploy:
     timeout-minutes: 30
     name: Build & Deploy
     runs-on: ubuntu-latest
+    environment: production # Use the production environment defined in GitHub
 
     steps:
       - name: Checkout code
@@ -36,37 +30,38 @@ jobs:
       - name: Build app
         run: pnpm run build
 
-      - name: Configure AWS credentials via OIDC
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.2.1
         with:
-          role-to-assume: arn:aws:iam::<YOUR_ACCOUNT_ID>:role/<YOUR_ROLE_NAME>
-          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # Use stored Credentials
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # Use stored Credentials
+          aws-region: ${{ secrets.AWS_REGION }} # Environment variable stored in Secrets
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and tag Docker image
         run: |
-          docker build -t ${{ env.CONTAINER_NAME }} .
-          docker tag ${{ env.CONTAINER_NAME }}:latest \
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_NAME }}:${{ env.IMAGE_TAG }}
+          docker build -t ${{ secrets.CONTAINER_NAME }} .
+          docker tag ${{ secrets.CONTAINER_NAME }}:latest \
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO_NAME }}:${{ github.sha }}
 
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPO_NAME }}:${{ env.IMAGE_TAG }}
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO_NAME }}:${{ github.sha }}
 
       - name: Run db:migrate on the new image in ECS
         id: run_migrate
         run: |
-          export CLUSTER_NAME="markdowntailor-prod" # Update accordingly
-          export TASK_DEF=$(aws ecs describe-task-definition --task-definition markdowntailor-prod | jq -r '.taskDefinition.taskDefinitionArn')
+          export CLUSTER_NAME=${{ secrets.ECS_CLUSTER }}  # Use GitHub secret
+          export TASK_DEF=$(aws ecs describe-task-definition --task-definition ${{ secrets.ECS_TASK_DEFINITION }} | jq -r '.taskDefinition.taskDefinitionArn')
 
           # Run the ECS Task for migration
           MIGRATION_TASK=$(aws ecs run-task \
             --cluster "$CLUSTER_NAME" \
             --launch-type FARGATE \
             --task-definition "$TASK_DEF" \
-            --network-configuration "awsvpcConfiguration={subnets=[subnet-123,subnet-456],securityGroups=[sg-xxx],assignPublicIp=DISABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.AWS_SUBNETS }}],securityGroups=[${{ secrets.AWS_SECURITY_GROUP }}],assignPublicIp=DISABLED}" \
             --overrides '{"containerOverrides": [{"name": "markdowntailor-container","command":["pnpm","exec","db:migrate"]}]}' \
             --count 1 \
             | jq -r '.tasks[0].taskArn')
@@ -85,9 +80,9 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ${{ env.TF_DIR }}
+        working-directory: ./terraform
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: ${{ env.TF_DIR }}
-        run: terraform apply -auto-approve -var="image_tag=${{ env.IMAGE_TAG }}"
+        working-directory: ./terraform
+        run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}"
