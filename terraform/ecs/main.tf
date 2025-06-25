@@ -129,12 +129,12 @@ resource "aws_ecs_task_definition" "app" {
           value = var.next_public_base_url
         },
         {
-          name      = "DATABASE_URL"
-          valueFrom = var.database_url
+          name  = "DATABASE_URL"
+          value = var.database_url
         },
         {
-          name      = "AUTH_DRIZZLE_URL"
-          valueFrom = var.database_url
+          name  = "AUTH_DRIZZLE_URL"
+          value = var.database_url
         },
         {
           name  = "AUTH_SECRET"

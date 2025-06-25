@@ -13,7 +13,7 @@ output "db_port" {
   value       = aws_db_instance.main.port
 }
 
-output "db_security_group_id" {
+output "rds_security_group_id" {
   description = "ID of the database security group"
   value       = aws_security_group.rds.id
 }

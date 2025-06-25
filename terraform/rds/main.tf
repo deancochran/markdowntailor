@@ -18,9 +18,8 @@ resource "aws_db_subnet_group" "main" {
 }
 
 # Create an empty security group for ECS if it doesn't exist yet
+# Create a placeholder security group for ECS to break dependency cycle
 resource "aws_security_group" "ecs_placeholder" {
-  count = var.ecs_security_group_id == "" ? 1 : 0
-
   name_prefix = "${var.project_name}-${var.environment}-ecs-placeholder-"
   vpc_id      = var.vpc_id
 
@@ -36,11 +35,12 @@ resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-${var.environment}-rds-"
   vpc_id      = var.vpc_id
 
+  # Default ingress rule using the placeholder security group
   ingress {
     from_port       = var.db_port
     to_port         = var.db_port
     protocol        = "tcp"
-    security_groups = [var.ecs_security_group_id != "" ? var.ecs_security_group_id : aws_security_group.ecs_placeholder[0].id]
+    security_groups = [aws_security_group.ecs_placeholder.id]
   }
 
   egress {
@@ -61,15 +61,8 @@ resource "aws_security_group" "rds" {
     create_before_destroy = true
   }
 }
-resource "aws_secretsmanager_secret" "db_password" {
-  name        = "${var.project_name}-${var.environment}-db-password"
-  description = "Secret for RDS database password"
-}
-
-resource "aws_secretsmanager_secret_version" "db_password_version" {
-  secret_id     = aws_secretsmanager_secret.db_password.id
-  secret_string = var.db_password
-}
+# Move Secrets Manager logic to a separate module or process to break dependency cycle
+# We'll directly use the password variable for now to break the cycle
 
 resource "aws_db_instance" "main" {
   identifier = "${var.project_name}-${var.environment}-db"
@@ -85,7 +78,7 @@ resource "aws_db_instance" "main" {
 
   db_name  = var.db_name
   username = var.db_username
-  password = data.aws_secretsmanager_secret_version.db_password_version.secret_string # Keep this line only.
+  password = var.db_password
 
   vpc_security_group_ids = [aws_security_group.rds.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name

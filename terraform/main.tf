@@ -39,6 +39,15 @@ module "vpc" {
   private_subnet_cidrs = var.private_subnet_cidrs
 }
 
+# ACM Module
+module "acm" {
+  source = "./acm"
+
+  domain_name  = var.domain_name
+  project_name = var.project_name
+  environment  = var.environment
+}
+
 # ALB Module
 module "alb" {
   source = "./alb"
@@ -47,7 +56,7 @@ module "alb" {
   environment     = var.environment
   vpc_id          = module.vpc.vpc_id
   public_subnets  = module.vpc.public_subnets
-  certificate_arn = module.route53.certificate_arn
+  certificate_arn = module.acm.certificate_arn
 
   depends_on = [module.vpc]
 }
@@ -63,21 +72,24 @@ module "waf" {
   depends_on = [module.alb]
 }
 
-# RDS Module
+# RDS Module - Create before ECS to break circular dependency
 module "rds" {
   source = "./rds"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  vpc_id                = module.vpc.vpc_id
-  private_subnets       = module.vpc.private_subnets
-  db_name               = var.db_name
-  db_username           = var.db_username
-  db_password           = var.db_password
-  ecs_security_group_id = module.ecs.ecs_security_group_id
+  project_name    = var.project_name
+  environment     = var.environment
+  vpc_id          = module.vpc.vpc_id
+  private_subnets = module.vpc.private_subnets
+  db_name         = var.db_name
+  db_username     = var.db_username
+  db_password     = var.db_password
+  # Remove direct dependency on ECS security group
+  # ecs_security_group_id = module.ecs.ecs_security_group_id
 
-  depends_on = [module.vpc, module.ecs]
+  depends_on = [module.vpc]
 }
+
+# ACM Module is already defined above
 
 # Route53 Module
 module "route53" {
@@ -96,16 +108,19 @@ module "route53" {
 module "ecs" {
   source = "./ecs"
 
-  project_name             = var.project_name
-  environment              = var.environment
-  vpc_id                   = module.vpc.vpc_id
-  private_subnets          = module.vpc.private_subnets
-  blue_target_group_arn    = module.alb.blue_target_group_arn
-  green_target_group_arn   = module.alb.green_target_group_arn
-  alb_security_group_id    = module.alb.alb_security_group_id
-  ecr_repository_url       = aws_ecr_repository.app_repo.repository_url
-  image_tag                = var.image_tag
+  project_name           = var.project_name
+  environment            = var.environment
+  vpc_id                 = module.vpc.vpc_id
+  private_subnets        = module.vpc.private_subnets
+  blue_target_group_arn  = module.alb.blue_target_group_arn
+  green_target_group_arn = module.alb.green_target_group_arn
+  alb_security_group_id  = module.alb.alb_security_group_id
+  ecr_repository_url     = aws_ecr_repository.app_repo.repository_url
+  image_tag              = var.image_tag
+  # Use database connection string from RDS module output
   database_url             = module.rds.db_connection_string
+  rds_security_group_id    = module.rds.rds_security_group_id
+  db_port                  = 5432
   next_public_base_url     = var.next_public_base_url
   auth_secret              = var.auth_secret
   auth_github_id           = var.auth_github_id
@@ -127,7 +142,7 @@ module "ecs" {
   stripe_alpha_price_id    = var.stripe_alpha_price_id
   alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
-  depends_on = [module.vpc, module.alb]
+  depends_on = [module.vpc, module.alb, module.rds]
 }
 
 # ECR Repository
