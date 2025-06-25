@@ -7,17 +7,6 @@ import { and, eq, sql } from "drizzle-orm";
 import { User } from "next-auth";
 import Stripe from "stripe";
 import { updateUserWithStripeCustomerId } from "../actions/users";
-// Validate required environment variables
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn("STRIPE_SECRET_KEY is required");
-}
-
-if (!process.env.STRIPE_WEBHOOK_SECRET) {
-  console.warn("STRIPE_WEBHOOK_SECRET is required");
-}
-if (!process.env.STRIPE_ALPHA_PRICE_ID) {
-  console.warn("STRIPE_ALPHA_PRICE_ID is required");
-}
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
