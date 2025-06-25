@@ -32,14 +32,16 @@ jobs:
       ALPHA_ACCESS_CUTOFF_DATE: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
       NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
       AUTH_TRUST_HOST: ${{ secrets.AUTH_TRUST_HOST }}
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      SENTRY_DNS: ${{ secrets.SENTRY_DNS }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-
+      STRIPE_ALPHA_PRICE_ID: ${{ secrets.STRIPE_ALPHA_PRICE_ID }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

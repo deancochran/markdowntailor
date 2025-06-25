@@ -16,7 +16,7 @@ export const redis = Redis.fromEnv();
 // Rate limiters using Redis
 export const middlewareRateLimiter = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "10 s"),
+  limiter: Ratelimit.slidingWindow(15, "5 s"),
 });
 
 export const apiRateLimiter = new Ratelimit({

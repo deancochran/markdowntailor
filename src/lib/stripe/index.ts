@@ -15,6 +15,9 @@ if (!process.env.STRIPE_SECRET_KEY) {
 if (!process.env.STRIPE_WEBHOOK_SECRET) {
   console.warn("STRIPE_WEBHOOK_SECRET is required");
 }
+if (!process.env.STRIPE_ALPHA_PRICE_ID) {
+  console.warn("STRIPE_ALPHA_PRICE_ID is required");
+}
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -44,7 +47,7 @@ export async function createCreditPurchaseCheckoutSession({
       mode: "payment",
       line_items: [
         {
-          price: process.env.STRIPE_ALPHA_PRICE_ID as string,
+          price: process.env.STRIPE_ALPHA_PRICE_ID,
           quantity: 1,
         },
       ],
