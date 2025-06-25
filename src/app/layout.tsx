@@ -1,42 +1,114 @@
-import { Header } from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
+
+import { auth } from "@/auth";
+import { ModeToggle } from "@/components/ModeToggle";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { logout } from "@/lib/actions/auth";
+import * as Sentry from "@sentry/nextjs";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Resume Builder",
+  title: "markdowntailor",
   description: "A markdown-based resume editor",
+  other: {
+    ...Sentry.getTraceData(),
+  },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
-      >
-        <div className="grid h-screen grid-rows-[auto_1fr_auto]">
-          <Header />
-          <main className="w-full h-full flex items-start">{children}</main>
-          <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-            Resume Builder &copy; {new Date().getFullYear()}
-          </footer>
-        </div>
-        <Toaster />
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <div className="h-screen flex flex-col">
+            <header className="sticky h-16 top-0 z-50 border-b shadow-xl">
+              <div className="flex w-full px-8 h-14 items-center justify-between">
+                <div className="flex items-center">
+                  <Link href="/" className="flex items-center ">
+                    <span className="font-bold">markdowntailor</span>
+                  </Link>
+                </div>
+
+                <div className="flex items-center">
+                  <nav className="flex items-center space-x-2">
+                    {/* DARK MODE SWITCH */}
+                    <ModeToggle />
+                    {/* AVATAR DropdownMenu */}
+                    {session ? (
+                      <div className="flex items-center gap-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Avatar className="cursor-pointer">
+                              <AvatarImage
+                                src={session.user?.image || undefined}
+                                alt={session.user?.name || "User"}
+                              />
+                              <AvatarFallback>
+                                {session.user?.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-center w-full cursor-pointer"
+                              asChild
+                            >
+                              <Link href="/resumes">Resumes</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-center w-full cursor-pointer"
+                              asChild
+                            >
+                              <Link href="/settings">Settings</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <form action={logout}>
+                                <button
+                                  type="submit"
+                                  className="w-full text-left cursor-pointer"
+                                >
+                                  Sign Out
+                                </button>
+                              </form>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ) : (
+                      <Button className="" type="button" asChild>
+                        <Link href="/login">Sign In</Link>
+                      </Button>
+                    )}
+                  </nav>
+                </div>
+              </div>
+            </header>
+
+            <main className="h-full overflow-auto">{children}</main>
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

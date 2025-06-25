@@ -39,3 +39,44 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.swc/*
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+# Terraform
+/terraform/
+**/.terraform/*
+*.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+*terraform.tfvars
+*.auto.tfvars
+*.tfstate
+*.tfstate.backup
+*.tfplan
+env/*
+playwright-report/
+Thumbs.db
+.DS_Store
+.Thumbs.db
+.husky
+.husky/*
+TASKMANAGEMENT
+TASKMANAGEMENT/*
+pnpm-lock.yaml

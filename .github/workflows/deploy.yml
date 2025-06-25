@@ -1,0 +1,153 @@
+name: Build and Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "terraform/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - prod
+          - staging
+      deploy_type:
+        description: "Type of deployment"
+        required: true
+        default: "standard"
+        type: choice
+        options:
+          - standard
+          - rollback
+      rollback_tag:
+        description: "Image tag to rollback to (for rollback deployment)"
+        required: false
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: markdowntailor-prod
+  PROJECT_NAME: markdowntailor
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Generate semantic version
+        id: semver
+        run: |
+          # If this is a rollback, use provided tag
+          if [[ "${{ github.event.inputs.deploy_type }}" == "rollback" ]]; then
+            echo "tag=${{ github.event.inputs.rollback_tag || 'latest' }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # For standard deployment, generate a version
+          GIT_SHA=$(git rev-parse --short HEAD)
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "tag=${TIMESTAMP}-${GIT_SHA}" >> $GITHUB_OUTPUT
+          echo "latest=latest" >> $GITHUB_OUTPUT
+
+      # AppSpec is now configured directly in CodePipeline
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.semver.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            GITHUB_SHA=${{ github.sha }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+      # AppSpec is now configured directly in CodePipeline
+
+      - name: Verify Deployment Started
+        run: |
+          echo "Docker image pushed to ECR with tag: ${{ steps.semver.outputs.tag }}"
+          echo "CodePipeline should automatically detect the new image and start the deployment"
+
+          # Check that the pipeline started
+          sleep 30
+          PIPELINE_NAME="${{ env.PROJECT_NAME }}-${{ github.event.inputs.environment || 'prod' }}-pipeline"
+          EXECUTION_ID=$(aws codepipeline list-pipeline-executions --pipeline-name $PIPELINE_NAME --max-items 1 --query 'pipelineExecutionSummaries[0].pipelineExecutionId' --output text)
+
+          if [ -n "$EXECUTION_ID" ]; then
+            echo "Pipeline execution started with ID: $EXECUTION_ID"
+            echo "::set-output name=pipeline_execution_id::$EXECUTION_ID"
+          else
+            echo "::warning::Pipeline execution not detected. Check AWS Console."
+          fi
+
+      - name: Monitor Deployment
+        run: |
+          PIPELINE_NAME="${{ env.PROJECT_NAME }}-${{ github.event.inputs.environment || 'prod' }}-pipeline"
+          EXECUTION_ID=$(aws codepipeline list-pipeline-executions --pipeline-name $PIPELINE_NAME --max-items 1 --query 'pipelineExecutionSummaries[0].pipelineExecutionId' --output text)
+
+          if [ -n "$EXECUTION_ID" ]; then
+            echo "Monitoring pipeline execution: $EXECUTION_ID"
+
+            # Poll for status (timeout after 10 minutes)
+            timeout=600
+            interval=30
+            elapsed=0
+
+            while [ $elapsed -lt $timeout ]; do
+              STATUS=$(aws codepipeline get-pipeline-execution --pipeline-name $PIPELINE_NAME --pipeline-execution-id $EXECUTION_ID --query 'pipelineExecution.status' --output text)
+
+              echo "Current status: $STATUS"
+
+              if [ "$STATUS" = "Succeeded" ]; then
+                echo "Deployment completed successfully!"
+                break
+              elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+                echo "::error::Deployment failed or was stopped."
+                exit 1
+              fi
+
+              sleep $interval
+              elapsed=$((elapsed + interval))
+
+              echo "Waited for $elapsed seconds..."
+            done
+
+            if [ $elapsed -ge $timeout ]; then
+              echo "::warning::Monitoring timed out, but deployment might still be in progress."
+            fi
+          else
+            echo "::warning::Could not find pipeline execution to monitor."
+          fi
+
+      - name: Deployment Information
+        run: |
+          echo "::notice::Deployment initiated with image tag: ${{ steps.semver.outputs.tag }}"
+          echo "::notice::Application URL: https://markdowntailor.com"
+          echo "::notice::Pipeline Console: https://console.aws.amazon.com/codesuite/codepipeline/pipelines/${{ env.PROJECT_NAME }}-${{ github.event.inputs.environment || 'prod' }}-pipeline/view?region=${{ env.AWS_REGION }}"
