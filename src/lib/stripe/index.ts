@@ -8,8 +8,6 @@ import { User } from "next-auth";
 import Stripe from "stripe";
 import { updateUserWithStripeCustomerId } from "../actions/users";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 export const stripeAgentToolkit = new StripeAgentToolkit({
   secretKey: process.env.STRIPE_SECRET_KEY as string,
   configuration: {
@@ -31,6 +29,7 @@ export interface CheckoutSessionParams {
 export async function createCreditPurchaseCheckoutSession({
   user,
 }: CheckoutSessionParams): Promise<Stripe.Checkout.Session> {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -122,6 +121,7 @@ async function handleCheckoutSessionCompleted(
  * Handles Stripe webhook events
  */
 export async function handleStripeWebhook(rawBody: Buffer, signature: string) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
   try {
     console.log("🚀 Processing Stripe webhook");
 
