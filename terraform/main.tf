@@ -118,9 +118,8 @@ module "ecs" {
   ecr_repository_url     = aws_ecr_repository.app_repo.repository_url
   image_tag              = var.image_tag
   # Use database connection string from RDS module output
-  database_url             = module.rds.db_connection_string
-  rds_security_group_id    = module.rds.rds_security_group_id
-  db_port                  = 5432
+  database_url = module.rds.db_connection_string
+  # Security group rules are now managed in main.tf
   next_public_base_url     = var.next_public_base_url
   auth_secret              = var.auth_secret
   auth_github_id           = var.auth_github_id
@@ -143,6 +142,19 @@ module "ecs" {
   alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
   depends_on = [module.vpc, module.alb, module.rds]
+}
+
+# Allow ECS tasks to communicate with RDS
+resource "aws_security_group_rule" "ecs_to_rds" {
+  description              = "Allow ECS tasks to communicate with RDS"
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = module.ecs.ecs_security_group_id
+  security_group_id        = module.rds.rds_security_group_id
+
+  depends_on = [module.ecs, module.rds]
 }
 
 # ECR Repository
