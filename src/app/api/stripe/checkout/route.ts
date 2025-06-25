@@ -1,24 +1,12 @@
 import { auth } from "@/auth";
-import { createCreditPurchaseCheckoutSession } from "@/lib/stripe";
 import { apiRateLimiter } from "@/lib/upstash";
-import { User } from "next-auth";
 import { NextResponse } from "next/server";
-
-// Create a utility function to perform the checkout session creation.
-async function createCheckoutSession(user: User) {
-  try {
-    // Call the function to create a checkout session using the user information.
-    const checkoutSession = await createCreditPurchaseCheckoutSession({
-      user,
-    });
-    return checkoutSession;
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    throw error; // Re-throw the error to be handled later
-  }
-}
+import Stripe from "stripe";
 
 export async function GET() {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+    apiVersion: "2025-05-28.basil",
+  });
   try {
     const session = await auth();
 
@@ -33,8 +21,28 @@ export async function GET() {
       return new Response("Too Many Requests", { status: 429 });
     }
 
-    // Create the checkout session now that we have a valid session and rate limit is confirmed
-    const checkoutSession = await createCheckoutSession(session.user);
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [
+        {
+          price: process.env.STRIPE_ALPHA_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      consent_collection: {
+        terms_of_service: "required",
+      },
+      metadata: {
+        user_id: session.user.id,
+      },
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=cancelled`,
+      ...(!!session.user.stripeCustomerId
+        ? { customer: session.user.stripeCustomerId }
+        : {
+            customer_email: session.user.email,
+          }),
+    });
 
     // Return the checkout session URL
     return NextResponse.json({

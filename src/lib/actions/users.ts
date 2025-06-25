@@ -7,22 +7,17 @@ import { user } from "@/db/schema";
 import { withSentry } from "@/lib/utils/sentry";
 import Decimal from "decimal.js";
 import { eq, sql } from "drizzle-orm";
-import Stripe from "stripe";
 
 /**
  * Delete a user and their Stripe customer
  */
 export const deleteUser = withSentry("delete-user", async () => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
 
-  if (session.user.stripeCustomerId) {
-    await stripe.customers.del(session.user.stripeCustomerId);
-  }
   await db.delete(user).where(eq(user.id, session.user.id));
 });
 
