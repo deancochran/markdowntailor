@@ -42,8 +42,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ steps.semver.outputs.tag }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/markdowntailor:${{ steps.semver.outputs.tag }}
+            ${{ steps.login-ecr.outputs.registry }}/markdowntailor:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
