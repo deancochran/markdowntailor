@@ -53,7 +53,8 @@ node_modules/
 .env.sentry-build-plugin
 
 # Terraform
-/terraform/
+terraform/*
+terraform
 **/.terraform/*
 *.terraform.lock.hcl
 *.tfstate
