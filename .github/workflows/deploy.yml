@@ -30,15 +30,11 @@ on:
         required: false
         type: string
 
-env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: markdowntailor-prod
-  PROJECT_NAME: markdowntailor
-
 jobs:
   build-and-push:
     name: Build and Push to ECR
     runs-on: ubuntu-latest
+    environment: cicd
     permissions:
       id-token: write
       contents: read
