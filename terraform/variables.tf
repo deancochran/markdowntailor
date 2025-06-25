@@ -151,6 +151,12 @@ variable "sentry_project" {
   sensitive   = true
 }
 
+variable "sentry_dns" {
+  description = "Sentry DNS"
+  type        = string
+  sensitive   = true
+}
+
 variable "stripe_secret_key" {
   description = "Stripe Secret Key"
   type        = string
@@ -169,14 +175,8 @@ variable "stripe_webhook_secret" {
   sensitive   = true
 }
 
-variable "stripe_input_meter" {
-  description = "Stripe Input Meter"
-  type        = string
-  sensitive   = true
-}
-
-variable "stripe_output_meter" {
-  description = "Stripe Output Meter"
+variable "stripe_alpha_price_id" {
+  description = "Stripe Alpha Price ID"
   type        = string
   sensitive   = true
 }

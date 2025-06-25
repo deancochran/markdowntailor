@@ -118,11 +118,11 @@ module "ecs" {
   sentry_auth_token        = var.sentry_auth_token
   sentry_org               = var.sentry_org
   sentry_project           = var.sentry_project
+  sentry_dns               = var.sentry_dns
   stripe_secret_key        = var.stripe_secret_key
   stripe_public_key        = var.stripe_public_key
   stripe_webhook_secret    = var.stripe_webhook_secret
-  stripe_input_meter       = var.stripe_input_meter
-  stripe_output_meter      = var.stripe_output_meter
+  stripe_alpha_price_id    = var.stripe_alpha_price_id
   alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
   depends_on = [module.vpc, module.alb, module.rds]

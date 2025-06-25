@@ -49,5 +49,6 @@ export async function updateUserWithStripeCustomerId(
       })
       .where(eq(user.id, dbUser.id))
       .returning();
+    console.log(`ALPHA CREDITS REDEEMED`);
   }
 }

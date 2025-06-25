@@ -6,6 +6,7 @@ import Decimal from "decimal.js";
 import { and, eq, sql } from "drizzle-orm";
 import { User } from "next-auth";
 import Stripe from "stripe";
+import { updateUserWithStripeCustomerId } from "../actions/users";
 // Validate required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
   console.warn("STRIPE_SECRET_KEY is required");
@@ -27,8 +28,6 @@ export const stripeAgentToolkit = new StripeAgentToolkit({
     },
   },
 });
-export const ALPHA_PRODUCT_ID = "prod_SXA2y1INLaH5se";
-export const ALPHA_PRICE_ID = "price_1Rc5iOIhODsTDweweITC2vcw";
 
 /**
  * Creates a Stripe checkout session for credit purchases
@@ -45,7 +44,7 @@ export async function createCreditPurchaseCheckoutSession({
       mode: "payment",
       line_items: [
         {
-          price: ALPHA_PRICE_ID,
+          price: process.env.STRIPE_ALPHA_PRICE_ID as string,
           quantity: 1,
         },
       ],
@@ -105,6 +104,10 @@ async function handleCheckoutSessionCompleted(
   if (!session.amount_subtotal) {
     throw new Error("Missing amount_subtotal");
   }
+  await updateUserWithStripeCustomerId(
+    session.metadata.user_id,
+    session.customer as string,
+  );
   console.log(`💳 Updating customer ID: ${session.customer}`);
   await db
     .update(user)

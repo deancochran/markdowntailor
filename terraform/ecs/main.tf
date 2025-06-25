@@ -189,6 +189,10 @@ resource "aws_ecs_task_definition" "app" {
           value = var.sentry_project
         },
         {
+          name  = "SENTRY_DNS"
+          value = var.sentry_dns
+        },
+        {
           name  = "STRIPE_SECRET_KEY"
           value = var.stripe_secret_key
         },
@@ -201,12 +205,8 @@ resource "aws_ecs_task_definition" "app" {
           value = var.stripe_webhook_secret
         },
         {
-          name  = "STRIPE_INPUT_METER"
-          value = var.stripe_input_meter
-        },
-        {
-          name  = "STRIPE_OUPUT_METER"
-          value = var.stripe_ouput_meter
+          name  = "STRIPE_ALPHA_PRICE_ID"
+          value = var.stripe_alpha_price_id
         },
         {
           name  = "ALPHA_ACCESS_CUTOFF_DATE"
