@@ -28,6 +28,8 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   // Pass the auth token
   authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Suppresses source map uploading logs during build
+  silent: true,
   // Upload a larger set of source maps for prettier stack traces (increases build time)
   widenClientFileUpload: false,
 
