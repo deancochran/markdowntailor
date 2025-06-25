@@ -17,6 +17,21 @@ resource "aws_db_subnet_group" "main" {
   )
 }
 
+# Create an empty security group for ECS if it doesn't exist yet
+resource "aws_security_group" "ecs_placeholder" {
+  count = var.ecs_security_group_id == "" ? 1 : 0
+
+  name_prefix = "${var.project_name}-${var.environment}-ecs-placeholder-"
+  vpc_id      = var.vpc_id
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${var.project_name}-${var.environment}-ecs-placeholder-sg"
+    }
+  )
+}
+
 resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-${var.environment}-rds-"
   vpc_id      = var.vpc_id
@@ -25,7 +40,7 @@ resource "aws_security_group" "rds" {
     from_port       = var.db_port
     to_port         = var.db_port
     protocol        = "tcp"
-    security_groups = [var.ecs_security_group_id]
+    security_groups = [var.ecs_security_group_id != "" ? var.ecs_security_group_id : aws_security_group.ecs_placeholder[0].id]
   }
 
   egress {

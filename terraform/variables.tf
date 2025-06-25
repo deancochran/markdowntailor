@@ -186,3 +186,9 @@ variable "alpha_access_cutoff_date" {
   type        = string
   sensitive   = true
 }
+
+variable "github_repo" {
+  description = "GitHub repository in format 'organization/repo-name' for OIDC authentication"
+  type        = string
+  default     = "deancochran/markdowntailor"
+}

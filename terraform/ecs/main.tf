@@ -239,13 +239,9 @@ resource "aws_ecs_service" "main" {
   desired_count   = var.app_count
   launch_type     = "FARGATE"
 
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
+  deployment_controller {
+    type = "CODE_DEPLOY"
   }
-
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 50
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
@@ -254,7 +250,7 @@ resource "aws_ecs_service" "main" {
   }
 
   load_balancer {
-    target_group_arn = var.alb_target_group_arn
+    target_group_arn = var.blue_target_group_arn
     container_name   = "${var.project_name}-container"
     container_port   = 80
   }
@@ -262,6 +258,13 @@ resource "aws_ecs_service" "main" {
   health_check_grace_period_seconds = 300
 
   depends_on = [aws_ecs_task_definition.app] # Ensure the service waits for the task definition to be created
+
+  lifecycle {
+    ignore_changes = [
+      task_definition,
+      load_balancer # Ignore changes to load balancer as this will be managed by CodeDeploy
+    ]
+  }
 
   tags = {
     Name = "${var.project_name}-${var.environment}-service"

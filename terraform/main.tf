@@ -29,7 +29,7 @@ data "aws_caller_identity" "current" {}
 
 # VPC Module
 module "vpc" {
-  source = "./modules/vpc"
+  source = "./vpc"
 
   project_name         = var.project_name
   environment          = var.environment
@@ -41,7 +41,7 @@ module "vpc" {
 
 # ALB Module
 module "alb" {
-  source = "./modules/alb"
+  source = "./alb"
 
   project_name    = var.project_name
   environment     = var.environment
@@ -54,7 +54,7 @@ module "alb" {
 
 # WAF Module
 module "waf" {
-  source = "./modules/waf"
+  source = "./waf"
 
   project_name = var.project_name
   environment  = var.environment
@@ -65,22 +65,23 @@ module "waf" {
 
 # RDS Module
 module "rds" {
-  source = "./modules/rds"
+  source = "./rds"
 
-  project_name    = var.project_name
-  environment     = var.environment
-  vpc_id          = module.vpc.vpc_id
-  private_subnets = module.vpc.private_subnets
-  db_name         = var.db_name
-  db_username     = var.db_username
-  db_password     = var.db_password
+  project_name          = var.project_name
+  environment           = var.environment
+  vpc_id                = module.vpc.vpc_id
+  private_subnets       = module.vpc.private_subnets
+  db_name               = var.db_name
+  db_username           = var.db_username
+  db_password           = var.db_password
+  ecs_security_group_id = module.ecs.ecs_security_group_id
 
-  depends_on = [module.vpc]
+  depends_on = [module.vpc, module.ecs]
 }
 
 # Route53 Module
 module "route53" {
-  source = "./modules/route53"
+  source = "./route53"
 
   domain_name  = var.domain_name
   project_name = var.project_name
@@ -93,13 +94,14 @@ module "route53" {
 
 # ECS Module
 module "ecs" {
-  source = "./modules/ecs"
+  source = "./ecs"
 
   project_name             = var.project_name
   environment              = var.environment
   vpc_id                   = module.vpc.vpc_id
   private_subnets          = module.vpc.private_subnets
-  alb_target_group_arn     = module.alb.target_group_arn
+  blue_target_group_arn    = module.alb.blue_target_group_arn
+  green_target_group_arn   = module.alb.green_target_group_arn
   alb_security_group_id    = module.alb.alb_security_group_id
   ecr_repository_url       = aws_ecr_repository.app_repo.repository_url
   image_tag                = var.image_tag
@@ -125,7 +127,7 @@ module "ecs" {
   stripe_alpha_price_id    = var.stripe_alpha_price_id
   alpha_access_cutoff_date = var.alpha_access_cutoff_date
 
-  depends_on = [module.vpc, module.alb, module.rds]
+  depends_on = [module.vpc, module.alb]
 }
 
 # ECR Repository
@@ -136,5 +138,22 @@ resource "aws_ecr_repository" "app_repo" {
   image_scanning_configuration {
     scan_on_push = true
   }
+}
 
+# CI/CD Module
+module "cicd" {
+  source = "./cicd"
+
+  project_name            = var.project_name
+  environment             = var.environment
+  ecr_repository_name     = aws_ecr_repository.app_repo.name
+  ecr_repository_url      = aws_ecr_repository.app_repo.repository_url
+  image_tag               = var.image_tag
+  ecs_cluster_name        = module.ecs.cluster_name
+  ecs_service_name        = module.ecs.service_name
+  alb_listener_arn        = module.alb.https_listener_arn
+  blue_target_group_name  = module.alb.blue_target_group_name
+  green_target_group_name = module.alb.green_target_group_name
+
+  depends_on = [module.ecs, module.alb, aws_ecr_repository.app_repo]
 }

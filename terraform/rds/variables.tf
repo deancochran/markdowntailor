@@ -25,6 +25,7 @@ variable "private_subnets" {
 variable "ecs_security_group_id" {
   description = "The ID of the ECS security group"
   type        = string
+  default     = ""
   sensitive   = true
 }
 

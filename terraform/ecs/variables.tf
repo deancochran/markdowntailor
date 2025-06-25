@@ -21,8 +21,14 @@ variable "private_subnets" {
   sensitive   = true
 }
 
-variable "alb_target_group_arn" {
-  description = "The ARN of the ALB target group"
+variable "blue_target_group_arn" {
+  description = "The ARN of the blue ALB target group"
+  type        = string
+  sensitive   = true
+}
+
+variable "green_target_group_arn" {
+  description = "The ARN of the green ALB target group"
   type        = string
   sensitive   = true
 }
