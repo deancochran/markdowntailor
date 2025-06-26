@@ -13,7 +13,7 @@ export async function register() {
       const { migrate } = await import("drizzle-orm/node-postgres/migrator");
 
       await migrate(db, {
-        migrationsFolder: "./db/migrations",
+        migrationsFolder: "./src/db/migrations",
       });
 
       console.info("✅ Database migration completed successfully!");
