@@ -46,22 +46,24 @@ This sprint focuses on delivering a secure, stable alpha version of ResumeForge 
 ---
 
 ### Week 3 (June 23-29)
-- [ ] Incorporate testing into each page of the application
-- [ ] Set up IaC with Terraform
-  - [ ] Configure markdowntailor title/name
-- [ ] Setup CICD Pipelines
-  - [ ] Set up environments (dev, staging, production, alpha)
-  - [ ] Configure Release Strategy
-  - [ ] Configure automated builds
-  - [ ] Configure automated testing
-  - [ ] Configure automated deployment
-  - [ ] Configure AI integration for debugging
-- [ ] Test CI/CD pipelines with real commits and changes
-- [ ] Test CI/CD pipelines with db migrations
+- [x] Incorporate testing into each page of the application
+- [x] Set up IaC with Terraform
+  - [x] Configure markdowntailor title/name
+- [x] Setup CICD Pipelines
+  - [x] Set up environments (dev, staging, production, alpha)
+  - [] Configure Release Strategy
+  - [x] Configure automated builds
+  - [x] Configure automated testing
+  - [x] Configure automated deployment
+  - [x] Configure AI integration for debugging
+- [x] Test CI/CD pipelines with real commits and changes
+- [x] Test CI/CD pipelines with db migrations
 
 
 
 ### Week 4 (June 30 - July 1)
+- [ ] Add comments in your  Terraform config
+- [ ] Add comments for your CICD GH config
 - [ ] README.md updates and documentation
 - [ ] Go-live readiness checklist
 - [ ] Set up CRM
