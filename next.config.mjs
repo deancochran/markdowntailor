@@ -10,19 +10,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  webpack: (config) => {
-    // This is necessary for the markdown editor to work properly
-    // Add Node.js module polyfills for browser environment
-    config.resolve.fallback = {
-      fs: false,
-      path: false,
-      os: false,
-      crypto: false,
-      stream: false,
-      string_decoder: false,
-    };
-    return config;
-  },
+
   turbopack: {
     rules: {
       "*.svg": {

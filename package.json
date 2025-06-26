@@ -28,6 +28,7 @@
     "@ai-sdk/react": "^1.2.12",
     "@auth/drizzle-adapter": "^1.10.0",
     "@auth/neon-adapter": "^1.10.0",
+    "@aws-sdk/client-rds-data": "^3.835.0",
     "@fontsource/open-sans": "^5.2.6",
     "@hookform/resolvers": "^5.1.1",
     "@monaco-editor/react": "^4.7.0",

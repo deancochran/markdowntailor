@@ -37,7 +37,7 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/src/db/migrations ./src/db/migrations
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 
 EXPOSE 80
 ENV PORT=80
