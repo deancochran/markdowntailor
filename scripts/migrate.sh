@@ -2,4 +2,4 @@
 
 # Run database migrations
 echo "Running database migrations"
-npm run db:migrate
+pnpm run db:migrate
