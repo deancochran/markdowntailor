@@ -1,19 +1,19 @@
-import { db } from "@/db/drizzle";
 import * as Sentry from "@sentry/nextjs";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import path from "path";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // Initialize Sentry first
     await import("./sentry.server.config");
 
-    // Run database migrations
     try {
       console.info("🚀 Starting database migration...");
 
+      // Dynamically import Node.js-specific modules
+      const { db } = await import("@/db/drizzle");
+      const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+
       await migrate(db, {
-        migrationsFolder: path.join(process.cwd(), "migrations"),
+        migrationsFolder: "./db/migrations",
       });
 
       console.info("✅ Database migration completed successfully!");

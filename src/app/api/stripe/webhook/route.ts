@@ -1,8 +1,8 @@
 import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
 import { updateUserWithStripeCustomerId } from "@/lib/actions/users";
 import Decimal from "decimal.js";
 import { and, eq, sql } from "drizzle-orm";
-import { user } from "migrations/schema";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";

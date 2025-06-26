@@ -1,8 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: "standalone",
   reactStrictMode: true,
+  serverExternalPackages: ["pg", "drizzle-orm"],
   eslint: {
     ignoreDuringBuilds: false,
   },
@@ -11,7 +12,15 @@ const nextConfig = {
   },
   webpack: (config) => {
     // This is necessary for the markdown editor to work properly
-    config.resolve.fallback = { fs: false, path: false };
+    // Add Node.js module polyfills for browser environment
+    config.resolve.fallback = {
+      fs: false,
+      path: false,
+      os: false,
+      crypto: false,
+      stream: false,
+      string_decoder: false,
+    };
     return config;
   },
   turbopack: {
