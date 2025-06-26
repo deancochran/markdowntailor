@@ -2,11 +2,16 @@ import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    // Initialize Sentry first
-    await import("./sentry.server.config");
-
     try {
+      // Initialize Sentry first
+      await import("./sentry.server.config");
+
       console.info("🚀 Starting database migration...");
+
+      // Verify DATABASE_URL is set before proceeding
+      if (!process.env.DATABASE_URL) {
+        throw new Error("DATABASE_URL environment variable is not set");
+      }
 
       // Dynamically import Node.js-specific modules
       const { db } = await import("@/db/drizzle");
