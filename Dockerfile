@@ -2,15 +2,15 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json ./
-RUN npm install -g pnpm && pnpm install --no-lockfile
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm install -g pnpm
-RUN pnpm run build
+RUN npm install
+RUN npm run build
 
 # Production image, copy all the files and install dependencies
 FROM node:20-alpine AS runner
@@ -26,4 +26,4 @@ COPY --from=builder /app/package.json ./package.json
 ENV PORT=80
 EXPOSE 80
 
-CMD ["pnpm", "start"]
+CMD ["npm", "start"]
