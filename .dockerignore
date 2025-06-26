@@ -1,0 +1,11 @@
+Dockerfile
+.dockerignore
+node_modules
+README.md
+.next
+docker
+.git
+terraform
+*.tsbuildinfo
+coverage
+*.log
