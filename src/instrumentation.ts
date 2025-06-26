@@ -8,11 +8,6 @@ export async function register() {
 
       console.info("🚀 Starting database migration...");
 
-      // Verify DATABASE_URL is set before proceeding
-      if (!process.env.DATABASE_URL) {
-        throw new Error("DATABASE_URL environment variable is not set");
-      }
-
       // Dynamically import Node.js-specific modules
       const { db } = await import("@/db/drizzle");
       const { migrate } = await import("drizzle-orm/node-postgres/migrator");
