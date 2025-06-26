@@ -12,8 +12,9 @@ export async function register() {
       const { db } = await import("@/db/drizzle");
       const { migrate } = await import("drizzle-orm/node-postgres/migrator");
 
+      const path = await import("path");
       await migrate(db, {
-        migrationsFolder: "./src/db/migrations",
+        migrationsFolder: path.join(process.cwd(), "src/db/migrations"),
       });
 
       console.info("✅ Database migration completed successfully!");
