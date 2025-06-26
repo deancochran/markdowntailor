@@ -14,7 +14,7 @@ export default async function middleware(
 ): Promise<Response | undefined> {
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   // // Skip rate limiting in test environment
-  if (process.env.NODE_ENV !== "test") {
+  if (process.env.NODE_ENV !== "development") {
     const { success } = await middlewareRateLimiter.limit(ip);
     if (!success) {
       return NextResponse.redirect(new URL("/blocked", request.url));
