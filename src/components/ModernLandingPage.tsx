@@ -17,7 +17,7 @@ import { useEffect, useMemo, useState } from "react";
 
 // Alpha Program Banner Component
 function AlphaProgramBanner() {
-  const [timeLeft, setTimeLeft] = useState({
+  const [_timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,

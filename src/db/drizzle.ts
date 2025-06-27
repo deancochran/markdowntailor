@@ -1,17 +1,9 @@
 import "dotenv/config";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 
 // Create the connection pool with better error handling
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("DATABASE_URL environment variable is not set");
 }
-
-const pool = new Pool({
-  connectionString,
-  // Add connection timeout to fail fast if DB is unreachable
-  connectionTimeoutMillis: 5000,
-});
-
-export const db = drizzle(pool);
+export const db = drizzle(process.env.DATABASE_URL as string);
