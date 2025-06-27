@@ -38,14 +38,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.sh /scripts/startup.sh
 
 EXPOSE 80
 ENV PORT=80
 ENV HOSTNAME="0.0.0.0"
 
 # server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-RUN chmod +x /scripts/startup.sh
-CMD ["/scripts/startup.sh"]
+CMD ["node", "server.js"]
