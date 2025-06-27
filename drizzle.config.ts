@@ -7,7 +7,7 @@ export default defineConfig({
 
   dbCredentials: {
     url: process.env.DATABASE_URL as string,
-    ssl: process.env.NODE_ENV === "production" ? "require" : undefined,
+    ssl: process.env.NODE_ENV === "production" ? true : undefined,
   },
   strict: true,
 });

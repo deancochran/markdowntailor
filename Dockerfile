@@ -37,9 +37,9 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/migrations ./app/migrations
-COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./app/drizzle.config.ts
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.sh /app/scripts/startup.sh
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.sh /scripts/startup.sh
 
 EXPOSE 80
 ENV PORT=80
@@ -47,5 +47,5 @@ ENV HOSTNAME="0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-RUN chmod +x /app/scripts/startup.sh
-CMD ["/app/scripts/startup.sh"]
+RUN chmod +x /scripts/startup.sh
+CMD ["/scripts/startup.sh"]
