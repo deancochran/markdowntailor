@@ -54,6 +54,8 @@ pnpm run dev
 | `pnpm run lint` | Run ESLint |
 | `pnpm run typecheck` | TypeScript type checking |
 | `pnpm run db:generate` | Generate Drizzle schema |
+| `pnpm run db:migrate` | Create migration files |
+| `pnpm run db:run-migrations` | Run migrations on database |
 | `pnpm run db:studio` | Open Drizzle Studio |
 | `pnpm run test` | Run Playwright tests |
 | `pnpm run test:ui` | Run Playwright tests with UI |
@@ -195,25 +197,49 @@ NEXTAUTH_URL=http://localhost:3000
 
 ### Drizzle ORM with Neon
 
-Schema definitions are in `/src/lib/db/schema.ts`:
+Schema definitions are in `/src/db/schema.ts`:
 
 ```bash
 # Generate schema changes
 pnpm run db:generate
 
+# Create migration files
+pnpm run db:migrate
+
 # Open Drizzle Studio
 pnpm run db:studio
 ```
 
-### Working with Neon Database
+### Running Migrations
+
+We use a structured approach to database migrations:
 
 ```bash
-# Generate migrations after schema changes
-pnpm run db:generate
+# Generate migration files after schema changes
+pnpm run db:migrate
 
-# Push schema to database (development)
-# Note: Use migrations for production
+# Push schema directly to database (development only)
+# Note: Always use migrations for production
+pnpm run db:push
 ```
+
+### Migration Architecture
+
+Our migration system is designed with the following features:
+
+1. **Separation of concerns**:
+   - Migration generation (`db:migrate`)
+   - Migration execution (`db:run-migrations`)
+
+2. **Explicit control**:
+   - Migrations don't automatically run on app startup
+   - Proper error handling and connection management
+   - Connection pooling with timeouts and error handling
+
+3. **Production-ready**:
+   - Safe for CI/CD environments
+   - Connection pool is properly closed after migrations
+   - Error handling prevents incomplete migrations
 
 ## 🔧 Development Workflow
 

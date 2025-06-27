@@ -23,6 +23,7 @@ export default async function middleware(
 
   // Only apply alpha cutoff to protected routes
   const pathname = request.nextUrl.pathname;
+  // Exclude auth routes from protection
   const protectedPaths = ["/resumes", "/settings", "/templates", "/api"];
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   if (
