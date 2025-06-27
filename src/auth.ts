@@ -48,6 +48,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: DrizzleAdapter(db),
   providers: providers,
   callbacks: {
