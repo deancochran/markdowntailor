@@ -122,48 +122,15 @@ function AlphaProgramBanner() {
   return (
     <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20 p-1">
       <div className="w-full h-full p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex flex-col items-start gap-1">
-          <Badge variant={content.badgeVariant} className="font-semibold">
+        <div className="w-full flex flex-col items-start gap-1">
+          <Badge
+            variant={content.badgeVariant}
+            className="font-semibold text-sm"
+          >
             {content.badgeText}
           </Badge>
-          <h3 className="text-lg font-bold text-foreground">{content.title}</h3>
+          <h3 className="text-sm font-bold text-foreground">{content.title}</h3>
         </div>
-
-        {content.showCountdown && (
-          <div className="flex items-center gap-2">
-            <div className="text-sm font-medium text-muted-foreground">
-              {content.countdownLabel}
-            </div>
-            <div className="flex gap-1">
-              {timeLeft.days > 0 && (
-                <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                  <div className="text-lg font-bold text-primary">
-                    {timeLeft.days}
-                  </div>
-                  <div className="text-xs text-muted-foreground">DAYS</div>
-                </div>
-              )}
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.hours}
-                </div>
-                <div className="text-xs text-muted-foreground">HRS</div>
-              </div>
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.minutes}
-                </div>
-                <div className="text-xs text-muted-foreground">MIN</div>
-              </div>
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.seconds}
-                </div>
-                <div className="text-xs text-muted-foreground">SEC</div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -224,15 +191,15 @@ export default function ModernLandingPage() {
   }, [testimonials.length]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
+    <div className="bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
       {/* Alpha Program Banner */}
       <AlphaProgramBanner />
 
-      <main className="flex-grow flex flex-col gap-20 py-10">
+      <div className="flex flex-col gap-12 md:gap-20 py-8 md:py-10 px-4">
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           <div
-            className={`relative flex flex-col items-center align-middle justify-evenly gap-8 px-16 py-8 transition-all duration-1000 ${
+            className={`relative flex flex-col items-center align-middle justify-evenly gap-8  transition-all duration-1000 ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
@@ -456,88 +423,102 @@ export default function ModernLandingPage() {
           </h2>
           <Button className="px-8 py-4 text-lg " size={"lg"} asChild>
             <Link href="/resumes">
-              Start Building Your Resume Now
+              Start Building Now
               <ArrowRight className="h-5 w-5 ml-2" />
             </Link>
           </Button>
         </div>
-      </main>
+      </div>
 
       {/* Footer */}
-      <footer className="border-t border-border/50">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="col-span-12 lg:col-span-4 flex flex-col items-start justify-between">
+      <footer className="border-t border-border/50 w-full">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Mobile-friendly footer layout */}
+          <div className="w-full flex flex-row flex-wrap items-start justify-start gap-4">
+            {/* Logo and copyright - top section */}
+            <div>
               <h3 className="text-xl font-bold text-foreground">
                 markdowntailor
               </h3>
-              <div className="items-start flex flex-col justify-end">
-                <p className="text-muted-foreground mt-2 text-sm">
-                  &copy; {new Date().getFullYear()} markdowntailor&trade;
-                </p>
-                <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground mt-2 text-sm whitespace-nowrap">
+                &copy; {new Date().getFullYear()} markdowntailor&trade;
+              </p>
+              {/* All rights reserved - at the bottom */}
+              <div>
+                <p className="text-xs text-muted-foreground">
                   All rights reserved.
                 </p>
               </div>
             </div>
-            <div className="col-span-12 lg:col-span-8 grid grid-cols-2 md:grid-cols-3 gap-8">
+
+            {/* Links in flexible grid for mobile devices */}
+            <div className="grow flex flex-row flex-wrap space-x-8 gap-8 items-start sm:justify-end justify-start">
+              {/* First column - small screens get 2 columns */}
               <div>
-                <h4 className="font-semibold text-foreground mb-4">Product</h4>
-                <ul className="space-y-2">
+                <h4 className="font-semibold text-foreground mb-2 text-sm">
+                  Product
+                </h4>
+                <ul className="space-y-1.5">
                   <li>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
-                      Features (coming soon)
+                      Features
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
-                      Pricing (coming soon)
+                      Pricing
                     </Link>
                   </li>
                 </ul>
               </div>
+
               <div>
-                <h4 className="font-semibold text-foreground mb-4">Company</h4>
-                <ul className="space-y-2">
+                <h4 className="font-semibold text-foreground mb-2 text-sm">
+                  Company
+                </h4>
+                <ul className="space-y-1.5">
                   <li>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
-                      Blog (coming soon)
+                      Blog
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
-                      About Us (coming soon)
+                      About
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="#"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
-                      Contact Us (coming soon)
+                      Contact
                     </Link>
                   </li>
                 </ul>
               </div>
+              {/* Legal links - most important for visibility on mobile */}
               <div>
-                <h4 className="font-semibold text-foreground mb-4">Legal</h4>
-                <ul className="space-y-2">
+                <h4 className="font-semibold text-foreground mb-2 text-sm">
+                  Legal
+                </h4>
+                <ul className="space-y-1.5">
                   <li>
                     <Link
                       href="/privacy-policy"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
                       Privacy Policy
                     </Link>
@@ -545,7 +526,7 @@ export default function ModernLandingPage() {
                   <li>
                     <Link
                       href="/terms-of-service"
-                      className="text-sm text-muted-foreground hover:text-primary"
+                      className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                     >
                       Terms of Service
                     </Link>
