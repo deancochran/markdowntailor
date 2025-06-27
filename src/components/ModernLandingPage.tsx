@@ -122,48 +122,15 @@ function AlphaProgramBanner() {
   return (
     <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20 p-1">
       <div className="w-full h-full p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="flex flex-col items-start gap-1">
-          <Badge variant={content.badgeVariant} className="font-semibold">
+        <div className="w-full flex flex-col items-start gap-1">
+          <Badge
+            variant={content.badgeVariant}
+            className="font-semibold text-sm"
+          >
             {content.badgeText}
           </Badge>
-          <h3 className="text-lg font-bold text-foreground">{content.title}</h3>
+          <h3 className="text-sm font-bold text-foreground">{content.title}</h3>
         </div>
-
-        {content.showCountdown && (
-          <div className="flex items-center gap-2">
-            <div className="text-sm font-medium text-muted-foreground">
-              {content.countdownLabel}
-            </div>
-            <div className="flex gap-1">
-              {timeLeft.days > 0 && (
-                <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                  <div className="text-lg font-bold text-primary">
-                    {timeLeft.days}
-                  </div>
-                  <div className="text-xs text-muted-foreground">DAYS</div>
-                </div>
-              )}
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.hours}
-                </div>
-                <div className="text-xs text-muted-foreground">HRS</div>
-              </div>
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.minutes}
-                </div>
-                <div className="text-xs text-muted-foreground">MIN</div>
-              </div>
-              <div className="bg-primary/10 rounded-lg  text-center min-w-[50px]">
-                <div className="text-lg font-bold text-primary">
-                  {timeLeft.seconds}
-                </div>
-                <div className="text-xs text-muted-foreground">SEC</div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -232,7 +199,7 @@ export default function ModernLandingPage() {
         {/* Hero Section */}
         <div className="relative overflow-hidden">
           <div
-            className={`relative flex flex-col items-center align-middle justify-evenly gap-8 px-16 py-8 transition-all duration-1000 ${
+            className={`relative flex flex-col items-center align-middle justify-evenly gap-8  transition-all duration-1000 ${
               isVisible
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-10"
