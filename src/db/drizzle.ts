@@ -8,7 +8,7 @@ if (!connectionString) {
   console.error("DATABASE_URL environment variable is not set");
 }
 const pool = new Pool({
-  connectionString,
+  connectionString: `${connectionString}?sslmode=no-verify`,
   ssl: process.env.NODE_ENV === "production" ? true : undefined,
 });
 
