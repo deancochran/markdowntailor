@@ -1,15 +1,34 @@
-import "dotenv/config";
+import * as schema from "@/db/schema";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import path from "node:path";
 import { Pool } from "pg";
 
-// Create the connection pool with better error handling
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("DATABASE_URL environment variable is not set");
+// Stores the db connection in the global scope to prevent multiple instances due to hot reloading with Next.js
+const globalForDb = globalThis as unknown as {
+  drizzle: NodePgDatabase<typeof schema>;
+};
+
+// Tested and compatible with Next.js Boilerplate
+const createDbConnection = () => {
+  return drizzle(
+    new Pool({
+      connectionString: `${process.env.DATABASE_URL}?sslmode=no-verify`,
+      ssl: process.env.NODE_ENV === "production" ? true : undefined,
+    }),
+  );
+};
+
+const db = globalForDb.drizzle || createDbConnection();
+
+// Only store in global during development to prevent hot reload issues
+if (process.env.NODE_ENV !== "production") {
+  globalForDb.drizzle = db;
 }
-const pool = new Pool({
-  connectionString: `${connectionString}?sslmode=no-verify`,
-  ssl: process.env.NODE_ENV === "production" ? true : undefined,
+
+await migrate(db, {
+  migrationsFolder: path.join(process.cwd(), "migrations"),
 });
 
-export const db = drizzle(pool);
+export { db };
