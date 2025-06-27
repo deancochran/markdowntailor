@@ -30,3 +30,6 @@ jobs:
 
       - name: Build app
         run: pnpm run build
+
+      - name: Build image
+        run: docker build .
