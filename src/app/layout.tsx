@@ -36,17 +36,17 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="h-screen flex flex-col">
-            <header className="sticky h-16 top-0 z-50 border-b shadow-xl">
-              <div className="flex w-full px-2 h-14 items-center justify-between">
+          <div className="grid h-screen grid-rows-[auto_1fr_auto]">
+            <header className="sticky top-0 z-50 border-b shadow-xl">
+              <div className="flex w-full px-4 h-14 items-center justify-between">
                 <div className="flex items-center">
-                  <Link href="/" className="flex items-center ">
+                  <Link href="/" className="flex items-center">
                     <span className="font-bold">markdowntailor</span>
                   </Link>
                 </div>
 
                 <div className="flex items-center">
-                  <nav className="flex items-center space-x-2">
+                  <nav className="flex items-center gap-2">
                     {/* DARK MODE SWITCH */}
                     <ModeToggle />
                     {/* AVATAR DropdownMenu */}
@@ -96,7 +96,7 @@ export default async function RootLayout({
                         </DropdownMenu>
                       </div>
                     ) : (
-                      <Button className="" type="button" asChild>
+                      <Button className="ml-2" type="button" asChild>
                         <Link href="/login">Sign In</Link>
                       </Button>
                     )}
@@ -105,7 +105,7 @@ export default async function RootLayout({
               </div>
             </header>
 
-            <main className="h-full overflow-auto">{children}</main>
+            <main className="overflow-auto w-full">{children}</main>
           </div>
           <Toaster />
         </ThemeProvider>
