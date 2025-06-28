@@ -39,6 +39,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
 
+# 👇 This is the critical part: copy browser binaries
+COPY --from=deps /root/.cache/ms-playwright /root/.cache/ms-playwright
+
 EXPOSE 80
 ENV PORT=80
 ENV HOSTNAME="0.0.0.0"
