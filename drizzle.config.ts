@@ -6,7 +6,10 @@ export default defineConfig({
   dialect: "postgresql",
 
   dbCredentials: {
-    url: `${process.env.DATABASE_URL as string}`,
+    url:
+      process.env.NODE_ENV === "production"
+        ? `${process.env.DATABASE_URL}?sslmode=no-verify`
+        : `${process.env.DATABASE_URL}`,
     ssl: process.env.NODE_ENV === "production" ? true : undefined,
   },
   strict: true,
