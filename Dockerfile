@@ -22,7 +22,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 # Install Playwright browsers and system dependencies in production
 
-RUN npx playwright install -–with-deps chromium
+RUN npx playwright install --with-deps chromium
 
 # Copy built application
 
