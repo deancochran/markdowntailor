@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { marked } from "marked";
-import { Browser, chromium } from "playwright";
+import { Browser, chromium } from "playwright-core";
 
 let browserInstance: Browser | null = null;
 
@@ -17,6 +17,8 @@ async function getBrowser(): Promise<Browser> {
   if (!browserInstance) {
     browserInstance = await chromium.launch({
       headless: true,
+      // Use the system-installed Chromium in Docker, fallback to default if not set
+      executablePath: "/usr/bin/chromium-browser",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -25,6 +27,8 @@ async function getBrowser(): Promise<Browser> {
         "--no-first-run",
         "--no-zygote",
         "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor",
       ],
     });
   }
