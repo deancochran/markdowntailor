@@ -9,7 +9,7 @@ RUN corepack enable pnpm && pnpm install
 
 FROM node:20-bookworm AS builder
 WORKDIR /app
-COPY –-from=deps /app/node_modules ./node_modules
+COPY –from=deps /app/node_modules ./node_modules
 COPY . .
 RUN corepack enable pnpm && pnpm run build
 
@@ -22,14 +22,14 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 # Install Playwright browsers and system dependencies in production
 
-RUN npx -y playwright install –with-deps chromium
+RUN npx -y playwright@1.52.0 install –with-deps chromium
 
 # Copy built application
 
-COPY –-from=builder /app/public ./public
-COPY –-from=builder /app/.next/standalone ./
-COPY –-from=builder /app/.next/static ./.next/static
-COPY –-from=builder /app/migrations ./migrations
+COPY –from=builder /app/public ./public
+COPY –from=builder /app/.next/standalone ./
+COPY –from=builder /app/.next/static ./.next/static
+COPY –from=builder /app/migrations ./migrations
 
 EXPOSE 80
 ENV PORT=80
