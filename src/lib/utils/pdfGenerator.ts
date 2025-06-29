@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { marked } from "marked";
-import { Browser, chromium } from "playwright";
+import { Browser, chromium } from "playwright-core";
 
 let browserInstance: Browser | null = null;
 
@@ -25,6 +25,8 @@ async function getBrowser(): Promise<Browser> {
         "--no-first-run",
         "--no-zygote",
         "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor",
       ],
     });
   }
