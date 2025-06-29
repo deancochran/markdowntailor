@@ -29,7 +29,7 @@ RUN npx -y playwright install –with-deps chromium
 COPY –from=builder /app/public ./public
 COPY –from=builder /app/.next/standalone ./
 COPY –from=builder /app/.next/static ./.next/static
-COPY –from=builder /app/migrations ./migrations
+COPY –from=builder /app/migrations ./app/migrations
 
 EXPOSE 80
 ENV PORT=80
