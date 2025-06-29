@@ -22,7 +22,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=0
 
 # Install Playwright browsers and system dependencies in production
 
-RUN npx -y playwright install –with-deps chromium
+RUN npx playwright install -–with-deps chromium
 
 # Copy built application
 
@@ -35,4 +35,4 @@ EXPOSE 80
 ENV PORT=80
 ENV HOSTNAME=“0.0.0.0”
 
-CMD [“node”, “server.js”]
+CMD ["node", "server.js"]
