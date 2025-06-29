@@ -14,7 +14,8 @@ RUN corepack enable pnpm && pnpm run build
 # Production stage
 FROM node:20-alpine AS runner
 WORKDIR /app
-RUN apk add --no-cache chromium
+COPY --from=deps /app/node_modules ./ node_modules
+RUN corepack enable pnpm && pnpm install --prod --frozen-lockfile && npx playwright install chromium --with-deps
 ENV NODE_ENV=production
 ENV PLAYWRIGHT_BROWSERS_PATH=0
 COPY --from=builder /app/public ./public
