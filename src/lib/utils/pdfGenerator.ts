@@ -17,8 +17,6 @@ async function getBrowser(): Promise<Browser> {
   if (!browserInstance) {
     browserInstance = await chromium.launch({
       headless: true,
-      // Use the system-installed Chromium in Docker, fallback to default if not set
-      executablePath: "/usr/bin/chromium-browser",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
