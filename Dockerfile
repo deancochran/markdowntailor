@@ -35,7 +35,7 @@ RUN --mount=type=cache,target=/root/.cache/ms-playwright \
 
 
 EXPOSE 80
-ENV PORT 80
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=80
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
