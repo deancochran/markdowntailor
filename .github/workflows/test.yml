@@ -25,24 +25,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
-      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      DRIZZLE_AUTH_URL: postgres://postgres:postgres@localhost:5432/db
-      ALPHA_ACCESS_CUTOFF_DATE: ${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
-      NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
-      AUTH_TRUST_HOST: ${{ secrets.AUTH_TRUST_HOST }}
-      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
-      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-      SENTRY_DNS: ${{ secrets.SENTRY_DNS }}
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_PUBLIC_KEY: ${{ secrets.STRIPE_PUBLIC_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-      STRIPE_ALPHA_PRICE_ID: ${{ secrets.STRIPE_ALPHA_PRICE_ID }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,5 +43,59 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Run Playwright tests
-        run: pnpm exec playwright test
+      - name: Build Docker image
+        run: docker build -t test-app:latest .
+
+      - name: Run Docker container in background
+        run: |
+          docker run -d \
+            --name test-app-container \
+            --add-host host.docker.internal:host-gateway \
+            -p 3000:3000 \
+            -e NEXT_PUBLIC_BASE_URL="http://localhost:3000" \
+            -e DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/db \
+            -e AUTH_DRIZZLE_URL=postgres://postgres:postgres@host.docker.internal:5432/db \
+            -e AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+            -e AUTH_TRUST_HOST="http://localhost:3000" \
+            -e AUTH_URL="http://localhost:3000/api/auth" \
+            -e AUTH_GITHUB_ID="${{ secrets.AUTH_GITHUB_ID }}" \
+            -e AUTH_GITHUB_SECRET="${{ secrets.AUTH_GITHUB_SECRET }}" \
+            -e AUTH_LINKEDIN_ID="${{ secrets.AUTH_LINKEDIN_ID }}" \
+            -e AUTH_LINKEDIN_SECRET="${{ secrets.AUTH_LINKEDIN_SECRET }}" \
+            -e AUTH_GOOGLE_ID="${{ secrets.AUTH_GOOGLE_ID }}" \
+            -e AUTH_GOOGLE_SECRET="${{ secrets.AUTH_GOOGLE_SECRET }}" \
+            -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            -e ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
+            -e UPSTASH_REDIS_REST_URL="${{ secrets.UPSTASH_REDIS_REST_URL }}" \
+            -e UPSTASH_REDIS_REST_TOKEN="${{ secrets.UPSTASH_REDIS_REST_TOKEN }}" \
+            -e SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}" \
+            -e SENTRY_ORG="${{ secrets.SENTRY_ORG }}" \
+            -e SENTRY_PROJECT="${{ secrets.SENTRY_PROJECT }}" \
+            -e SENTRY_DNS="${{ secrets.SENTRY_DNS }}" \
+            -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+            -e STRIPE_PUBLIC_KEY="${{ secrets.STRIPE_PUBLIC_KEY }}" \
+            -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+            -e STRIPE_ALPHA_PRICE_ID="${{ secrets.STRIPE_ALPHA_PRICE_ID }}" \
+            -e ALPHA_ACCESS_CUTOFF_DATE="${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}" \
+            test-app:latest
+
+      - name: Wait for application to be ready
+        run: |
+          echo "Waiting for application to start..."
+          timeout 60 bash -c 'until curl -f http://localhost:3000/health 2>/dev/null; do sleep 2; done' || {
+            echo "Application failed to start, checking logs:"
+            docker logs test-app-container
+            exit 1
+          }
+
+      - name: Run production tests
+        run: |
+          # Set the test target to the running container
+          export TEST_BASE_URL=http://localhost:3000
+          pnpm run test
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop test-app-container || true
+          docker rm test-app-container || true
