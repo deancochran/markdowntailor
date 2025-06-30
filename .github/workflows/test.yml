@@ -52,6 +52,7 @@ jobs:
             --name test-app-container \
             --add-host host.docker.internal:host-gateway \
             -p 3000:3000 \
+            -e NODE_ENV=development \
             -e NEXT_PUBLIC_BASE_URL="http://localhost:3000" \
             -e DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/db \
             -e AUTH_DRIZZLE_URL=postgres://postgres:postgres@host.docker.internal:5432/db \
