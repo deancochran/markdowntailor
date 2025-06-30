@@ -1,41 +1,46 @@
-# ---- Base ----
-FROM node:20-bookworm AS base
+# syntax=docker/dockerfile:1
+FROM node:20-bookworm-slim AS base
 WORKDIR /app
 RUN corepack enable pnpm
 
-# ---- Dependencies ----
+# Dependencies
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm fetch
-RUN pnpm install --prod --no-optional
+COPY package.json pnpm-lock.yaml* ./
+RUN --mount=type=cache,target=/root/.cache/ms-playwright \
+    pnpm install --frozen-lockfile
 
-# ---- Builder ----
+# Build
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN pnpm install --no-frozen-lockfile
 RUN pnpm run build
 
-# ---- Production ----
-FROM node:20-bookworm AS runner
-WORKDIR /app
-ENV NODE_ENV=production
 
-# Copy application files
+# Test production image
+FROM builder AS test-production
+COPY . .
+CMD ["pnpm", "run", "test"]
+
+
+# Production
+FROM node:20-bookworm-slim AS production
+WORKDIR /app
+RUN corepack enable pnpm
+
+# Copy built app
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/migrations ./migrations
 
-# Install and cache Playwright
-# Using a separate RUN command for Playwright installation to leverage caching
-# This layer will only be rebuilt if Playwright version in package.json changes
-COPY --from=builder /app/package.json ./package.json
+# Copy package files and install production deps + Playwright
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 RUN --mount=type=cache,target=/root/.cache/ms-playwright \
-    npx playwright install --with-deps chromium
+    pnpm install --prod --frozen-lockfile
 
-
-EXPOSE 80
+ENV NODE_ENV=production
 ENV PORT=80
-ENV HOSTNAME="0.0.0.0"
+ENV HOST=0.0.0.0
+EXPOSE 80
 
 CMD ["node", "server.js"]
