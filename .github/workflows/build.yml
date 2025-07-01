@@ -114,16 +114,21 @@ jobs:
       - name: Update docker-compose file for CI
         run: |
           # Use the image we just built instead of building again
-          sed -i 's/build: \./image: ${{ steps.meta.outputs.tags }}/g' test.docker-compose.yml
+          sed -i "s|build: \.|image: ${{ steps.meta.outputs.tags }}|g" test.docker-compose.yml
 
       - name: Start services with docker-compose
         run: |
-          docker-compose -f test.docker-compose.yml up -d postgres
+          # Ensure docker compose is available
+          docker --version
+          docker compose version
+
+          # Start postgres service
+          docker compose -f test.docker-compose.yml up -d postgres
 
           # Wait for Postgres to be ready
           echo "Waiting for Postgres to be ready..."
           timeout=60
-          until docker exec $(docker-compose -f test.docker-compose.yml ps -q postgres) pg_isready -U postgres || [ $timeout -le 0 ]; do
+          until docker exec $(docker compose -f test.docker-compose.yml ps -q postgres) pg_isready -U postgres || [ $timeout -le 0 ]; do
             echo "Waiting for postgres to start... ($timeout seconds left)"
             sleep 1
             timeout=$((timeout-1))
@@ -137,7 +142,7 @@ jobs:
           echo "Postgres is ready"
 
           # Start the app service
-          docker-compose -f test.docker-compose.yml up -d app
+          docker compose -f test.docker-compose.yml up -d app
 
       - name: Run Playwright tests locally
         id: run-tests
@@ -146,7 +151,8 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose -f test.docker-compose.yml down
+        run: |
+          docker compose -f test.docker-compose.yml down
 
       - name: Upload Playwright test artifacts
         if: always()

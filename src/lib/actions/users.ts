@@ -5,8 +5,7 @@ import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 
 import { withSentry } from "@/lib/utils/sentry";
-import Decimal from "decimal.js";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * Delete a user and their Stripe customer
@@ -36,15 +35,5 @@ export async function updateUserWithStripeCustomerId(
   if (!dbUser) {
     throw new Error("User not found");
   }
-  if (dbUser.alpha_credits_redeemed == false) {
-    await db
-      .update(user)
-      .set({
-        alpha_credits_redeemed: true,
-        credits: sql`${user.credits} + ${sql.raw(new Decimal("25").toString())}`,
-      })
-      .where(eq(user.id, dbUser.id))
-      .returning();
-    console.log(`ALPHA CREDITS REDEEMED`);
-  }
+  return dbUser;
 }

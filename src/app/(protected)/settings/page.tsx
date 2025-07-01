@@ -91,9 +91,9 @@ export default async function SettingsPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Purchase Credits</CardTitle>
+            <CardTitle>Claim your Alpha Credits</CardTitle>
             <CardDescription>
-              Buy credits to power your AI-assisted resume building.
+              Claim free credits to power your AI-assisted resume building.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -109,7 +109,11 @@ export default async function SettingsPage({
                   .toFixed(2)}
               </span>
             </div>
-            <PurchaseCreditsForm />
+            {session.user.alpha_credits_redeemed === false && (
+              <>
+                <PurchaseCreditsForm />
+              </>
+            )}
           </CardContent>
         </Card>
 

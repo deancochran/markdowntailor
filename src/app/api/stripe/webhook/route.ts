@@ -2,7 +2,7 @@ import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 import { updateUserWithStripeCustomerId } from "@/lib/actions/users";
 import Decimal from "decimal.js";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -50,29 +50,45 @@ export async function POST(req: NextRequest) {
         if (!session.metadata?.user_id) {
           throw new Error("Missing user_id");
         }
-        if (!session.amount_subtotal) {
-          throw new Error("Missing amount_subtotal");
-        }
-        await updateUserWithStripeCustomerId(
+
+        const checkoutUser = await updateUserWithStripeCustomerId(
           session.metadata.user_id,
           session.customer as string,
         );
         console.log(`💳 Updating customer ID: ${session.customer}`);
-        await db
-          .update(user)
-          .set({
-            credits: sql`${user.credits} + ${sql.raw(Decimal(session.amount_subtotal).toString())}`,
-          })
-          .where(
-            and(
-              eq(user.id, session.metadata.user_id),
-              eq(user.stripeCustomerId, session.customer as string),
-            ),
-          );
+        // USE THIS FOR BETA RELEASE
+        // if (!session.amount_subtotal) {
+        //   throw new Error("Missing amount_subtotal");
+        // }
+        // await db
+        //   .update(user)
+        //   .set({
+        //     credits: sql`${user.credits} + ${sql.raw(Decimal(session.amount_subtotal).toString())}`,
+        //   })
+        //   .where(
+        //     and(
+        //       eq(user.id, session.metadata.user_id),
+        //       eq(user.stripeCustomerId, session.customer as string),
+        //     ),
+        //   );
+
+        //  USE THIS FOR BETA RELEASE
+        if (checkoutUser.alpha_credits_redeemed == false) {
+          await db
+            .update(user)
+            .set({
+              alpha_credits_redeemed: true,
+              credits: sql`${user.credits} + ${sql.raw(new Decimal("100").toString())}`,
+            })
+            .where(eq(user.id, checkoutUser.id))
+            .returning();
+          console.log(`ALPHA CREDITS REDEEMED`);
+        }
+
         console.log(
           `✅ Customer Created: ${session.customer} for user: ${session.metadata?.user_id}`,
         );
-        console.log(`💰 Amount Subtotal: ${session.amount_subtotal} cents`);
+        // console.log(`💰 Amount Subtotal: ${session.amount_subtotal} cents`);
         break;
       case "customer.deleted":
         const customer = event.data.object;

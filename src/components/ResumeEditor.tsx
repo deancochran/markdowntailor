@@ -86,7 +86,15 @@ export default function ResumeEditor({
 
   useEffect(() => {
     if (!user) return;
-    setFeatureDisabled(new Decimal(user.credits).div(100).lt(0));
+    const insufficientCredits = new Decimal(user.credits).lt(0);
+    setFeatureDisabled(insufficientCredits);
+
+    // Show a toast when credit balance is too low
+    if (insufficientCredits) {
+      toast.warning(
+        "You have insufficient credits. Please add more credits to use the AI features.",
+      );
+    }
   }, [user]);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -415,10 +423,17 @@ export default function ResumeEditor({
         editor.getAction("editor.action.formatDocument")?.run();
       }, 50);
 
-      toast.success(`Applied modification to the ${contentType} document`);
+      toast.success(`Applied modification to the ${contentType} document`, {
+        description: "Your resume has been updated successfully.",
+      });
     } catch (error) {
       console.error("Error applying modification:", error);
-      toast.error("Failed to apply modification");
+      toast.error("Failed to apply modification", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please try again or make changes manually.",
+      });
     }
   }, []);
 
@@ -442,7 +457,9 @@ export default function ResumeEditor({
 
             // Show a summary toast after applying all modifications
             if (result.summary) {
-              toast.success(result.summary);
+              toast.success(`Changes applied: ${result.summary}`, {
+                duration: 5000, // Longer duration for important summaries
+              });
             }
           }
 
@@ -478,15 +495,51 @@ export default function ResumeEditor({
     experimental_throttle: 100,
     onError: (e) => {
       console.error("onError:", e);
-      toast.error("An error occurred with the AI chat");
+      // Check for specific error types and provide better error messages
+      if (e instanceof Error) {
+        if (e.message.includes("Unauthorized") || e.message.includes("401")) {
+          toast.error("Authentication error. Please sign in again.");
+        } else if (
+          e.message.includes("Insufficient credits") ||
+          e.message.includes("402")
+        ) {
+          toast.error(
+            "You don't have enough credits to use this feature. Please add more credits.",
+          );
+          setFeatureDisabled(true);
+        } else if (
+          e.message.includes("Too Many Requests") ||
+          e.message.includes("429")
+        ) {
+          toast.error("You've reached the rate limit. Please try again later.");
+        } else {
+          toast.error(`AI Chat Error: ${e.message}`);
+        }
+      } else {
+        toast.error("An error occurred with the AI chat. Please try again.");
+      }
     },
     onFinish: (message) => {
       // console.log("onFinish:", message);
       processToolInvocations(message);
+      toast.success("AI response complete!");
       mutate();
     },
-    onResponse() {
-      // console.log("onResponse:", response);
+    onResponse(response) {
+      if (response.status === 401) {
+        toast.error("Authentication error. Please sign in again.");
+      } else if (response.status === 402) {
+        toast.error(
+          "You don't have enough credits to use this feature. Please add more credits.",
+        );
+        setFeatureDisabled(true);
+      } else if (response.status === 429) {
+        toast.error("You've reached the rate limit. Please try again later.");
+      } else if (!response.ok) {
+        toast.error(`Error: ${response.statusText}`);
+      } else {
+        toast.info("AI is generating a response...");
+      }
     },
   });
 
@@ -614,7 +667,7 @@ export default function ResumeEditor({
 
       <div className="relative flex flex-col min-h-0  h-full w-full bg-muted gap-4 overflow-hidden">
         {/* Mobile Tab Bar - visible only on small screens */}
-        <div className="flex md:hidden items-center justify-center gap-1 p-2 border bg-background rounded">
+        <div className="flex lg:hidden items-center justify-center gap-1 p-2 border bg-background rounded">
           <Button
             className="flex grow text-xs"
             variant={mobileTab === "markdown" ? "outline" : "ghost"}
@@ -646,7 +699,7 @@ export default function ResumeEditor({
         </div>
 
         {/* Desktop Two-Column Layout */}
-        <div className="hidden md:flex flex-row min-h-0 h-full w-full gap-4 overflow-hidden">
+        <div className="hidden lg:flex flex-row min-h-0 h-full w-full gap-4 overflow-hidden">
           <div className="h-full w-full flex flex-col border">
             {/* Desktop Editor Tab Headers */}
             <div className="relative flex items-center align-middle justify-center gap-2 p-2 border-b">
@@ -795,7 +848,16 @@ export default function ResumeEditor({
                     featureDisabled={featureDisabled}
                     input={input}
                     setInput={setInput}
-                    handleSubmit={handleSubmit}
+                    handleSubmit={
+                      featureDisabled
+                        ? () => {
+                            toast.error(
+                              "Insufficient credits. Please add more credits to continue.",
+                            );
+                            return false;
+                          }
+                        : handleSubmit
+                    }
                     status={status}
                     stop={stop}
                     attachments={attachments}
@@ -809,7 +871,7 @@ export default function ResumeEditor({
         </div>
 
         {/* Mobile Single Column Layout */}
-        <div className="flex md:hidden flex-col min-h-0 h-full w-full border overflow-hidden">
+        <div className="flex lg:hidden flex-col min-h-0 h-full w-full border overflow-hidden">
           <div className="flex-1 relative">
             {/* Mobile Markdown Editor */}
             <div
