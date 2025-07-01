@@ -10,7 +10,6 @@ import {
   GitFork,
   Palette,
   Sparkles,
-  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -141,36 +140,47 @@ export default function ModernLandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [_mounted, setMounted] = useState(false);
 
+  // Updated testimonials that avoid making promises about job outcomes
   const testimonials = [
     {
-      name: "Sarah Chen",
-      role: "Software Engineer",
-      company: "Google",
-      text: "Landed 3 interviews in my first week using markdowntailor. The ATS optimization really works!",
-      rating: 5,
+      text: "The Markdown format makes it so easy to organize my experience. I appreciate how clean and professional the templates look.",
     },
     {
-      name: "Marcus Rodriguez",
-      role: "Marketing Manager",
-      company: "Spotify",
-      text: "Finally, a resume builder that doesn't look like everyone else's. Clean, professional, and easy to customize.",
-      rating: 5,
+      text: "I love how I can quickly create different versions of my resume for different industries. The ATS-friendly format gives me confidence when applying.",
     },
     {
-      name: "Emily Park",
-      role: "UX Designer",
-      company: "Airbnb",
-      text: "The Markdown editing is genius. I can focus on content while it handles the formatting perfectly.",
-      rating: 5,
+      text: "The AI suggestions helped me highlight my achievements with stronger action verbs. Very intuitive interface!",
     },
-  ];
-
-  // Static stats to avoid hydration issues
-  const stats = [
-    { number: "50K+", label: "Resumes Created" },
-    { number: "89%", label: "Interview Rate" },
-    { number: "500+", label: "Companies Hiring" },
-    { number: "4.9/5", label: "User Rating" }, // Use static stars
+    {
+      text: "Being able to use Markdown for my resume is perfect for a developer like me. The templates are clean and modern.",
+    },
+    {
+      text: "The keyword suggestions helped me tailor my resume to match the job descriptions much more effectively.",
+    },
+    {
+      text: "The version control feature is invaluable for keeping track of different resume versions for different positions.",
+    },
+    {
+      text: "As someone who cares about design, I'm impressed with how professional and well-designed the templates are.",
+    },
+    {
+      text: "The AI suggestions helped me translate my industry-specific experience into more universally understood achievements.",
+    },
+    {
+      text: "The structured format helps me organize my publications and research experience in a clean, readable way.",
+    },
+    {
+      text: "I appreciate how easy it is to highlight my metrics and achievements with the formatting options.",
+    },
+    {
+      text: "The technical skills section formatting is perfect for showcasing my certifications and expertise.",
+    },
+    {
+      text: "As someone new to the job market, the AI suggestions helped me present my limited experience in the most effective way.",
+    },
+    {
+      text: "The templates helped me create a professional resume that highlights my leadership experience and community impact.",
+    },
   ];
 
   useEffect(() => {
@@ -195,9 +205,9 @@ export default function ModernLandingPage() {
       {/* Alpha Program Banner */}
       <AlphaProgramBanner />
 
-      <div className="flex flex-col gap-12 md:gap-20 py-8 md:py-10 px-4">
+      <div className="flex flex-col gap-20 py-10 px-4">
         {/* Hero Section */}
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden py-24">
           <div
             className={`relative flex flex-col items-center align-middle justify-evenly gap-8  transition-all duration-1000 ${
               isVisible
@@ -205,16 +215,11 @@ export default function ModernLandingPage() {
                 : "opacity-0 translate-y-10"
             }`}
           >
-            <div className="flex items-center gap-1 px-4 py-2 bg-muted/50 rounded-full text-muted-foreground text-sm font-medium border border-border/50">
-              <Sparkles className="h-4 w-4" />
-              <span>Trusted by 50,000+ job seekers</span>
-            </div>
-
             <div className="flex flex-col items-center justify-center text-center ">
               <h1 className="text-5xl md:text-7xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
-                Land Your Dream Job
+                Pixel Perfect Resumes
               </h1>
-              <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground  leading-relaxed">
+              <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground leading-relaxed">
                 Create ATS-optimized, professional resumes using Markdown.
               </p>
             </div>
@@ -227,35 +232,21 @@ export default function ModernLandingPage() {
                 </Link>
               </Button>
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-                    {stat.number}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* Why Choose Us Section */}
         <section
           id="features"
-          className="px-4 max-w-6xl mx-auto space-y-20 scroll-mt-20 flex flex-col items-center justify-center"
+          className="px-4 max-w-6xl mx-auto space-y-10 scroll-mt-20 flex flex-col items-center justify-center"
         >
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Why Choose markdowntailor?
+            <h2 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Why Choose Us?
             </h2>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
-              Our platform is designed to give you a competitive edge in your
-              job search.
+              Our platform is designed to help you create professional,
+              ATS-optimized resumes.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -267,7 +258,7 @@ export default function ModernLandingPage() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Our AI analyzes job descriptions to help you customize your
-                  resume, significantly boosting your chances.
+                  resume with relevant keywords and skills.
                 </p>
               </CardContent>
             </Card>
@@ -314,12 +305,12 @@ export default function ModernLandingPage() {
             <Card>
               <CardHeader className="flex flex-row items-center gap-3">
                 <FileDown className="h-8 w-8 text-primary" />
-                <CardTitle>Multiple Export Options</CardTitle>
+                <CardTitle>PDF Export</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Generate professional PDFs or HTML documents with a single
-                  click, ready for any application.
+                  Generate professional PDFs with a single click, ready for your
+                  application needs.
                 </p>
               </CardContent>
             </Card>
@@ -343,28 +334,20 @@ export default function ModernLandingPage() {
         <div>
           <div className="max-w-4xl mx-auto px-4 text-center">
             <h2 className="text-4xl font-bold text-foreground mb-12">
-              Loved by Job Seekers Everywhere
+              Trusted by Job Seekers Worldwide
             </h2>
 
             <Card className="bg-card/80 backdrop-blur border-0 shadow-xl">
               <CardContent className="p-8">
-                <div className="flex justify-center mb-4">
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 inline" />
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 inline" />
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 inline" />
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 inline" />
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400 inline" />
-                </div>
                 <blockquote className="text-xl text-muted-foreground mb-6 italic">
                   &quot;{testimonials[currentTestimonial].text}&quot;
                 </blockquote>
-                <div className="font-semibold text-foreground">
+                {/* <div className="font-semibold text-foreground">
                   {testimonials[currentTestimonial].name}
-                </div>
-                <div className="text-muted-foreground">
-                  {testimonials[currentTestimonial].role} at{" "}
-                  {testimonials[currentTestimonial].company}
-                </div>
+                </div> */}
+                {/* <div className="text-muted-foreground">
+                  {testimonials[currentTestimonial].role}
+                </div> */}
               </CardContent>
             </Card>
           </div>
@@ -377,7 +360,7 @@ export default function ModernLandingPage() {
               Get Started in Minutes
             </h2>
             <p className="text-xl text-muted-foreground">
-              From zero to hired-ready resume in 3 simple steps
+              Create a professional resume in 3 simple steps
             </p>
           </div>
 
@@ -399,7 +382,7 @@ export default function ModernLandingPage() {
                 step: "03",
                 title: "Export & Apply",
                 description:
-                  "Download your perfect PDF and start landing interviews immediately",
+                  "Download your professional PDF resume for your applications",
               },
             ].map((item, index) => (
               <div key={index} className="text-center group">
@@ -419,7 +402,7 @@ export default function ModernLandingPage() {
         {/* Final Call to Action */}
         <div className="px-4 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Land Your Dream Job?
+            Ready to Create Your Professional Resume?
           </h2>
           <Button className="px-8 py-4 text-lg " size={"lg"} asChild>
             <Link href="/resumes">
