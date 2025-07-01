@@ -2,29 +2,27 @@ import { getPosts } from "@/lib/blog";
 import { Feed } from "feed";
 
 export async function GET(request: Request) {
-  const baseUrl = "https://markdowntailor.com";
-
   // Create feed with site metadata
   const feed = new Feed({
     title: "markdowntailor Blog",
     description:
       "Articles on resume building, job hunting, and ATS optimization",
-    id: baseUrl,
-    link: baseUrl,
+    id: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+    link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
     language: "en",
-    image: `${baseUrl}/logo.png`,
-    favicon: `${baseUrl}/favicon.ico`,
+    image: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+    favicon: `${process.env.NEXT_PUBLIC_BASE_URL}/favicon.ico`,
     copyright: `Copyright © ${new Date().getFullYear()} markdowntailor`,
     updated: new Date(),
     generator: "markdowntailor",
     feedLinks: {
-      json: `${baseUrl}/api/rss/json`,
-      atom: `${baseUrl}/api/rss/atom`,
+      json: `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss/json`,
+      atom: `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss/atom`,
     },
     author: {
       name: "markdowntailor Team",
       email: "info@markdowntailor.com",
-      link: baseUrl,
+      link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
     },
   });
 
@@ -37,15 +35,15 @@ export async function GET(request: Request) {
 
     feed.addItem({
       title: post.title,
-      id: `${baseUrl}/blog/${post.slug}`,
-      link: `${baseUrl}/blog/${post.slug}`,
-      description: post.description  || "",
+      id: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+      link: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+      description: post.description || "",
       content: post.content,
       author: [
         {
           name: "markdowntailor Team",
           email: "info@markdowntailor.com",
-          link: baseUrl,
+          link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
         },
       ],
       date: postDate,
