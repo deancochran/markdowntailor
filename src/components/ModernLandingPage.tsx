@@ -191,7 +191,7 @@ export default function ModernLandingPage() {
   }, [testimonials.length]);
 
   return (
-    <div className="bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
+    <div className="w-full bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
       {/* Alpha Program Banner */}
       <AlphaProgramBanner />
 
