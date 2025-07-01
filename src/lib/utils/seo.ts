@@ -48,7 +48,7 @@ export function generateOpenGraph(props: PageSEOProps) {
     publishedTime: _publishedTime,
     modifiedTime: _modifiedTime,
     type = "website",
-    image = "/og-image.png",
+    image = "/logo.png", // Using logo.png as default
     imageAlt,
     tags: _tags,
     authorName: _authorName,
@@ -75,12 +75,11 @@ export function generateOpenGraph(props: PageSEOProps) {
 
   return openGraph;
 }
-
 /**
  * Generate Twitter card metadata
  */
 export function generateTwitterCard(props: PageSEOProps) {
-  const { title, description, image = "/twitter-image.png" } = props;
+  const { title, description, image = "/logo.png" } = props; // Using logo.png as default
 
   return {
     card: "summary_large_image",
@@ -96,9 +95,6 @@ export function generateTwitterCard(props: PageSEOProps) {
   };
 }
 
-/**
- * Generate JSON-LD structured data for a blog post
- */
 export function generateBlogPostSchema(props: {
   title: string;
   description: string;
@@ -114,10 +110,9 @@ export function generateBlogPostSchema(props: {
     slug,
     publishedDate,
     modifiedDate,
-    image = "/og-image.png",
+    image = "/logo.png", // Using logo.png as default
     authorName = "markdowntailor Team",
   } = props;
-
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",

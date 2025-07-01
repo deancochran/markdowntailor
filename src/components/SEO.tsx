@@ -43,11 +43,11 @@ const SEO: FC<SEOProps> = ({
     "@type": "Organization",
     name: "markdowntailor",
     url: "https://markdowntailor.com",
-    logo: "https://markdowntailor.com/logo.png",
+    logo: "https://markdowntailor.com/logo.png", // Using existing logo
     sameAs: [
-      "https://twitter.com/markdowntailor",
-      "https://github.com/markdowntailor",
-      "https://linkedin.com/company/markdowntailor",
+      // Simplified social profiles - only include active ones
+      // If none are active yet, you can leave this as an empty array
+      // "https://twitter.com/markdowntailor",
     ],
     contactPoint: {
       "@type": "ContactPoint",
