@@ -45,7 +45,8 @@ export default async function PostPage({
   };
 }) {
   // Get post data
-  const post = await getPost(params.slug);
+  const { slug } = await params;
+  const post = await getPost(slug);
 
   // Double-check that post exists (in case layout didn't catch it)
   if (!post) {

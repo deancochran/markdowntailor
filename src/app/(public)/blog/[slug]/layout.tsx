@@ -1,3 +1,4 @@
+import { Separator } from "@/components/ui/separator";
 import { getPost } from "@/lib/blog";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -75,7 +76,7 @@ export default async function MdxLayout({
     notFound();
   }
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+    <>
       {/* Back to blog link */}
       <div className="mb-8">
         <Link
@@ -102,7 +103,7 @@ export default async function MdxLayout({
 
       {/* Blog content - styling now handled by BlogPost component */}
       <div className="prose prose-headings:mt-8 prose-headings:font-semibold prose-headings:text-black prose-h1:text-5xl prose-h2:text-4xl prose-h3:text-3xl prose-h4:text-2xl prose-h5:text-xl prose-h6:text-lg dark:prose-headings:text-white">
-        <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+        <h1 className="text-5xl font-bold mb-2">{post.title}</h1>
         <div className="text-gray-500 mb-8">
           Published on{" "}
           {new Date(post.publishedOn).toLocaleDateString("en-US", {
@@ -111,6 +112,7 @@ export default async function MdxLayout({
             day: "numeric",
           })}
         </div>
+        <Separator className="mb-8" />
         {children}
       </div>
 
@@ -147,6 +149,6 @@ export default async function MdxLayout({
           }),
         }}
       />
-    </div>
+    </>
   );
 }
