@@ -10,7 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
 import Decimal from "decimal.js";
+import { eq } from "drizzle-orm";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -25,6 +28,22 @@ export default async function SettingsPage({
 
   if (!session) {
     redirect("/login");
+  }
+
+  // If payment was successful, fetch the latest user data from the database
+  // instead of relying on the session data which might be stale
+  if (payment === "success" && session.user.id) {
+    const [userData] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id));
+
+    if (userData) {
+      session.user = {
+        ...session.user,
+        ...userData,
+      };
+    }
   }
 
   return (
