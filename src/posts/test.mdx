@@ -1,0 +1,100 @@
+---
+title: Test Post - MDX Features
+seoTitle: Testing MDX Features in Our Blog System
+abstract: A demonstration of the various MDX features and components available in this blog system.
+isPublished: false
+publishedOn: 2025-07-01
+slug: test
+---
+
+# Testing MDX Features
+
+This post demonstrates the various features and components available in our MDX-powered blog system.
+
+## Basic Markdown
+
+Let's start with basic markdown features:
+
+### Text Formatting
+
+You can use **bold text**, *italic text*, or ***bold and italic*** text.
+
+### Lists
+
+Unordered list:
+- Item 1
+- Item 2
+- Item 3
+
+Ordered list:
+1. First item
+2. Second item
+3. Third item
+
+### Blockquotes
+
+> This is a blockquote.
+> It can span multiple lines.
+
+### Code
+
+Inline code: `const greeting = "Hello, world!";`
+
+Code block:
+```javascript
+function calculateTotal(items) {
+  return items.reduce((total, item) => {
+    return total + item.price;
+  }, 0);
+}
+```
+
+## Custom Components
+
+Our MDX setup includes some custom components:
+
+### Callouts
+
+<Callout type="info">
+  This is an informational callout that provides helpful context.
+</Callout>
+
+<Callout type="warning">
+  This is a warning callout that highlights potential issues.
+</Callout>
+
+<Callout type="error">
+  This is an error callout that indicates something critical.
+</Callout>
+
+<Callout type="success">
+  This is a success callout that celebrates achievements.
+</Callout>
+
+### Images
+
+Images are rendered using Next.js Image component for optimization:
+
+![Example image](https://via.placeholder.com/800x400)
+
+## Tables
+
+| Name    | Type    | Description           |
+|---------|---------|------------------------|
+| id      | string  | Unique identifier     |
+| title   | string  | Title of the item     |
+| active  | boolean | Whether item is active|
+
+## Links
+
+[External link to MDX documentation](https://mdxjs.com/)
+
+[Internal link to Welcome post](/blog/welcome)
+
+## Horizontal Rule
+
+---
+
+## Summary
+
+This post demonstrates the various MDX features available in our blog system. You can use this post as a reference when creating new content.
