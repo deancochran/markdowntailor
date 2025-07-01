@@ -10,7 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { db } from "@/db/drizzle";
+import { user } from "@/db/schema";
 import Decimal from "decimal.js";
+import { eq } from "drizzle-orm";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -25,6 +28,22 @@ export default async function SettingsPage({
 
   if (!session) {
     redirect("/login");
+  }
+
+  // If payment was successful, fetch the latest user data from the database
+  // instead of relying on the session data which might be stale
+  if (payment === "success" && session.user.id) {
+    const [userData] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id));
+
+    if (userData) {
+      session.user = {
+        ...session.user,
+        ...userData,
+      };
+    }
   }
 
   return (
@@ -91,9 +110,9 @@ export default async function SettingsPage({
 
         <Card>
           <CardHeader>
-            <CardTitle>Purchase Credits</CardTitle>
+            <CardTitle>Claim your Alpha Credits</CardTitle>
             <CardDescription>
-              Buy credits to power your AI-assisted resume building.
+              Claim free credits to power your AI-assisted resume building.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -109,7 +128,11 @@ export default async function SettingsPage({
                   .toFixed(2)}
               </span>
             </div>
-            <PurchaseCreditsForm />
+            {session.user.alpha_credits_redeemed === false && (
+              <>
+                <PurchaseCreditsForm />
+              </>
+            )}
           </CardContent>
         </Card>
 
