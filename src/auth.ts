@@ -10,7 +10,7 @@ import { user } from "./db/schema";
 import { setUserContext } from "./lib/utils/sentry";
 
 const providers = [GitHub, LinkedIn, Google];
-if (process.env.NODE_ENV === "development") {
+if (process.env.AUTH_CREDENTIALS_ENABLED) {
   providers.push(
     //@ts-expect-error issue https://github.com/nextauthjs/next-auth/issues/6174
     Credentials({

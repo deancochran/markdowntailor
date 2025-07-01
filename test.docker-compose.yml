@@ -3,7 +3,7 @@ services:
     image: postgres:17
     command: "-d 1"
     ports:
-      - "5555:5432"
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mypassword
@@ -20,23 +20,9 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - .env.test
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:mypassword@postgres:5432/postgres?sslmode=disable
+      - AUTH_DRIZZLE_URL=postgresql://postgres:mypassword@postgres:5432/postgres?sslmode=disable
     ports:
-      - "8000:80"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  playwright:
-    build:
-      context: .
-      target: test-production
-    command: pnpm run test
-    depends_on:
-      app:
-        condition: service_healthy
-    env_file:
-      - .env.test
+      - "3000:80"

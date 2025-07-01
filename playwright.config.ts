@@ -71,14 +71,11 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // Run your local dev server before starting the tests
   webServer: {
-    command: "pnpm run dev",
-    url: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
-
-    reuseExistingServer: !process.env.CI,
-    stdout: "ignore",
-    stderr: "pipe",
+    command: "docker-compose -f test.docker-compose.yml up -d",
+    url: "http://localhost:3000",
+    reuseExistingServer: true,
+    stdout: "pipe",
+    timeout: 60000,
   },
 });

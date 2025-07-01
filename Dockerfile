@@ -18,7 +18,6 @@ RUN pnpm run build
 
 # Test production image
 FROM builder AS test-production
-COPY . .
 CMD ["pnpm", "run", "test"]
 
 
@@ -28,17 +27,15 @@ WORKDIR /app
 RUN corepack enable pnpm
 
 # Copy built app
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/migrations ./migrations
 
-# Copy package files and install production deps + Playwright
-COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
-RUN --mount=type=cache,target=/root/.cache/ms-playwright \
-    pnpm install --prod --frozen-lockfile
+# Install production Playwright deps
+RUN npx playwright install chromium --with-deps
 
-ENV NODE_ENV=production
 ENV PORT=80
 ENV HOST=0.0.0.0
 EXPOSE 80
