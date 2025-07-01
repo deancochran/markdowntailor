@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:17
+    command: "-d 1"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:mypassword@postgres:5432/postgres?sslmode=disable
+      - AUTH_DRIZZLE_URL=postgresql://postgres:mypassword@postgres:5432/postgres?sslmode=disable
+    ports:
+      - "3000:80"

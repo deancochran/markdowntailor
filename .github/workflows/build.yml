@@ -1,35 +1,163 @@
-name: Build
+name: Build and Push Docker Image
 
 on:
   push:
-    branches-ignore: ["main"]
+    branches-ignore:
+      - "main"
 
 jobs:
-  build:
-    name: Build
+  build_and_push:
+    name: Build and Push
     runs-on: ubuntu-latest
     environment: development
+
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node.js and pnpm
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: "20" # Use a specific version to match your Dockerfile
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm run lint
+      - name: Lint and Type Check
+        run: |
+          pnpm run lint
+          pnpm run typecheck
 
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Build app
+      - name: Build app for validation
         run: pnpm run build
 
-      - name: Build image
-        run: docker build .
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # New steps for setting up test environment and running tests
+      - name: Create test environment file
+        run: |
+          cat > .env << EOL
+          NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          AUTH_TRUST_HOST=1
+          AUTH_URL=${{ secrets.AUTH_URL }}
+          AUTH_CREDENTIALS_ENABLED=1
+          RATE_LIMITING_DISABLED=1
+          DATABASE_SSL_DISABLED=1
+          AUTH_GITHUB_ID=${{ secrets.AUTH_GITHUB_ID }}
+          AUTH_GITHUB_SECRET=${{ secrets.AUTH_GITHUB_SECRET }}
+          AUTH_LINKEDIN_ID=${{ secrets.AUTH_LINKEDIN_ID }}
+          AUTH_LINKEDIN_SECRET=${{ secrets.AUTH_LINKEDIN_SECRET }}
+          AUTH_GOOGLE_ID=${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_GOOGLE_SECRET=${{ secrets.AUTH_GOOGLE_SECRET }}
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          UPSTASH_REDIS_REST_URL=${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN=${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT=${{ secrets.SENTRY_PROJECT }}
+          SENTRY_DNS=${{ secrets.SENTRY_DNS }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLIC_KEY=${{ secrets.STRIPE_PUBLIC_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_ALPHA_PRICE_ID=${{ secrets.STRIPE_ALPHA_PRICE_ID }}
+          ALPHA_ACCESS_CUTOFF_DATE=${{ secrets.ALPHA_ACCESS_CUTOFF_DATE }}
+          DATABASE_URL=postgresql://postgres:mypassword@localhost:5432/postgres?sslmode=disable
+          AUTH_DRIZZLE_URL=postgresql://postgres:mypassword@localhost:5432/postgres?sslmode=disable
+          EOL
+
+      - name: Update docker-compose file for CI
+        run: |
+          # Use the image we just built instead of building again
+          sed -i 's/build: \./image: ${{ steps.meta.outputs.tags }}/g' test.docker-compose.yml
+
+      - name: Start services with docker-compose
+        run: |
+          docker-compose -f test.docker-compose.yml up -d postgres
+
+          # Wait for Postgres to be ready
+          echo "Waiting for Postgres to be ready..."
+          timeout=60
+          until docker exec $(docker-compose -f test.docker-compose.yml ps -q postgres) pg_isready -U postgres || [ $timeout -le 0 ]; do
+            echo "Waiting for postgres to start... ($timeout seconds left)"
+            sleep 1
+            timeout=$((timeout-1))
+          done
+
+          if [ $timeout -le 0 ]; then
+            echo "Timed out waiting for Postgres to start"
+            exit 1
+          fi
+
+          echo "Postgres is ready"
+
+          # Start the app service
+          docker-compose -f test.docker-compose.yml up -d app
+
+      - name: Run Playwright tests locally
+        id: run-tests
+        run: pnpm run test
+        continue-on-error: true
+
+      - name: Stop services
+        if: always()
+        run: docker-compose -f test.docker-compose.yml down
+
+      - name: Upload Playwright test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+      - name: Check test results
+        if: steps.run-tests.outcome == 'failure'
+        run: exit 1

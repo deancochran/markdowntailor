@@ -9,3 +9,40 @@ terraform
 *.tsbuildinfo
 coverage
 *.log
+
+# Development/test artifacts
+jest.config.*
+.github
+.vscode
+.idea
+.editorconfig
+.eslintignore
+.eslintrc*
+.prettierrc*
+.prettier*
+
+# Cache and temp directories
+.cache
+.npm
+.pnpm-store
+tmp
+temp
+.temp
+
+# Build artifacts that will be regenerated
+dist
+build
+.vercel
+.turbo
+
+# Documentation and assets not needed for production
+docs
+.storybook
+storybook-static
+*.md
+!README.md
+
+# Environment and local config files (be careful with these)
+.env.local
+.env.development
+.env.test
