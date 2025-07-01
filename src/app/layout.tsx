@@ -15,11 +15,17 @@ import {
 import { logout } from "@/lib/actions/auth";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "markdowntailor",
   description: "A markdown-based resume editor",
+  alternates: {
+    types: {
+      "application/rss+xml": "https://markdowntailor.com/api/rss",
+    },
+  },
 };
 
 export default async function RootLayout({
@@ -101,9 +107,36 @@ export default async function RootLayout({
               </div>
             </header>
 
-            <main className="overflow-auto w-full">{children}</main>
+            <main className="overflow-auto w-full flex flex-col items-center justify-between">
+              {children}
+            </main>
           </div>
           <Toaster />
+
+          {/* Organization Schema for SEO */}
+          <Script
+            id="organization-schema"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "markdowntailor",
+                url: "https://markdowntailor.com",
+                logo: "https://markdowntailor.com/logo.png",
+                sameAs: [
+                  "https://twitter.com/markdowntailor",
+                  "https://github.com/markdowntailor",
+                  "https://linkedin.com/company/markdowntailor",
+                ],
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  email: "info@markdowntailor.com",
+                  contactType: "customer service",
+                },
+              }),
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

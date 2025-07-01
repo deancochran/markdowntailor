@@ -1,6 +1,15 @@
 import createMDX from "@next/mdx";
-import remarkFrontmatter from "remark-frontmatter";
-import remarkGfm from "remark-gfm";
+import { recmaCodeHike, remarkCodeHike } from "codehike/mdx";
+
+/** @type {import('codehike/mdx').CodeHikeConfig} */
+const chConfig = {
+  // optional (see code docs):
+  components: { code: "Code" },
+  // if you can't use RSC:
+  // syntaxHighlighting: {
+  //   theme: "github-dark",
+  // },
+};
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -18,10 +27,11 @@ const nextConfig = {
 };
 
 const withMDX = createMDX({
-  // Add markdown plugins here, as desired
-  options: {
-    remarkPlugins: [remarkFrontmatter, remarkGfm],
-    rehypePlugins: [],
+  remarkPlugins: [[remarkCodeHike, chConfig]],
+  recmaPlugins: [[recmaCodeHike, chConfig]],
+  jsx: true,
+  experimental: {
+    mdxRs: false,
   },
 });
 

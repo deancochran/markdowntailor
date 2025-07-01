@@ -37,7 +37,10 @@ export default async function middleware(
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  // Add pathname to headers for SEO metadata generation
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export async function auth(req: NextAuthRequest) {
