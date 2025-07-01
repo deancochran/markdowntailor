@@ -1,20 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import * as Sentry from "@sentry/nextjs";
 import { AlertTriangle } from "lucide-react";
-import { useEffect } from "react";
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
-
+export default function Error({ reset }: { reset: () => void }) {
   return (
     <div className="min-h-[calc(100vh-64px)]  flex items-center justify-center p-4">
       <div className="max-w-md w-full  shadow-2xl rounded-xl border border-gray-200 p-8 text-center">

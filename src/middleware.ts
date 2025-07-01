@@ -37,7 +37,10 @@ export default async function middleware(
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  // Add pathname to headers for SEO metadata generation
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export async function auth(req: NextAuthRequest) {
@@ -56,11 +59,9 @@ export const config = {
      * - favicon.ico
      * - sitemap.xml
      * - robots.txt
-     * https://docs.sentry.io/platforms/javascript/guides/astro/sourcemaps/#disabling-telemetry-data-collection
-     * - monitoring-tunnel
 
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|monitoring-tunnel).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
 

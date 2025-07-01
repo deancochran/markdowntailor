@@ -7,7 +7,6 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import { user } from "./db/schema";
-import { setUserContext } from "./lib/utils/sentry";
 
 const providers = [GitHub, LinkedIn, Google];
 if (process.env.AUTH_CREDENTIALS_ENABLED) {
@@ -74,7 +73,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           if (!currentUser) {
             throw new Error("User not found");
           }
-          setUserContext(currentUser);
 
           // Include all data in session (server-side only)
           session.user = {
