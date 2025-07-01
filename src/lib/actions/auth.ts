@@ -1,20 +1,18 @@
 "use server";
 
 import { signIn, signOut } from "@/auth";
-import { withSentry } from "@/lib/utils/sentry";
 
-export const githublogin = withSentry("github-login", async () => {
+export const githublogin = async () => {
   await signIn("github", { redirectTo: "/" }, { prompt: "login" });
-});
-
-export const linkedinlogin = withSentry("linkedin-login", async () => {
+};
+export const linkedinlogin = async () => {
   await signIn("linkedin", { redirectTo: "/" }, { prompt: "login" });
-});
+};
 
-export const googlelogin = withSentry("google-login", async () => {
+export const googlelogin = async () => {
   await signIn("google", { redirectTo: "/" }, { prompt: "login" });
-});
+};
 
-export const logout = withSentry("logout", async () => {
+export const logout = async () => {
   await signOut({ redirectTo: "/" });
-});
+};

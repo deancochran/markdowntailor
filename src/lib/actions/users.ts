@@ -4,13 +4,12 @@ import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 
-import { withSentry } from "@/lib/utils/sentry";
 import { eq } from "drizzle-orm";
 
 /**
  * Delete a user and their Stripe customer
  */
-export const deleteUser = withSentry("delete-user", async () => {
+export const deleteUser = async () => {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -18,7 +17,7 @@ export const deleteUser = withSentry("delete-user", async () => {
   }
 
   await db.delete(user).where(eq(user.id, session.user.id));
-});
+};
 
 export async function updateUserWithStripeCustomerId(
   userId: string,

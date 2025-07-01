@@ -56,11 +56,9 @@ export const config = {
      * - favicon.ico
      * - sitemap.xml
      * - robots.txt
-     * https://docs.sentry.io/platforms/javascript/guides/astro/sourcemaps/#disabling-telemetry-data-collection
-     * - monitoring-tunnel
 
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|monitoring-tunnel).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
 

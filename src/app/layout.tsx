@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/lib/actions/auth";
-import * as Sentry from "@sentry/nextjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
@@ -21,9 +20,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "markdowntailor",
   description: "A markdown-based resume editor",
-  other: {
-    ...Sentry.getTraceData(),
-  },
 };
 
 export default async function RootLayout({
