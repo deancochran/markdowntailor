@@ -66,7 +66,11 @@ function PureMessages({
           featureDisabled={featureDisabled}
           key={message.id}
           message={message}
-          isLoading={status === "streaming" && messages.length - 1 === index}
+          isLoading={
+            status === "streaming" &&
+            message.role === "assistant" &&
+            messages.length - 1 === index
+          }
           setMessages={setMessages}
           reload={reload}
           requiresScrollPadding={
@@ -75,7 +79,7 @@ function PureMessages({
         />
       ))}
 
-      {status === "submitted" &&
+      {(status === "submitted" || status === "streaming") &&
         messages.length > 0 &&
         messages[messages.length - 1].role === "user" && <ThinkingMessage />}
 
@@ -93,8 +97,16 @@ export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.status !== nextProps.status) return false;
   if (prevProps.status && nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
-  // if (!equal(prevProps.messages, nextProps.messages)) return false;
-  // if (!equal(prevProps.votes, nextProps.votes)) return false;
+
+  // Check if the last message's content has changed to ensure loading icon updates
+  if (
+    prevProps.messages.length > 0 &&
+    nextProps.messages.length > 0 &&
+    JSON.stringify(prevProps.messages[prevProps.messages.length - 1]) !==
+      JSON.stringify(nextProps.messages[nextProps.messages.length - 1])
+  ) {
+    return false;
+  }
 
   return true;
 });

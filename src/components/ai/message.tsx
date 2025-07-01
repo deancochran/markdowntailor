@@ -9,7 +9,7 @@ import { cn, sanitizeText } from "@/lib/utils";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import cx from "classnames";
-import { Pencil, Sparkles, SparklesIcon } from "lucide-react";
+import { Loader2, Pencil, Sparkles, SparklesIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useState } from "react";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -125,7 +125,19 @@ const PurePreviewMessage = ({
                             message.role === "user",
                         })}
                       >
-                        <Markdown>{sanitizeText(part.text)}</Markdown>
+                        {isLoading ? (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm text-muted-foreground">
+                                Loading response...
+                              </span>
+                            </div>
+                            <Markdown>{sanitizeText(part.text)}</Markdown>
+                          </div>
+                        ) : (
+                          <Markdown>{sanitizeText(part.text)}</Markdown>
+                        )}
                       </div>
                     </div>
                   );
@@ -136,14 +148,23 @@ const PurePreviewMessage = ({
                     <div key={key} className="flex flex-row gap-2 items-start">
                       <div className="size-8" />
 
-                      <MessageEditor
-                        featureDisabled={featureDisabled}
-                        key={message.id}
-                        message={message}
-                        setMode={setMode}
-                        setMessages={setMessages}
-                        reload={reload}
-                      />
+                      {isLoading ? (
+                        <div className="flex items-center gap-2 p-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm text-muted-foreground">
+                            Loading...
+                          </span>
+                        </div>
+                      ) : (
+                        <MessageEditor
+                          featureDisabled={featureDisabled}
+                          key={message.id}
+                          message={message}
+                          setMode={setMode}
+                          setMessages={setMessages}
+                          reload={reload}
+                        />
+                      )}
                     </div>
                   );
                 }
@@ -161,15 +182,20 @@ const PurePreviewMessage = ({
                         skeleton: true,
                       })}
                     >
-                      {toolName === "batch_modify" ? (
-                        <p>
-                          <span key={index}>{toolName}</span>
-                        </p>
-                      ) : toolName === "analyze_content" ? (
-                        <p>
-                          <span key={index}>{toolName}</span>
-                        </p>
-                      ) : null}
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {toolName === "batch_modify" ? (
+                          <p>
+                            <span key={index}>Running {toolName}...</span>
+                          </p>
+                        ) : toolName === "analyze_content" ? (
+                          <p>
+                            <span key={index}>Running {toolName}...</span>
+                          </p>
+                        ) : (
+                          <p>Processing...</p>
+                        )}
+                      </div>
                     </div>
                   );
                 }
@@ -265,8 +291,9 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col gap-4 text-muted-foreground">
-            Hmm...
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Thinking...</span>
           </div>
         </div>
       </div>

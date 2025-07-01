@@ -4,7 +4,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 
 import { LanguageModelUsage, LanguageModelV1 } from "ai";
 import Decimal from "decimal.js";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { User } from "next-auth";
 
 export type ModelObject = {
@@ -42,9 +42,12 @@ export async function deductCreditsFromUser(
   );
 
   await db.transaction(async (tx) => {
-    await tx.update(user).set({
-      credits: sql`${user.credits} - ${sql.raw(credit_usage)}`,
-    });
+    await tx
+      .update(user)
+      .set({
+        credits: sql`${user.credits} - ${sql.raw(credit_usage)}`,
+      })
+      .where(eq(user.id,_user.id));
 
     await tx.insert(ai_credit_logs).values({
       userId: _user.id,

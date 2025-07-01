@@ -7,9 +7,9 @@ import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useUser } from "@/hooks/use-user";
 import { useSaveResume } from "@/hooks/useSaveResume";
 import {
-  createResumeFromVersion,
-  deleteResume,
-  saveResume,
+    createResumeFromVersion,
+    deleteResume,
+    saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { useChat } from "@ai-sdk/react";
@@ -19,13 +19,13 @@ import { cx } from "class-variance-authority";
 import Decimal from "decimal.js";
 import { InferSelectModel } from "drizzle-orm";
 import {
-  CheckCircle,
-  Clock,
-  Copy,
-  History,
-  Loader2,
-  Save,
-  Trash2,
+    CheckCircle,
+    Clock,
+    Copy,
+    History,
+    Loader2,
+    Save,
+    Trash2,
 } from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
@@ -665,7 +665,7 @@ export default function ResumeEditor({
         </div>
       </div>
 
-      <div className="relative flex flex-col min-h-0  h-full w-full bg-muted gap-4 overflow-hidden">
+      <div className="relative flex flex-col min-h-0  h-full w-full bg-muted overflow-hidden">
         {/* Mobile Tab Bar - visible only on small screens */}
         <div className="flex lg:hidden items-center justify-center gap-1 p-2 border bg-background rounded">
           <Button

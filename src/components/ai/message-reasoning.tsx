@@ -36,6 +36,7 @@ export function MessageReasoning({
         <div className="flex flex-row gap-2 items-center">
           <div className="font-medium">Reasoning</div>
           <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading...</span>
         </div>
       ) : (
         <div className="flex flex-row gap-2 items-center">
@@ -66,7 +67,16 @@ export function MessageReasoning({
             style={{ overflow: "hidden" }}
             className="pl-4 text-zinc-600 dark:text-zinc-400 border-l flex flex-col gap-4"
           >
-            <Markdown>{reasoning}</Markdown>
+            {isLoading ? (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-muted-foreground">
+                  Loading reasoning content...
+                </span>
+              </div>
+            ) : (
+              <Markdown>{reasoning}</Markdown>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
