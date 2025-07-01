@@ -10,6 +10,30 @@ body {
     overscroll-behavior: none;
     overflow: hidden;
 }
+
+/* Add these mobile viewport fixes */
+:root {
+    --app-height: 100vh;
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@supports (height: 100dvh) {
+    :root {
+        --app-height: 100dvh;
+    }
+}
+
+.app-container {
+    height: var(--app-height);
+    padding-bottom: var(--safe-area-bottom);
+}
+
+/* Additional mobile-specific adjustments */
+@media (max-width: 768px) {
+    .mobile-safe-bottom {
+        padding-bottom: calc(var(--safe-area-bottom) + 1rem);
+    }
+}
 :root {
     --radius: 0.625rem;
     --background: oklch(1 0 0);

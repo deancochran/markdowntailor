@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/lib/actions/auth";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import "./globals.css";
@@ -28,6 +28,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover", // This helps with safe areas
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -36,10 +44,10 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="min-h-screen overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="grid h-screen grid-rows-[auto_1fr_auto]">
-            <header className="sticky top-0 z-50 border-b shadow-xl">
+          <div className="app-container flex flex-col">
+            <header className="sticky top-0 z-50 border-b shadow-xl flex-shrink-0">
               <div className="flex w-full px-4 h-14 items-center justify-between">
                 <div className="flex items-center">
                   <Link href="/" className="flex items-center">
@@ -106,39 +114,38 @@ export default async function RootLayout({
                 </div>
               </div>
             </header>
-
-            <main className="overflow-auto w-full flex flex-col items-center justify-between">
+            <main className="flex-1 overflow-y-auto overscroll-none w-full">
               {children}
             </main>
-          </div>
-          <Toaster />
 
-          {/* Organization Schema for SEO */}
-          <Script
-            id="organization-schema"
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Organization",
-                name: "markdowntailor",
-                url: "https://markdowntailor.com",
-                logo: "https://markdowntailor.com/logo.png",
-                sameAs: [
-                  "https://twitter.com/markdowntailor",
-                  "https://github.com/markdowntailor",
-                  "https://linkedin.com/company/markdowntailor",
-                ],
-                contactPoint: {
-                  "@type": "ContactPoint",
-                  email: "info@markdowntailor.com",
-                  contactType: "customer service",
-                },
-              }),
-            }}
-          />
+            <Toaster />
+          </div>
         </ThemeProvider>
       </body>
+      {/* Organization Schema for SEO */}
+      <Script
+        id="organization-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "markdowntailor",
+            url: "https://markdowntailor.com",
+            logo: "https://markdowntailor.com/logo.png",
+            sameAs: [
+              "https://twitter.com/markdowntailor",
+              "https://github.com/markdowntailor",
+              "https://linkedin.com/company/markdowntailor",
+            ],
+            contactPoint: {
+              "@type": "ContactPoint",
+              email: "info@markdowntailor.com",
+              contactType: "customer service",
+            },
+          }),
+        }}
+      />
     </html>
   );
 }
