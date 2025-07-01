@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import matter from "gray-matter";
+import path from "path";
 import { cache } from "react";
 
 // Type for blog post metadata
@@ -21,13 +22,14 @@ interface Post extends Frontmatter {
 // this means getPosts() will only be called once per page build, even though we may call it multiple times
 // when rendering the page.
 export const getPosts = cache(async () => {
-  const posts = await fs.readdir("src/posts/");
+  const postsDirectory = path.join(process.cwd(), "posts");
+  const posts = await fs.readdir(postsDirectory);
 
   return Promise.all(
     posts
 
       .map(async (file) => {
-        const filePath = `src/posts/${file}`;
+        const filePath = `posts/${file}`;
         const postContent = await fs.readFile(filePath, "utf8");
         const { data, content } = matter(postContent);
         return { ...data, content } as Post;
