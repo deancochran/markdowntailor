@@ -1,73 +1,21 @@
-import { Separator } from "@/components/ui/separator";
 import { getPost } from "@/lib/blog";
+import { components } from "@/mdx-components";
+import { Separator } from "@radix-ui/react-dropdown-menu";
 import { Metadata } from "next";
+import { MDXRemote } from "next-mdx-remote/rsc";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Script from "next/script";
-
-// Generate metadata for blog posts
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
+import remarkToc from "remark-toc";
+// Generate metadata for the page
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const post = await getPost(slug);
-
-  // Return 404 if post not found
-  if (!post) {
-    return {
-      title: "Post Not Found",
-      description: "The requested blog post could not be found",
-    };
-  }
-
-  // Base URL for canonical links and images
-  const baseUrl = "https://markdowntailor.com";
-  const postUrl = `${baseUrl}/blog/${post.slug}`;
-
-  return {
-    title: post.seoTitle || post.title,
-    description: post.description || `Read our post about ${post.title}`,
-    openGraph: {
-      type: "article",
-      url: postUrl,
-      title: post.seoTitle || post.title,
-      description: post.description || "",
-      publishedTime: post.publishedOn,
-      authors: ["markdowntailor Team"],
-      images: [
-        {
-          url: `${baseUrl}/og-image.png`,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.seoTitle || post.title,
-      description: post.description || "",
-      creator: "@markdowntailor",
-      images: [`${baseUrl}/twitter-image.png`],
-    },
-    alternates: {
-      canonical: postUrl,
-      types: {
-        "application/rss+xml": `${baseUrl}/api/rss`,
-      },
-    },
-  };
-}
-
-export default async function MdxLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { slug: string };
-}) {
   const { slug } = await params;
   const post = await getPost(slug);
 
@@ -75,10 +23,38 @@ export default async function MdxLayout({
   if (!post) {
     notFound();
   }
+
+  return {
+    title: post.seoTitle || post.title,
+    description: post.description,
+    openGraph: {
+      title: post.seoTitle || post.title,
+      description: post.description,
+      type: "article",
+      publishedTime: post.publishedOn,
+      url: `/blog/${post.slug}`,
+    },
+  };
+}
+
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  // Get post data
+  const { slug } = await params;
+  const post = await getPost(slug);
+
+  // Double-check that post exists (in case layout didn't catch it)
+  if (!post) {
+    notFound();
+  }
+
   return (
     <>
       {/* Back to blog link */}
-      <div className="mb-8">
+      <div className="mb-4">
         <Link
           href="/blog"
           className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
@@ -113,9 +89,25 @@ export default async function MdxLayout({
           })}
         </div>
         <Separator className="mb-8" />
-        {children}
+        <div>
+          <MDXRemote
+            source={post.content}
+            options={{
+              mdxOptions: {
+                remarkPlugins: [
+                  // Adds support for GitHub Flavored Markdown
+                  remarkGfm,
+                  // generates a table of contents based on headings
+                  remarkToc,
+                ],
+                // These work together to add IDs and linkify headings
+                rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+              },
+            }}
+            components={components}
+          />
+        </div>
       </div>
-
       {/* Add structured data for this blog post */}
       <Script
         id="blog-schema"
@@ -126,7 +118,7 @@ export default async function MdxLayout({
             "@type": "BlogPosting",
             headline: post.title,
             description: post.description || "",
-            image: "https://markdowntailor.com/og-image.png",
+            image: "https://markdowntailor.com/logo.png",
             datePublished: post.publishedOn,
             dateModified: post.publishedOn,
             author: {
@@ -152,3 +144,5 @@ export default async function MdxLayout({
     </>
   );
 }
+
+export const dynamicParams = true;
