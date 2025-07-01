@@ -537,9 +537,10 @@ export default function ResumeEditor({
         toast.error("You've reached the rate limit. Please try again later.");
       } else if (!response.ok) {
         toast.error(`Error: ${response.statusText}`);
-      } else {
-        toast.info("AI is generating a response...");
       }
+      // else {
+      //   toast.info("AI is generating a response...");
+      // }
     },
   });
 
