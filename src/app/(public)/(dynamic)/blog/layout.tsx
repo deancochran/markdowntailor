@@ -127,10 +127,10 @@ export default async function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">{children}</div>
+    <div className="flex flex-col h-full w-full items-center justify-between">
+      <div className="max-w-2xl w-full p-4">{children}</div>
 
       <AppFooter />
-    </>
+    </div>
   );
 }

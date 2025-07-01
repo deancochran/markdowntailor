@@ -1,5 +1,6 @@
 import AppFooter from "@/components/AppFooter";
 import { Metadata } from "next";
+
 import { headers } from "next/headers";
 
 // Default metadata for public pages
@@ -121,14 +122,10 @@ export default async function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-        <div className="prose prose-headings:mt-8 prose-headings:font-semibold prose-headings:text-black prose-h1:text-5xl prose-h2:text-4xl prose-h3:text-3xl prose-h4:text-2xl prose-h5:text-xl prose-h6:text-lg dark:prose-headings:text-white">
-          {children}
-        </div>
-      </div>
+    <div className="flex flex-col h-full w-full items-center justify-between">
+      <div className="max-w-2xl w-full p-4">{children}</div>
 
       <AppFooter />
-    </>
+    </div>
   );
 }

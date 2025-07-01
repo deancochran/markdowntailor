@@ -6,7 +6,7 @@ export default function AppFooter() {
         {/* Mobile-friendly footer layout */}
         <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-4">
           {/* Logo and copyright - top section */}
-          <div className="h-full flex flex-col items-start justify-between">
+          <div className="h-fit flex flex-col items-start justify-start">
             <h3 className="text-xl font-bold text-foreground">
               markdowntailor
             </h3>
