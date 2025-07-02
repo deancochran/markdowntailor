@@ -51,11 +51,6 @@ function generateHTMLContent(markdown: string, css: string): string {
       <title>Resume</title>
       <style>
 
-        // * {
-        //   all: unset;
-        //   display: revert; /* Re-apply the default 'display' value */
-        // }
-
         /* Custom CSS from user */
         ${css}
       </style>
