@@ -7,9 +7,9 @@ export default function AppFooter() {
         <div className="w-full h-full flex flex-row flex-wrap items-start justify-start gap-4">
           {/* Logo and copyright - top section */}
           <div className="h-fit flex flex-col items-start justify-start">
-            <h3 className="text-xl font-bold text-foreground">
+            <Link href="/" className="text-xl font-bold text-foreground">
               markdowntailor
-            </h3>
+            </Link>
 
             {/* All rights reserved - at the bottom */}
             <div>

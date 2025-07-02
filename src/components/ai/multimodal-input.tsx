@@ -12,10 +12,12 @@ import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { Attachment } from "ai";
 import { cx } from "class-variance-authority";
-import { CreditCard, SendHorizontal, Square } from "lucide-react";
+import { SendHorizontal, Square } from "lucide-react";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { AttachmentListing } from "./AttachmentListing";
+import { AttachmentUploader } from "./AttachmentUploader";
 function PureMultimodalInput({
   featureDisabled,
   input,
@@ -85,10 +87,11 @@ function PureMultimodalInput({
   return (
     <div className="flex flex-col w-full">
       {/* Attachment scroll container sits above the input area */}
-      {/* <AttachmentListing
+      <AttachmentListing
         attachments={attachments}
         setAttachments={setAttachments}
-      /> */}
+        featureDisabled={featureDisabled}
+      />
       <Textarea
         data-testid="multimodal-input"
         placeholder={
@@ -130,13 +133,10 @@ function PureMultimodalInput({
 
       {/* Input area with attachment uploader and chat controls */}
       <div className="flex flex-row gap-2 justify-end">
-        {/* <AttachmentUploader setAttachments={setAttachments} /> */}
-        {featureDisabled && (
-          <div className="flex items-center text-sm text-red-500 mr-2">
-            <CreditCard className="h-4 w-4 mr-1" />
-            <span>Insufficient credits</span>
-          </div>
-        )}
+        <AttachmentUploader
+          featureDisabled={featureDisabled}
+          setAttachments={setAttachments}
+        />
         {status === "submitted" ? (
           <TooltipProvider>
             <Tooltip>

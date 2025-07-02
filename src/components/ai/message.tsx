@@ -16,7 +16,6 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { Markdown } from "./markdown";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
-import { PreviewAttachment } from "./preview-attachment";
 
 const PurePreviewMessage = ({
   message,
@@ -63,7 +62,7 @@ const PurePreviewMessage = ({
           )}
 
           <div
-            className={cn("flex flex-col gap-4 w-full", {
+            className={cn("flex flex-col gap-1 w-full", {
               "min-h-96": message.role === "assistant" && requiresScrollPadding,
             })}
           >
@@ -73,11 +72,20 @@ const PurePreviewMessage = ({
                   data-testid={`message-attachments`}
                   className="flex flex-row justify-end gap-2"
                 >
-                  {message.experimental_attachments.map((attachment) => (
-                    <PreviewAttachment
-                      key={attachment.url}
-                      attachment={attachment}
-                    />
+                  {message.experimental_attachments.map((att) => (
+                    <div
+                      key={att.url}
+                      className="relative flex-shrink-0 outline-1 outline-border p-2 rounded-md w-16"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <div
+                          className="text-xs w-12 truncate text-ellipsis line-clamp-1"
+                          title={att.name}
+                        >
+                          {att.name}
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
