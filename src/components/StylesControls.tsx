@@ -1,8 +1,13 @@
-
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { ResumeStyles, SYSTEM_FONTS, defaultStyles } from '@/lib/utils/styles';
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ResumeStyles, SYSTEM_FONTS } from "@/lib/utils/styles";
 
 interface StylesControlsProps {
   styles: ResumeStyles;
@@ -24,8 +29,14 @@ const FONT_OPTIONS = [
   "Merriweather",
 ];
 
-export default function StylesControls({ styles, onStylesChange }: StylesControlsProps) {
-  const handleStyleChange = (key: keyof ResumeStyles, value: string | number) => {
+export default function StylesControls({
+  styles,
+  onStylesChange,
+}: StylesControlsProps) {
+  const handleStyleChange = (
+    key: keyof ResumeStyles,
+    value: string | number,
+  ) => {
     onStylesChange({
       ...styles,
       [key]: value,
@@ -34,13 +45,14 @@ export default function StylesControls({ styles, onStylesChange }: StylesControl
 
   return (
     <div className="p-4 space-y-4 bg-background border-b">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Font Family */}
-        <div className="space-y-2">
-          <Label htmlFor="fontFamily">Font Family</Label>
+      <div className="flex flex-row items-end justify-start gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="fontFamily">
+            Font Family
+          </Label>
           <Select
             value={styles.fontFamily}
-            onValueChange={(value) => handleStyleChange('fontFamily', value)}
+            onValueChange={(value) => handleStyleChange("fontFamily", value)}
           >
             <SelectTrigger id="fontFamily">
               <SelectValue placeholder="Select font" />
@@ -48,87 +60,118 @@ export default function StylesControls({ styles, onStylesChange }: StylesControl
             <SelectContent>
               {FONT_OPTIONS.map((font) => (
                 <SelectItem key={font} value={font}>
-                  <span style={{
-                    fontFamily: SYSTEM_FONTS.includes(font)
-                      ? font.replace(/\+/g, ' ')
-                      : `"${font.replace(/\+/g, ' ')}", sans-serif`
-                  }}>
-                    {font.replace(/\+/g, ' ')}
+                  <span
+                    style={{
+                      fontFamily: SYSTEM_FONTS.includes(font)
+                        ? font.replace(/\+/g, " ")
+                        : `"${font.replace(/\+/g, " ")}", sans-serif`,
+                    }}
+                  >
+                    {font.replace(/\+/g, " ")}
                   </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-
-        {/* Font Size */}
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label htmlFor="fontSize">Font Size ({styles.fontSize}px)</Label>
-          </div>
-          <Slider
-            id="fontSize"
-            min={8}
-            max={16}
-            step={0.5}
-            value={[styles.fontSize]}
-            onValueChange={([value]) => handleStyleChange('fontSize', value)}
-          />
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="fontSize">
+            Font Size
+          </Label>
+          <Select
+            value={styles.fontSize.toString()}
+            onValueChange={(value) =>
+              handleStyleChange("fontSize", parseFloat(value))
+            }
+          >
+            <SelectTrigger id="fontSize">
+              <SelectValue placeholder="Select font size" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 17 }, (_, i) => 8 + i * 0.5).map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}px
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="lineHeight">
+            Line Height
+          </Label>
+          <Select
+            value={styles.lineHeight.toString()}
+            onValueChange={(value) =>
+              handleStyleChange("lineHeight", parseFloat(value))
+            }
+          >
+            <SelectTrigger id="lineHeight">
+              <SelectValue placeholder="Select line height" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 11 }, (_, i) =>
+                (1 + i * 0.1).toFixed(1),
+              ).map((height) => (
+                <SelectItem key={height} value={height}>
+                  {height}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="marginH">
+            Horizontal Margin
+          </Label>
+          <Select
+            value={styles.marginH.toString()}
+            onValueChange={(value) =>
+              handleStyleChange("marginH", parseInt(value))
+            }
+          >
+            <SelectTrigger id="marginH">
+              <SelectValue placeholder="Select margin" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 9 }, (_, i) => 10 + i * 5).map((margin) => (
+                <SelectItem key={margin} value={margin.toString()}>
+                  {margin}px
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Line Height */}
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label htmlFor="lineHeight">Line Height ({styles.lineHeight})</Label>
-          </div>
-          <Slider
-            id="lineHeight"
-            min={1}
-            max={2}
-            step={0.1}
-            value={[styles.lineHeight]}
-            onValueChange={([value]) => handleStyleChange('lineHeight', value)}
-          />
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="marginV">
+            Vertical Margin
+          </Label>
+          <Select
+            value={styles.marginV.toString()}
+            onValueChange={(value) =>
+              handleStyleChange("marginV", parseInt(value))
+            }
+          >
+            <SelectTrigger id="marginV">
+              <SelectValue placeholder="Select margin" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 9 }, (_, i) => 10 + i * 5).map((margin) => (
+                <SelectItem key={margin} value={margin.toString()}>
+                  {margin}px
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        {/* Margins */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="marginH">Horizontal Margin ({styles.marginH}px)</Label>
-            </div>
-            <Slider
-              id="marginH"
-              min={10}
-              max={50}
-              step={5}
-              value={[styles.marginH]}
-              onValueChange={([value]) => handleStyleChange('marginH', value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="marginV">Vertical Margin ({styles.marginV}px)</Label>
-            </div>
-            <Slider
-              id="marginV"
-              min={10}
-              max={50}
-              step={5}
-              value={[styles.marginV]}
-              onValueChange={([value]) => handleStyleChange('marginV', value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => onStylesChange(defaultStyles)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Reset to Defaults
-        </button>
+          Reset
+        </Button>
       </div>
     </div>
   );
