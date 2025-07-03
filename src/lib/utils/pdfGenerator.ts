@@ -17,17 +17,17 @@ async function getBrowser(): Promise<Browser> {
   if (!browserInstance) {
     browserInstance = await chromium.launch({
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-        "--disable-web-security",
-        "--disable-features=VizDisplayCompositor",
-      ],
+      // args: [
+      //   "--no-sandbox",
+      //   "--disable-setuid-sandbox",
+      //   "--disable-dev-shm-usage",
+      //   "--disable-accelerated-2d-canvas",
+      //   "--no-first-run",
+      //   "--no-zygote",
+      //   "--disable-gpu",
+      //   "--disable-web-security",
+      //   "--disable-features=VizDisplayCompositor",
+      // ],
     });
   }
   return browserInstance;
@@ -37,7 +37,10 @@ async function getBrowser(): Promise<Browser> {
  * Convert markdown to HTML with CSS styling
  */
 function generateHTMLContent(markdown: string, css: string): string {
-  const htmlContent = marked(markdown);
+  const htmlContent = marked(markdown, {
+    gfm: true,
+    breaks: true,
+  });
 
   return `
     <!DOCTYPE html>
@@ -47,26 +50,11 @@ function generateHTMLContent(markdown: string, css: string): string {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Resume</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #333;
-            background: white;
-          }
-
-          /* Page break controls */
-          .page-break {
-            page-break-before: always;
-          }
-
-          .no-break {
-            page-break-inside: avoid;
-          }
+        // * {
+        //   all: unset;
+        //   display: revert; /* Re-apply the default 'display' value */
+        // }
 
         /* Custom CSS from user */
         ${css}
@@ -85,10 +73,6 @@ function generateHTMLContent(markdown: string, css: string): string {
 export async function generatePDFServerSide(
   markdown: string,
   css: string,
-  options: {
-    format?: "A4" | "Letter";
-    margin?: { top: string; right: string; bottom: string; left: string };
-  } = {},
 ): Promise<{ pdfBuffer: Buffer; pageCount: number }> {
   const browser = await getBrowser();
   const page = await browser.newPage();
@@ -115,15 +99,8 @@ export async function generatePDFServerSide(
 
     // Generate PDF
     const pdfBuffer = await page.pdf({
-      format: options.format || "A4",
-      margin: options.margin || {
-        top: "0.5in",
-        right: "0.5in",
-        bottom: "0.5in",
-        left: "0.5in",
-      },
-      printBackground: true,
-      preferCSSPageSize: false,
+      format: "A4",
+      preferCSSPageSize: true,
     });
 
     // Calculate page count (approximate)
@@ -151,16 +128,8 @@ export async function cleanupBrowser() {
 export async function generatePDFDataURL(
   markdown: string,
   css: string,
-  options?: {
-    format?: "A4" | "Letter";
-    margin?: { top: string; right: string; bottom: string; left: string };
-  },
 ): Promise<{ pdfDataUrl: string; pageCount: number }> {
-  const { pdfBuffer, pageCount } = await generatePDFServerSide(
-    markdown,
-    css,
-    options,
-  );
+  const { pdfBuffer, pageCount } = await generatePDFServerSide(markdown, css);
   const base64 = pdfBuffer.toString("base64");
   const pdfDataUrl = `data:application/pdf;base64,${base64}`;
 
