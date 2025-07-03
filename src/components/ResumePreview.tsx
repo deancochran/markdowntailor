@@ -24,6 +24,49 @@ const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
 
+// Paper dimensions (US Letter at 96 DPI)
+const PAPER_WIDTH = 816; // 8.5 inches
+const PAPER_HEIGHT = 1056; // 11 inches
+const CONTAINER_MIN_WIDTH = 900; // Ensure container is wide enough for fixed-width pages
+
+// Print-specific CSS for fixed paper dimensions
+const PRINT_CSS = `
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .${PAPER_WIDTH}-fixed-page {
+      width: ${PAPER_WIDTH}px !important;
+      height: ${PAPER_HEIGHT}px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      page-break-after: always !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      transform: none !important;
+      overflow: visible !important;
+    }
+
+    .${PAPER_WIDTH}-fixed-page:last-child {
+      page-break-after: avoid !important;
+    }
+
+    @page {
+      size: letter;
+      margin: 0;
+    }
+  }
+`;
+
 export default function ResumePreview({
   markdown,
   styles,
@@ -95,6 +138,9 @@ export default function ResumePreview({
   // Inject scoped CSS into document head
   useScopedCSSInjection(scopedCSS, scopeClass, styleElementRef);
 
+  // Inject print CSS for fixed dimensions
+  usePrintCSSInjection();
+
   // Handle font loading and markdown rendering
   useResumeRendering(
     markdown,
@@ -130,6 +176,7 @@ export default function ResumePreview({
         pages={pages}
         totalPages={totalPages}
         scopeClass={scopeClass}
+        styles={styles}
       />
     </div>
   );
@@ -155,13 +202,16 @@ async function loadGoogleFont(fontFamily: string): Promise<void> {
   });
 }
 
-function useZoomControls(scale: number, setScale: (scale: number) => void) {
+function useZoomControls(
+  scale: number,
+  setScale: React.Dispatch<React.SetStateAction<number>>,
+) {
   const zoomIn = useCallback(() => {
-    setScale((prev) => Math.min(prev * SCALE_FACTOR, SCALE_LIMITS.max));
+    setScale((prev: number) => Math.min(prev * SCALE_FACTOR, SCALE_LIMITS.max));
   }, [setScale]);
 
   const zoomOut = useCallback(() => {
-    setScale((prev) => Math.max(prev / SCALE_FACTOR, SCALE_LIMITS.min));
+    setScale((prev: number) => Math.max(prev / SCALE_FACTOR, SCALE_LIMITS.min));
   }, [setScale]);
 
   const resetZoom = useCallback(() => {
@@ -214,6 +264,32 @@ function useScopedCSSInjection(
   }, [scopedCSS, scopeClass, styleElementRef]);
 }
 
+function usePrintCSSInjection(): void {
+  useEffect(() => {
+    const styleId = "resume-print-styles";
+
+    // Remove existing print style element
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    // Create and inject print style element
+    const styleElement = document.createElement("style");
+    styleElement.id = styleId;
+    styleElement.textContent = PRINT_CSS;
+    document.head.appendChild(styleElement);
+
+    // Cleanup function
+    return () => {
+      const style = document.getElementById(styleId);
+      if (style) {
+        style.remove();
+      }
+    };
+  }, []);
+}
+
 function useResumeRendering(
   markdown: string,
   fontFamily: string,
@@ -253,7 +329,7 @@ function useResumeRendering(
 }
 
 function useParentComponentAPI(
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   getResumeContentForPrint: () => string,
   getScopedSelector: (selector: string) => string,
   customProperties: Record<string, string>,
@@ -264,7 +340,12 @@ function useParentComponentAPI(
       containerRef.current.getScopedSelector = getScopedSelector;
       containerRef.current.customProperties = customProperties;
     }
-  }, [getResumeContentForPrint, getScopedSelector, customProperties, containerRef]);
+  }, [
+    getResumeContentForPrint,
+    getScopedSelector,
+    customProperties,
+    containerRef,
+  ]);
 }
 
 function usePageRecalculation(
@@ -338,6 +419,7 @@ interface PreviewContainerProps {
   pages: Array<{ content: string; pageNumber: number }>;
   totalPages: number;
   scopeClass: string;
+  styles: ResumeStyles;
 }
 
 function PreviewContainer({
@@ -347,11 +429,15 @@ function PreviewContainer({
   pages,
   totalPages,
   scopeClass,
+  styles,
 }: PreviewContainerProps) {
   return (
     <div
       className="flex-1 overflow-auto print:overflow-visible bg-gray-100 p-4 flex justify-center items-start"
-      style={{ backgroundColor: "#f1f5f9" }}
+      style={{
+        backgroundColor: "#f1f5f9",
+        minWidth: `${CONTAINER_MIN_WIDTH}px`,
+      }}
     >
       {isLoading || isCalculating ? (
         <LoadingSpinner isLoading={isLoading} />
@@ -361,6 +447,7 @@ function PreviewContainer({
           pages={pages}
           totalPages={totalPages}
           scopeClass={scopeClass}
+          styles={styles}
         />
       )}
     </div>
@@ -389,6 +476,7 @@ interface PagesContainerProps {
   pages: Array<{ content: string; pageNumber: number }>;
   totalPages: number;
   scopeClass: string;
+  styles: ResumeStyles;
 }
 
 function PagesContainer({
@@ -396,6 +484,7 @@ function PagesContainer({
   pages,
   totalPages,
   scopeClass,
+  styles,
 }: PagesContainerProps) {
   return (
     <div
@@ -404,6 +493,8 @@ function PagesContainer({
         transform: `scale(${scale})`,
         transformOrigin: "top center",
         transition: "transform 0.2s ease-out",
+        width: `${PAPER_WIDTH}px`,
+        flexShrink: 0, // Prevent shrinking
       }}
     >
       {pages.map((page, index) => (
@@ -414,6 +505,7 @@ function PagesContainer({
           totalPages={totalPages}
           scopeClass={scopeClass}
           isLastPage={index === pages.length - 1}
+          styles={styles}
         />
       ))}
     </div>
@@ -426,14 +518,16 @@ interface PageRendererProps {
   totalPages: number;
   scopeClass: string;
   isLastPage: boolean;
+  styles: ResumeStyles;
 }
 
 function PageRenderer({
   page,
-  index,
+  index: _index,
   totalPages,
   scopeClass,
   isLastPage,
+  styles,
 }: PageRendererProps) {
   return (
     <div
@@ -449,13 +543,22 @@ function PageRenderer({
 
       {/* Page content */}
       <div
-        className={scopeClass}
+        className={`${scopeClass} ${PAPER_WIDTH}-fixed-page bg-white shadow-lg print:shadow-none`}
         dangerouslySetInnerHTML={{ __html: page.content }}
         role="document"
         aria-label={`Resume page ${page.pageNumber}`}
         style={{
           boxSizing: "border-box",
-          width: "100%",
+          width: `${PAPER_WIDTH}px`,
+          height: `${PAPER_HEIGHT}px`,
+          minWidth: `${PAPER_WIDTH}px`,
+          minHeight: `${PAPER_HEIGHT}px`,
+          maxWidth: `${PAPER_WIDTH}px`,
+          maxHeight: `${PAPER_HEIGHT}px`,
+          padding: `${styles.marginV}px ${styles.marginH}px`,
+          border: "1px solid #e5e7eb",
+          borderRadius: "4px",
+          overflow: "hidden",
         }}
       />
     </div>

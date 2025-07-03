@@ -40,7 +40,7 @@ export const useSmartPages = ({
   content,
   styles,
   scopeClass,
-  customProperties,
+  customProperties: _customProperties,
 }: UseSmartPagesProps): UseSmartPagesReturn => {
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
