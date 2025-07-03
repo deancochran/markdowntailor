@@ -46,6 +46,8 @@ export default function ResumePreview({
   const { pages, totalPages, isCalculating, recalculatePages } = useSmartPages({
     content: renderedHtml,
     styles,
+    scopeClass,
+    customProperties,
   });
 
   // Load the selected font
@@ -249,13 +251,6 @@ export default function ResumePreview({
                   role="document"
                   aria-label={`Resume page ${page.pageNumber}`}
                   style={{
-                    // Apply CSS custom properties directly for immediate effect
-                    ...Object.fromEntries(
-                      Object.entries(customProperties).map(([key, value]) => [
-                        key,
-                        value,
-                      ]),
-                    ),
                     boxSizing: "border-box",
                     width: "100%",
                   }}

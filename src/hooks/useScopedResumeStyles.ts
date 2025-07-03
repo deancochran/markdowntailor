@@ -1,5 +1,4 @@
 import {
-  PRINT_HTML_TEMPLATE,
   ResumeStyles,
   SYSTEM_FONTS,
   getDefaultCustomProperties,
@@ -56,8 +55,18 @@ export const useScopedResumeStyles = ({
       });
     };
 
+    // Generate CSS custom properties definition
+    const customPropsCSS = Object.entries(customProperties)
+      .map(([key, value]) => `${key}: ${value};`)
+      .join("\n        ");
+
     // Apply custom CSS directly with scoping
     return `
+      /* Define CSS custom properties at root level */
+      :root {
+        ${customPropsCSS}
+      }
+
       /* Page container with white background and shadow */
       ${scopeSelector} {
         background-color: var(--resume-background-color);
@@ -124,7 +133,7 @@ export const useScopedResumeStyles = ({
       /* User's custom CSS with scope applied */
       ${scopeCSS(customCss || "")}
     `;
-  }, [scopeClass, customCss]);
+  }, [scopeClass, customCss, customProperties]);
 
   // Helper function to generate scoped selectors
   const getScopedSelector = useCallback(
@@ -134,29 +143,52 @@ export const useScopedResumeStyles = ({
     [scopeClass],
   );
 
-  // Generate complete HTML for printing using template from styles.ts
+  // Generate complete HTML for printing using the same scoped CSS as preview
   const getContentForPrint = useCallback(
     (content: string): string => {
-      const fontFamily = styles.fontFamily.replace(/\+/g, " ");
       const fontUrl =
         styles.fontFamily && !SYSTEM_FONTS.includes(styles.fontFamily)
           ? `https://fonts.googleapis.com/css2?family=${styles.fontFamily}:wght@300;400;500;600;700&display=swap`
           : "";
 
-      // Replace template placeholders with actual values
-      return PRINT_HTML_TEMPLATE.replace(
-        "{{FONT_LINK}}",
-        fontUrl ? `<link href="${fontUrl}" rel="stylesheet">` : "",
-      )
-        .replace("{{FONT_FAMILY}}", fontFamily)
-        .replace("{{FONT_SIZE}}", styles.fontSize.toString())
-        .replace("{{LINE_HEIGHT}}", styles.lineHeight.toString())
-        .replace("{{MARGIN_V}}", styles.marginV.toString())
-        .replace("{{MARGIN_H}}", styles.marginH.toString())
-        .replace("{{CUSTOM_CSS}}", customCss || "")
-        .replace("{{CONTENT}}", content);
+      // Generate CSS custom properties definition
+      const customPropsCSS = Object.entries(customProperties)
+        .map(([key, value]) => `${key}: ${value};`)
+        .join("\n    ");
+
+      // Use the same scoped CSS structure as the preview
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resume</title>
+  ${fontUrl ? `<link href="${fontUrl}" rel="stylesheet">` : ""}
+  <style>
+    /* Define CSS custom properties at root level */
+    :root {
+      ${customPropsCSS}
+    }
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: white;
+    }
+    /* Use the same scoped CSS as preview */
+    ${scopedCSS}
+  </style>
+</head>
+<body>
+  <div class="${scopeClass}">
+    ${content}
+  </div>
+</body>
+</html>`;
     },
-    [styles, customCss],
+    [styles, scopedCSS, scopeClass, customProperties],
   );
 
   return {

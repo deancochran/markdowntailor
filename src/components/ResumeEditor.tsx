@@ -291,7 +291,7 @@ export default function ResumeEditor({
 
     // Replace current document content with resume content
     document.body.innerHTML = htmlContent;
-    document.title = `${resume.name} - Resume`;
+    document.title = `${resume.title} - Resume`;
 
     // Print the current window
     window.print();

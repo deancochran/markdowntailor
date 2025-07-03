@@ -1,20 +1,19 @@
 import { ResumeStyles } from "@/lib/utils/styles";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-// A4 dimensions in pixels (at 96 DPI)
+// A4 dimensions in pixels (more accurate for print)
+// A4 = 210mm x 297mm = 8.27" x 11.69" = 794px x 1123px at 96 DPI
+// But for print accuracy, we use slightly adjusted dimensions
 const A4_DIMENSIONS = {
   width: 794,
   height: 1123,
 } as const;
 
-interface PageBreakOptions {
-  // Minimum lines to keep together
-  minLinesKeepTogether: number;
-  // Avoid breaking inside these elements
-  avoidBreakInside: string[];
-  // Preferred break points
-  preferredBreakPoints: string[];
-}
+// Print-specific dimensions that better match actual print output
+const PRINT_DIMENSIONS = {
+  width: 794,
+  height: 1056, // Reduced height to account for print margins and browser behavior
+} as const;
 
 interface PageInfo {
   pageNumber: number;
@@ -26,7 +25,8 @@ interface PageInfo {
 interface UseSmartPagesProps {
   content: string;
   styles: ResumeStyles;
-  options?: Partial<PageBreakOptions>;
+  scopeClass?: string;
+  customProperties?: Record<string, string>;
 }
 
 interface UseSmartPagesReturn {
@@ -38,52 +38,30 @@ interface UseSmartPagesReturn {
   getContentArea: () => { width: number; height: number };
 }
 
-const DEFAULT_OPTIONS: PageBreakOptions = {
-  minLinesKeepTogether: 2,
-  avoidBreakInside: [
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "li",
-    "p",
-    "blockquote",
-  ],
-  preferredBreakPoints: ["h1", "h2", "h3", "hr", "div", "section"],
-};
-
 export const useSmartPages = ({
   content,
   styles,
-  options = {},
+  scopeClass,
+  customProperties,
 }: UseSmartPagesProps): UseSmartPagesReturn => {
   const [pages, setPages] = useState<PageInfo[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const mergedOptions = useMemo(
-    () => ({
-      ...DEFAULT_OPTIONS,
-      ...options,
-    }),
-    [options],
-  );
-
   // Calculate page dimensions
   const getPageDimensions = useCallback(() => {
     return {
-      width: A4_DIMENSIONS.width,
-      height: A4_DIMENSIONS.height,
+      width: PRINT_DIMENSIONS.width,
+      height: PRINT_DIMENSIONS.height,
     };
   }, []);
 
-  // Calculate content area (page minus margins)
+  // Calculate content area (page minus margins and buffer)
   const getContentArea = useCallback(() => {
     const pageDimensions = getPageDimensions();
+    const PRINT_BUFFER = 20; // Extra buffer to prevent content overflow
     return {
       width: pageDimensions.width - styles.marginH * 2,
-      height: pageDimensions.height - styles.marginV * 2,
+      height: pageDimensions.height - styles.marginV * 2 - PRINT_BUFFER,
     };
   }, [styles.marginH, styles.marginV, getPageDimensions]);
 
@@ -96,16 +74,18 @@ export const useSmartPages = ({
       element.style.left = "-9999px";
       element.style.top = "-9999px";
       element.style.visibility = "hidden";
-      element.style.fontFamily = styles.fontFamily.replace(/\+/g, " ");
-      element.style.fontSize = `${styles.fontSize}px`;
-      element.style.lineHeight = `${styles.lineHeight}`;
       element.style.width = `${getContentArea().width}px`;
       element.style.boxSizing = "border-box";
+
+      // Use the same scoped CSS class as the preview for accurate measurement
+      if (scopeClass) {
+        element.className = scopeClass;
+      }
 
       document.body.appendChild(element);
       return element;
     },
-    [styles.fontFamily, styles.fontSize, styles.lineHeight, getContentArea],
+    [getContentArea, scopeClass],
   );
 
   // Get element height
@@ -113,53 +93,7 @@ export const useSmartPages = ({
     return element.offsetHeight;
   }, []);
 
-  // Find best break point within content
-  const findBreakPoint = useCallback(
-    (element: HTMLElement, maxHeight: number) => {
-      const children = Array.from(element.children) as HTMLElement[];
-      let currentHeight = 0;
-      let breakIndex = -1;
-
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        const childHeight = getElementHeight(child);
-
-        if (currentHeight + childHeight > maxHeight) {
-          // Check if this is a preferred break point
-          if (
-            mergedOptions.preferredBreakPoints.includes(
-              child.tagName.toLowerCase(),
-            )
-          ) {
-            breakIndex = i;
-            break;
-          }
-
-          // Check if previous element was a good break point
-          if (
-            i > 0 &&
-            mergedOptions.preferredBreakPoints.includes(
-              children[i - 1].tagName.toLowerCase(),
-            )
-          ) {
-            breakIndex = i;
-            break;
-          }
-
-          // Default to breaking before this element
-          breakIndex = i;
-          break;
-        }
-
-        currentHeight += childHeight;
-      }
-
-      return breakIndex;
-    },
-    [mergedOptions.preferredBreakPoints, getElementHeight],
-  );
-
-  // Split content into pages
+  // Split content into pages - simplified approach
   const splitIntoPages = useCallback(
     (html: string) => {
       if (!html.trim()) {
@@ -177,7 +111,7 @@ export const useSmartPages = ({
       const totalHeight = getElementHeight(measurementElement);
       const availableHeight = getContentArea().height;
 
-      // If content fits in one page
+      // If content fits in one page, return it as is
       if (totalHeight <= availableHeight) {
         document.body.removeChild(measurementElement);
         return [
@@ -190,95 +124,67 @@ export const useSmartPages = ({
         ];
       }
 
-      // Split into multiple pages
+      // Content doesn't fit - estimate number of pages needed
+      const estimatedPages = Math.ceil(totalHeight / availableHeight);
       const pages: PageInfo[] = [];
-      let remainingContent = html;
+      const children = Array.from(measurementElement.children) as HTMLElement[];
+
+      if (children.length === 0) {
+        // No child elements, treat as single page
+        document.body.removeChild(measurementElement);
+        return [
+          {
+            pageNumber: 1,
+            content: html,
+            contentHeight: totalHeight,
+            availableHeight: availableHeight,
+          },
+        ];
+      }
+
+      let currentPageContent: HTMLElement[] = [];
+      let currentPageHeight = 0;
       let pageNumber = 1;
 
-      while (remainingContent.trim()) {
-        const tempElement = createMeasurementElement(remainingContent);
-        const currentHeight = getElementHeight(tempElement);
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        const childHeight = getElementHeight(child);
 
-        if (currentHeight <= availableHeight) {
-          // Remaining content fits in one page
+        // If adding this element would exceed page height, start new page
+        if (
+          currentPageHeight + childHeight > availableHeight &&
+          currentPageContent.length > 0
+        ) {
           pages.push({
             pageNumber,
-            content: remainingContent,
-            contentHeight: currentHeight,
+            content: currentPageContent.map((el) => el.outerHTML).join(""),
+            contentHeight: currentPageHeight,
             availableHeight: availableHeight,
           });
-          document.body.removeChild(tempElement);
-          break;
-        }
 
-        // Find where to break the content
-        const breakIndex = findBreakPoint(tempElement, availableHeight);
-
-        if (breakIndex === -1 || breakIndex === 0) {
-          // Force break at first element if no good break point found
-          const children = Array.from(tempElement.children) as HTMLElement[];
-          if (children.length > 0) {
-            const firstChild = children[0];
-            pages.push({
-              pageNumber,
-              content: firstChild.outerHTML,
-              contentHeight: getElementHeight(firstChild),
-              availableHeight: availableHeight,
-            });
-
-            // Remove the first element from remaining content
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(remainingContent, "text/html");
-            const bodyChildren = Array.from(doc.body.children);
-            if (bodyChildren.length > 0) {
-              bodyChildren[0].remove();
-              remainingContent = doc.body.innerHTML;
-            } else {
-              remainingContent = "";
-            }
-          } else {
-            // No more content to process
-            break;
-          }
+          currentPageContent = [child];
+          currentPageHeight = childHeight;
+          pageNumber++;
         } else {
-          // Split at the break point
-          const children = Array.from(tempElement.children) as HTMLElement[];
-          const pageChildren = children.slice(0, breakIndex);
-          const pageContent = pageChildren
-            .map((child) => child.outerHTML)
-            .join("");
-          const pageHeight = pageChildren.reduce(
-            (sum, child) => sum + getElementHeight(child),
-            0,
-          );
-
-          pages.push({
-            pageNumber,
-            content: pageContent,
-            contentHeight: pageHeight,
-            availableHeight: availableHeight,
-          });
-
-          // Remaining content
-          const remainingChildren = children.slice(breakIndex);
-          remainingContent = remainingChildren
-            .map((child) => child.outerHTML)
-            .join("");
+          currentPageContent.push(child);
+          currentPageHeight += childHeight;
         }
+      }
 
-        document.body.removeChild(tempElement);
-        pageNumber++;
+      // Add the last page if it has content
+      if (currentPageContent.length > 0) {
+        pages.push({
+          pageNumber,
+          content: currentPageContent.map((el) => el.outerHTML).join(""),
+          contentHeight: currentPageHeight,
+          availableHeight: availableHeight,
+        });
       }
 
       document.body.removeChild(measurementElement);
       return pages;
     },
-    [
-      createMeasurementElement,
-      getElementHeight,
-      getContentArea,
-      findBreakPoint,
-    ],
+    [createMeasurementElement, getElementHeight, getContentArea],
   );
 
   // Recalculate pages
@@ -289,6 +195,37 @@ export const useSmartPages = ({
       // Wait for fonts to load
       if (document.fonts) {
         await document.fonts.ready;
+      }
+
+      // Wait for scoped CSS to be available if scopeClass is provided
+      if (scopeClass) {
+        let cssReady = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!cssReady && attempts < maxAttempts) {
+          // Check if scoped CSS is available by testing if the class exists
+          const testElement = document.createElement("div");
+          testElement.className = scopeClass;
+          testElement.style.position = "absolute";
+          testElement.style.left = "-9999px";
+          testElement.style.top = "-9999px";
+          testElement.style.visibility = "hidden";
+          document.body.appendChild(testElement);
+
+          const computedStyle = window.getComputedStyle(testElement);
+          const hasCustomProps =
+            computedStyle.getPropertyValue("--resume-font-family") !== "";
+
+          document.body.removeChild(testElement);
+
+          if (hasCustomProps) {
+            cssReady = true;
+          } else {
+            attempts++;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
       }
 
       // Small delay to ensure DOM is ready
@@ -310,7 +247,7 @@ export const useSmartPages = ({
     } finally {
       setIsCalculating(false);
     }
-  }, [content, splitIntoPages, getContentArea]);
+  }, [content, splitIntoPages, getContentArea, scopeClass]);
 
   // Recalculate when dependencies change
   useEffect(() => {
