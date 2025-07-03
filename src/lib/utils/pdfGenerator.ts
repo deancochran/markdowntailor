@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { marked } from "marked";
 import { Browser, chromium } from "playwright-core";
+import { generatePdfHTML } from "./styles";
 
 let browserInstance: Browser | null = null;
 
@@ -37,29 +38,12 @@ async function getBrowser(): Promise<Browser> {
  * Convert markdown to HTML with CSS styling
  */
 function generateHTMLContent(markdown: string, css: string): string {
-  const htmlContent = marked(markdown, {
+  const htmlContent = marked.parse(markdown, {
     gfm: true,
     breaks: true,
-  });
+  }) as string;
 
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Resume</title>
-      <style>
-
-        /* Custom CSS from user */
-        ${css}
-      </style>
-    </head>
-    <body>
-      ${htmlContent}
-    </body>
-    </html>
-  `;
+  return generatePdfHTML(htmlContent, css);
 }
 
 /**

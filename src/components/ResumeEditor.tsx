@@ -38,7 +38,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
-import { ServerPDFPreview } from "./ServerPDFPreview";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 
@@ -261,63 +260,54 @@ export default function ResumeEditor({
       return;
     }
 
-    // Find the actual resume content within the ResumePreview component
-    const resumePageElement = resumeElement.querySelector('.resume-page');
+    // Find the resume content HTML
+    const resumePageElement = resumeElement.querySelector("#resume-page");
     if (!resumePageElement) {
       toast.error("Could not find resume content to print");
       setIsPrinting(false);
       return;
     }
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      alert("Please allow popups for this website to print your resume");
+    // Get the resume HTML content
+    const resumeContent = resumePageElement.innerHTML;
+
+    // Access the container that has the getContentForPrint method
+    const containerElement = resumeElement.querySelector(
+      "div[class^='flex flex-col h-full']",
+    );
+    if (
+      !containerElement ||
+      typeof containerElement.getContentForPrint !== "function"
+    ) {
+      toast.error("Could not prepare resume for printing");
       setIsPrinting(false);
       return;
     }
 
-    // Get the resume content with embedded styles
-    const resumeContent = resumePageElement.innerHTML;
+    // Get the properly formatted HTML content for printing using the component's method
+    const htmlContent = containerElement.getContentForPrint(resumeContent);
 
-    // Create a clean print document
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${title || 'My Resume'}</title>
-          <meta charset="utf-8">
-          <style>
-            @media print {
-              body {
-                margin: 0;
-                padding: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-              }
-              * {
-                box-shadow: none !important;
-              }
-            }
-            @page {
-              margin: 0;
-              size: A4;
-            }
-          </style>
-        </head>
-        <body>
-          ${resumeContent}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    // Print after a slight delay to ensure styles are loaded
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
+    // Create a new window for printing only the resume content
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Please allow popups to download your resume as PDF");
       setIsPrinting(false);
+      return;
+    }
+
+    // Write the content to the new window
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+
+    // Wait for resources to load before printing
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      // Close the print window after printing (or after cancel)
+      setTimeout(() => {
+        printWindow.close();
+        setIsPrinting(false);
+      }, 1000);
     }, 500);
   };
 
@@ -711,6 +701,7 @@ export default function ResumeEditor({
               size="sm"
               onClick={handlePrint}
               disabled={isPrinting}
+              aria-label="Print or download as PDF"
             >
               {isPrinting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -886,10 +877,10 @@ export default function ResumeEditor({
                   ref={resumeRef}
                 >
                   <ResumePreview
-                              markdown={markdown}
-                              styles={styles}
-                              customCss={css}
-                            />
+                    markdown={markdown}
+                    styles={styles}
+                    customCss={css}
+                  />
                 </div>
               </div>
 
@@ -1018,10 +1009,10 @@ export default function ResumeEditor({
                 ref={resumeRef}
               >
                 <ResumePreview
-                            markdown={markdown}
-                            styles={styles}
-                            customCss={css}
-                          />
+                  markdown={markdown}
+                  styles={styles}
+                  customCss={css}
+                />
               </div>
             </div>
 

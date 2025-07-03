@@ -1,14 +1,22 @@
+import { useScopedResumeStyles } from "@/hooks/useScopedResumeStyles";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { marked } from "marked";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+// Add custom properties to HTMLDivElement type
+declare global {
+  interface HTMLDivElement {
+    getContentForPrint?: () => string;
+    getScopedSelector?: (selector: string) => string;
+    customProperties?: Record<string, string>;
+  }
+}
+
 interface ResumePreviewProps {
   markdown: string;
   styles: ResumeStyles;
-  customCss?: string; // Add this to accept custom CSS
+  customCss?: string;
 }
-// A4 paper size in pixels at 96 DPI
-const A4_SIZE = { width: 794, height: 1123 };
 
 export default function ResumePreview({
   markdown,
@@ -17,8 +25,41 @@ export default function ResumePreview({
 }: ResumePreviewProps) {
   const [renderedHtml, setRenderedHtml] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [scale, setScale] = useState(0.8); // Default scale for preview
+  const [scale, setScale] = useState(0.8);
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const styleElementRef = useRef<HTMLStyleElement | null>(null);
+
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+      // Reset scale on mobile
+      if (newIsMobile) {
+        setScale(1);
+      } else if (scale === 1) {
+        setScale(0.8);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, [scale]);
+
+  // Generate scoped styles using our custom hook
+  const {
+    scopeClass,
+    scopedCSS,
+    customProperties,
+    getScopedSelector,
+    getContentForPrint,
+  } = useScopedResumeStyles({
+    styles,
+    customCss,
+    isPreview: true,
+  });
 
   // Load the selected font
   const loadFont = useCallback(async (fontFamily: string) => {
@@ -48,121 +89,40 @@ export default function ResumePreview({
   }, []);
 
   // Render markdown to HTML
-  const renderMarkdown = useCallback((content: string) => {
+  const renderMarkdown = useCallback(async (content: string) => {
     if (!content.trim()) return "";
 
     return marked(content, {
       gfm: true,
       breaks: true,
+      async: false,
     });
   }, []);
 
-  // Generate scoped CSS that will be injected into the HTML
-  const generateScopedCSS = useCallback(() => {
-    const fontFamily = styles.fontFamily.replace(/\+/g, " ");
+  // Inject scoped CSS into document head
+  useEffect(() => {
+    const styleId = `resume-scoped-styles-${scopeClass}`;
 
-    return `
-      <style>
-        /* Custom CSS - Applied first as a base */
-        ${customCss || ""}
+    // Remove existing style element
+    if (styleElementRef.current) {
+      styleElementRef.current.remove();
+    }
 
-        /* Reset and base styles for the resume content */
-        * {
-          box-sizing: border-box;
-        }
+    // Create and inject new style element
+    const styleElement = document.createElement("style");
+    styleElement.id = styleId;
+    styleElement.textContent = scopedCSS;
+    document.head.appendChild(styleElement);
+    styleElementRef.current = styleElement;
 
-        body {
-          margin: 0;
-          padding: 0;
-          font-family: "${fontFamily}", -apple-system, BlinkMacSystemFont, sans-serif;
-          font-size: ${styles.fontSize}px;
-          line-height: ${styles.lineHeight};
-          color: #333;
-          background: white;
-        }
-
-        /* Typography styles */
-        h1, h2, h3, h4, h5, h6 {
-          margin: 0.5em 0;
-          font-weight: 600;
-        }
-
-        p {
-          margin: 0.5em 0;
-        }
-
-        ul, ol {
-          margin: 0.5em 0;
-          padding-left: 1.5em;
-        }
-
-        li {
-          margin: 0.25em 0;
-        }
-
-        a {
-          color: #0066cc;
-          text-decoration: none;
-        }
-
-        a:hover {
-          text-decoration: underline;
-        }
-
-        strong, b {
-          font-weight: 600;
-        }
-
-        em, i {
-          font-style: italic;
-        }
-
-        code {
-          background: #f5f5f5;
-          padding: 0.1em 0.3em;
-          border-radius: 3px;
-          font-family: monospace;
-        }
-
-        pre {
-          background: #f5f5f5;
-          padding: 1em;
-          border-radius: 5px;
-          overflow-x: auto;
-        }
-
-        blockquote {
-          border-left: 4px solid #ddd;
-          margin: 1em 0;
-          padding-left: 1em;
-          color: #666;
-        }
-
-        hr {
-          border: none;
-          border-top: 1px solid #ddd;
-          margin: 1.5em 0;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 1em 0;
-        }
-
-        th, td {
-          padding: 0.5em;
-          text-align: left;
-          border-bottom: 1px solid #ddd;
-        }
-
-        th {
-          font-weight: 600;
-          background: #f9f9f9;
-        }
-      </style>
-    `;
-  }, [styles, customCss]);
+    // Cleanup function
+    return () => {
+      if (styleElementRef.current) {
+        styleElementRef.current.remove();
+        styleElementRef.current = null;
+      }
+    };
+  }, [scopedCSS, scopeClass]);
 
   // Render effect
   useEffect(() => {
@@ -174,15 +134,10 @@ export default function ResumePreview({
         await loadFont(styles.fontFamily);
 
         // Render markdown
-        const markdownHtml = await renderMarkdown(markdown);
+        const html = await renderMarkdown(markdown);
+        setRenderedHtml(html);
 
-        // Combine the scoped CSS with the rendered markdown
-        const scopedCSS = generateScopedCSS();
-        const completeHtml = scopedCSS + markdownHtml;
-
-        setRenderedHtml(completeHtml);
-
-        // Wait a bit for fonts to be ready
+        // Wait for fonts to be ready
         if (document.fonts) {
           await document.fonts.ready;
         }
@@ -194,83 +149,104 @@ export default function ResumePreview({
     };
 
     renderResume();
-  }, [
-    markdown,
-    styles.fontFamily,
-    loadFont,
-    renderMarkdown,
-    generateScopedCSS,
-  ]);
+  }, [markdown, styles.fontFamily, loadFont, renderMarkdown]);
 
-  // Remove the global CSS injection effect since we're now using scoped CSS
-  // useEffect(() => {
-  //   const styleId = "resume-preview-styles";
-  //   const dynamicCSS = generateDynamicCSS();
-  //   // ... removed
-  // }, [generateDynamicCSS]);
-
-  // Zoom controls
+  // Zoom controls (hidden on mobile)
   const zoomIn = () => setScale((prev) => Math.min(prev * 1.1, 1.5));
   const zoomOut = () => setScale((prev) => Math.max(prev / 1.1, 0.3));
-  const resetZoom = () => setScale(0.8);
+  const resetZoom = () => setScale(isMobile ? 1 : 0.8);
+
+  // Get content for printing
+  const getResumeContentForPrint = useCallback(() => {
+    return getContentForPrint(renderedHtml);
+  }, [getContentForPrint, renderedHtml]);
+
+  // Expose print function to parent components
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.getContentForPrint = getResumeContentForPrint;
+      containerRef.current.getScopedSelector = getScopedSelector;
+      containerRef.current.customProperties = customProperties;
+    }
+  }, [getResumeContentForPrint, getScopedSelector, customProperties]);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Controls */}
-      <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
-        <button
-          onClick={zoomIn}
-          className="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200"
-        >
-          Zoom In
-        </button>
-        <button
-          onClick={zoomOut}
-          className="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200"
-        >
-          Zoom Out
-        </button>
-        <button
-          onClick={resetZoom}
-          className="px-2 py-1 bg-gray-100 rounded hover:bg-gray-200"
-        >
-          Reset
-        </button>
-        <div className="ml-2 text-sm text-gray-600">
-          {Math.round(scale * 100)}%
-        </div>
+    <div className="flex flex-col h-full" ref={containerRef}>
+      {/* Controls - responsive visibility */}
+      <div
+        className={`flex items-center gap-2 p-2 border-b bg-white print:hidden ${isMobile ? "justify-center" : ""}`}
+      >
+        {!isMobile && (
+          <>
+            <button
+              onClick={zoomIn}
+              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              aria-label="Zoom in"
+            >
+              Zoom In
+            </button>
+            <button
+              onClick={zoomOut}
+              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              aria-label="Zoom out"
+            >
+              Zoom Out
+            </button>
+            <button
+              onClick={resetZoom}
+              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+              aria-label="Reset zoom"
+            >
+              Reset
+            </button>
+            <div className="ml-2 text-sm text-gray-600" aria-live="polite">
+              {Math.round(scale * 100)}%
+            </div>
+          </>
+        )}
+        {isMobile && <div className="text-sm text-gray-600">Mobile View</div>}
       </div>
 
-      {/* Preview */}
+      {/* Preview Container */}
       <div
-        ref={containerRef}
-        className="flex-1 overflow-auto bg-gray-100 p-4 flex justify-center"
+        className={`flex-1 overflow-auto print:overflow-visible ${
+          isMobile
+            ? "bg-white"
+            : "bg-gray-100 p-4 flex justify-center items-start"
+        }`}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
-            <div>Loading preview...</div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-600">Loading preview...</span>
+            </div>
           </div>
         ) : (
           <div
+            className={`${isMobile ? "w-full" : "flex-shrink-0"}`}
             style={{
-              transform: `scale(${scale})`,
+              transform: isMobile ? "none" : `scale(${scale})`,
               transformOrigin: "top center",
-              transition: "transform 0.2s ease-out",
+              transition: isMobile ? "none" : "transform 0.2s ease-out",
             }}
           >
+            {/* Resume Content with Scoped Styles */}
             <div
-              className="resume-page"
-              style={{
-                width: `${A4_SIZE.width}px`,
-                minHeight: `${A4_SIZE.height}px`,
-                margin: "0 auto",
-                background: "white",
-                boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-                padding: `${styles.marginV}px ${styles.marginH}px`,
-                boxSizing: "border-box",
-                position: "relative",
-              }}
+              id="resume-page"
+              className={scopeClass}
               dangerouslySetInnerHTML={{ __html: renderedHtml }}
+              role="document"
+              aria-label="Resume preview"
+              style={{
+                // Apply CSS custom properties directly for immediate effect
+                ...Object.fromEntries(
+                  Object.entries(customProperties).map(([key, value]) => [
+                    key,
+                    value,
+                  ]),
+                ),
+              }}
             />
           </div>
         )}
