@@ -17,7 +17,7 @@ const nextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   output: "standalone",
   reactStrictMode: true,
-  serverExternalPackages: ["pg", "drizzle-orm"],
+  serverExternalPackages: ["pg", "drizzle-orm", "path", "fs"],
   eslint: {
     ignoreDuringBuilds: false,
   },

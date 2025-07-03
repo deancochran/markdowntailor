@@ -1,4 +1,5 @@
 "use client";
+import ResumePreview from "@/components/ResumePreview";
 import { Button } from "@/components/ui/button";
 import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
@@ -7,11 +8,12 @@ import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useUser } from "@/hooks/use-user";
 import { useSaveResume } from "@/hooks/useSaveResume";
 import {
-    createResumeFromVersion,
-    deleteResume,
-    saveResume,
+  createResumeFromVersion,
+  deleteResume,
+  saveResume,
 } from "@/lib/actions/resume";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
+import { ResumeStyles, defaultStyles } from "@/lib/utils/styles";
 import { useChat } from "@ai-sdk/react";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { Attachment, Message } from "ai";
@@ -19,13 +21,14 @@ import { cx } from "class-variance-authority";
 import Decimal from "decimal.js";
 import { InferSelectModel } from "drizzle-orm";
 import {
-    CheckCircle,
-    Clock,
-    Copy,
-    History,
-    Loader2,
-    Save,
-    Trash2,
+  CheckCircle,
+  Clock,
+  Copy,
+  Download,
+  History,
+  Loader2,
+  Save,
+  Trash2,
 } from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
@@ -98,6 +101,7 @@ export default function ResumeEditor({
   }, [user]);
 
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   // Replace page estimation with actual page count from PDF
   const [_actualPages, setActualPages] = useState(0);
@@ -113,6 +117,8 @@ export default function ResumeEditor({
   const updatedAt = watch("updatedAt");
   const [modifiedMarkdown, modifyMarkdown] = useState(markdown);
   const [modifiedCss, modifyCss] = useState(css);
+  const [styles, setStyles] = useState<ResumeStyles>(defaultStyles);
+  const resumeRef = useRef<HTMLDivElement>(null);
 
   // Add these hooks inside your component
   const { sanitizedValue: sanitizedTitle } = useSanitizedInput(
@@ -246,6 +252,73 @@ export default function ResumeEditor({
         redirect("/resumes");
       }
     }
+  };
+  const handlePrint = () => {
+    setIsPrinting(true);
+    const resumeElement = resumeRef.current;
+    if (!resumeElement) {
+      setIsPrinting(false);
+      return;
+    }
+
+    // Find the actual resume content within the ResumePreview component
+    const resumePageElement = resumeElement.querySelector('.resume-page');
+    if (!resumePageElement) {
+      toast.error("Could not find resume content to print");
+      setIsPrinting(false);
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups for this website to print your resume");
+      setIsPrinting(false);
+      return;
+    }
+
+    // Get the resume content with embedded styles
+    const resumeContent = resumePageElement.innerHTML;
+
+    // Create a clean print document
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title || 'My Resume'}</title>
+          <meta charset="utf-8">
+          <style>
+            @media print {
+              body {
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              * {
+                box-shadow: none !important;
+              }
+            }
+            @page {
+              margin: 0;
+              size: A4;
+            }
+          </style>
+        </head>
+        <body>
+          ${resumeContent}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+
+    // Print after a slight delay to ensure styles are loaded
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+      setIsPrinting(false);
+    }, 500);
   };
 
   const handleDuplicate = async () => {
@@ -632,6 +705,20 @@ export default function ResumeEditor({
               )}
               <span className="hidden sm:inline">Save</span>
             </Button>
+            {/* Print Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              disabled={isPrinting}
+            >
+              {isPrinting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Download</span>
+            </Button>
             {/* Duplicate button */}
             <Button
               variant="outline"
@@ -794,15 +881,15 @@ export default function ResumeEditor({
                   previewTab === "preview" ? "block" : "hidden",
                 )}
               >
-                <div className="relative flex-1 h-full overflow-hidden">
-                  <ServerPDFPreview
-                    resumeId={resume.id}
-                    previewTab={previewTab}
-                    onPageCountChange={handlePageCountChange}
-                    hasUnsavedChanges={isDirty}
-                    isSaving={isSaving}
-                    updatedAt={updatedAt}
-                  />
+                <div
+                  className="relative flex-1 h-full overflow-hidden"
+                  ref={resumeRef}
+                >
+                  <ResumePreview
+                              markdown={markdown}
+                              styles={styles}
+                              customCss={css}
+                            />
                 </div>
               </div>
 
@@ -926,15 +1013,15 @@ export default function ResumeEditor({
                 mobileTab === "preview" ? "block" : "hidden",
               )}
             >
-              <div className="relative flex-1 h-full overflow-hidden">
-                <ServerPDFPreview
-                  resumeId={resume.id}
-                  previewTab={previewTab}
-                  onPageCountChange={handlePageCountChange}
-                  hasUnsavedChanges={isDirty}
-                  isSaving={isSaving}
-                  updatedAt={updatedAt}
-                />
+              <div
+                className="relative flex-1 h-full overflow-hidden"
+                ref={resumeRef}
+              >
+                <ResumePreview
+                            markdown={markdown}
+                            styles={styles}
+                            customCss={css}
+                          />
               </div>
             </div>
 
