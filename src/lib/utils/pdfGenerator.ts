@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import { marked } from "marked";
 import { Browser, chromium } from "playwright-core";
-import { generatePdfHTML } from "./styles";
 
 let browserInstance: Browser | null = null;
 

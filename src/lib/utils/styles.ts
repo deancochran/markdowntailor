@@ -54,55 +54,41 @@ export const getDefaultCustomProperties = (
     "--resume-max-width": "794px",
     "--resume-min-height": "1123px",
 
-    // Default colors (can be overridden by custom CSS)
-    "--resume-text-color": "#333333",
-    "--resume-link-color": "#0066cc",
-    "--resume-border-color": "#dddddd",
-    "--resume-code-bg": "#f5f5f5",
-    "--resume-shadow": "0 0 10px rgba(0, 0, 0, 0.1)",
+    // Set box-sizing for consistent measurements
+    "--resume-box-sizing": "border-box",
   };
 };
 
 /**
  * Default CSS for resumes
  * This serves as the base styling for all resumes
+ *
+ * Only contains minimal styling to establish the page layout.
+ * All other styles should be specified by the user via custom CSS.
  */
 export const DEFAULT_RESUME_CSS = `
   body {
     margin: 0;
-    padding: 20px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #333;
+    padding: 0;
     background: white;
+    box-sizing: border-box;
   }
 
-  h1 {
-    font-size: 24px;
-    margin-bottom: 16px;
+  * {
+    box-sizing: inherit;
   }
 
-  h2 {
-    font-size: 18px;
-    margin-top: 20px;
-    margin-bottom: 12px;
+  /* Basic print settings */
+  @page {
+    size: A4;
+    margin: 0;
   }
 
-  h3 {
-    font-size: 16px;
-    margin-top: 16px;
-    margin-bottom: 8px;
-  }
-
-  h4 {
-    font-size: 14px;
-    margin-top: 14px;
-    margin-bottom: 6px;
-  }
-
-  ul {
-    padding-left: 20px;
+  @media print {
+    html, body {
+      width: 210mm;
+      height: 297mm;
+    }
   }
 `;
 
@@ -110,4 +96,7 @@ export const DEFAULT_RESUME_CSS = `
  * Template for scoped CSS used in the preview component
  * This is applied to resume content with a unique scope class
  */
-export const SCOPED_RESUME_CSS_TEMPLATE = ``
+export const SCOPED_RESUME_CSS_TEMPLATE = `
+  /* This template can be used for scoped CSS in the preview component */
+  /* It intentionally contains no default styling */
+`;

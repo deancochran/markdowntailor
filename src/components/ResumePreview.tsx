@@ -233,7 +233,6 @@ export default function ResumePreview({
           >
             {/* Resume Content with Scoped Styles */}
             <div
-              id="resume-page"
               className={scopeClass}
               dangerouslySetInnerHTML={{ __html: renderedHtml }}
               role="document"
@@ -246,6 +245,9 @@ export default function ResumePreview({
                     value,
                   ]),
                 ),
+                boxSizing: "border-box",
+                width: "100%",
+                margin: "0 auto",
               }}
             />
           </div>

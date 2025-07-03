@@ -9,7 +9,6 @@
  * - DEFAULT_RESUME_MARKDOWN
  */
 
-import { DEFAULT_RESUME_CSS, DEFAULT_RESUME_MARKDOWN } from "./styles";
 
 // Re-export for backward compatibility
 export { DEFAULT_RESUME_CSS, DEFAULT_RESUME_MARKDOWN };

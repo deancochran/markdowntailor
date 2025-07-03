@@ -3,7 +3,7 @@ import ResumePreview from "@/components/ResumePreview";
 import { Button } from "@/components/ui/button";
 import { resume as Resume } from "@/db/schema";
 import { toast } from "sonner";
-
+import StylesControls from "@/components/StylesControls";
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useUser } from "@/hooks/use-user";
 import { useSaveResume } from "@/hooks/useSaveResume";
@@ -825,22 +825,25 @@ export default function ResumeEditor({
 
               <div
                 className={cx(
-                  "absolute inset-0",
+                  "absolute inset-0 flex flex-col",
                   editorsTab === "css" ? "block" : "hidden",
                 )}
               >
-                <DiffEditor
-                  key="css-editor"
-                  language="css"
-                  original={css}
-                  modified={modifiedCss}
-                  keepCurrentOriginalModel={true}
-                  keepCurrentModifiedModel={true}
-                  onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
-                  options={diffEditorOptions}
-                  theme={theme === "dark" ? "vs-dark" : "light"}
-                  height="100%"
-                />
+                <StylesControls styles={styles} onStylesChange={setStyles} />
+                <div className="flex-1">
+                  <DiffEditor
+                    key="css-editor"
+                    language="css"
+                    original={css}
+                    modified={modifiedCss}
+                    keepCurrentOriginalModel={true}
+                    keepCurrentModifiedModel={true}
+                    onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
+                    options={diffEditorOptions}
+                    theme={theme === "dark" ? "vs-dark" : "light"}
+                    height="100%"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -877,9 +880,9 @@ export default function ResumeEditor({
                   ref={resumeRef}
                 >
                   <ResumePreview
-                    markdown={markdown}
+                    markdown={sanitizedMarkdown}
                     styles={styles}
-                    customCss={css}
+                    customCss={sanitizedCSS}
                   />
                 </div>
               </div>
@@ -979,22 +982,25 @@ export default function ResumeEditor({
             {/* Mobile CSS Editor */}
             <div
               className={cx(
-                "absolute inset-0",
+                "absolute inset-0 flex flex-col",
                 mobileTab === "css" ? "block" : "hidden",
               )}
             >
-              <DiffEditor
-                key="mobile-css-editor"
-                language="css"
-                original={css}
-                modified={modifiedCss}
-                keepCurrentOriginalModel={true}
-                keepCurrentModifiedModel={true}
-                onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
-                options={diffEditorOptions}
-                theme={theme === "dark" ? "vs-dark" : "light"}
-                height="100%"
-              />
+              <StylesControls styles={styles} onStylesChange={setStyles} />
+              <div className="flex-1">
+                <DiffEditor
+                  key="mobile-css-editor"
+                  language="css"
+                  original={css}
+                  modified={modifiedCss}
+                  keepCurrentOriginalModel={true}
+                  keepCurrentModifiedModel={true}
+                  onMount={createEditorMount(modifiedCssEditorRef, modifyCss)}
+                  options={diffEditorOptions}
+                  theme={theme === "dark" ? "vs-dark" : "light"}
+                  height="100%"
+                />
+              </div>
             </div>
 
             {/* Mobile Preview */}
@@ -1009,9 +1015,9 @@ export default function ResumeEditor({
                 ref={resumeRef}
               >
                 <ResumePreview
-                  markdown={markdown}
+                  markdown={sanitizedMarkdown}
                   styles={styles}
-                  customCss={css}
+                  customCss={sanitizedCSS}
                 />
               </div>
             </div>
