@@ -3,17 +3,15 @@ import { useCallback, useEffect, useState } from "react";
 
 // A4 dimensions in pixels (more accurate for print)
 // A4 = 210mm x 297mm = 8.27" x 11.69" = 794px x 1123px at 96 DPI
-// But for print accuracy, we use slightly adjusted dimensions
-const A4_DIMENSIONS = {
+const PRINT_DIMENSIONS = {
   width: 794,
   height: 1123,
 } as const;
 
-// Print-specific dimensions that better match actual print output
-const PRINT_DIMENSIONS = {
-  width: 794,
-  height: 1056, // Reduced height to account for print margins and browser behavior
-} as const;
+const PRINT_BUFFER = 20; // Extra buffer to prevent content overflow
+const CSS_READY_MAX_ATTEMPTS = 10;
+const CSS_READY_DELAY = 100;
+const DOM_READY_DELAY = 50;
 
 interface PageInfo {
   pageNumber: number;
@@ -58,7 +56,6 @@ export const useSmartPages = ({
   // Calculate content area (page minus margins and buffer)
   const getContentArea = useCallback(() => {
     const pageDimensions = getPageDimensions();
-    const PRINT_BUFFER = 20; // Extra buffer to prevent content overflow
     return {
       width: pageDimensions.width - styles.marginH * 2,
       height: pageDimensions.height - styles.marginV * 2 - PRINT_BUFFER,
@@ -70,19 +67,10 @@ export const useSmartPages = ({
     (html: string) => {
       const element = document.createElement("div");
       element.innerHTML = html;
-      element.style.position = "absolute";
-      element.style.left = "-9999px";
-      element.style.top = "-9999px";
-      element.style.visibility = "hidden";
-      element.style.width = `${getContentArea().width}px`;
-      element.style.boxSizing = "border-box";
 
-      // Use the same scoped CSS class as the preview for accurate measurement
-      if (scopeClass) {
-        element.className = scopeClass;
-      }
-
+      applyMeasurementStyles(element, getContentArea().width, scopeClass);
       document.body.appendChild(element);
+
       return element;
     },
     [getContentArea, scopeClass],
@@ -97,14 +85,7 @@ export const useSmartPages = ({
   const splitIntoPages = useCallback(
     (html: string) => {
       if (!html.trim()) {
-        return [
-          {
-            pageNumber: 1,
-            content: "",
-            contentHeight: 0,
-            availableHeight: getContentArea().height,
-          },
-        ];
+        return createEmptyPage(getContentArea().height);
       }
 
       const measurementElement = createMeasurementElement(html);
@@ -114,75 +95,14 @@ export const useSmartPages = ({
       // If content fits in one page, return it as is
       if (totalHeight <= availableHeight) {
         document.body.removeChild(measurementElement);
-        return [
-          {
-            pageNumber: 1,
-            content: html,
-            contentHeight: totalHeight,
-            availableHeight: availableHeight,
-          },
-        ];
+        return createSinglePage(html, totalHeight, availableHeight);
       }
 
-      // Content doesn't fit - estimate number of pages needed
-      const estimatedPages = Math.ceil(totalHeight / availableHeight);
-      const pages: PageInfo[] = [];
-      const children = Array.from(measurementElement.children) as HTMLElement[];
-
-      if (children.length === 0) {
-        // No child elements, treat as single page
-        document.body.removeChild(measurementElement);
-        return [
-          {
-            pageNumber: 1,
-            content: html,
-            contentHeight: totalHeight,
-            availableHeight: availableHeight,
-          },
-        ];
-      }
-
-      let currentPageContent: HTMLElement[] = [];
-      let currentPageHeight = 0;
-      let pageNumber = 1;
-
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-        const childHeight = getElementHeight(child);
-
-        // If adding this element would exceed page height, start new page
-        if (
-          currentPageHeight + childHeight > availableHeight &&
-          currentPageContent.length > 0
-        ) {
-          pages.push({
-            pageNumber,
-            content: currentPageContent.map((el) => el.outerHTML).join(""),
-            contentHeight: currentPageHeight,
-            availableHeight: availableHeight,
-          });
-
-          currentPageContent = [child];
-          currentPageHeight = childHeight;
-          pageNumber++;
-        } else {
-          currentPageContent.push(child);
-          currentPageHeight += childHeight;
-        }
-      }
-
-      // Add the last page if it has content
-      if (currentPageContent.length > 0) {
-        pages.push({
-          pageNumber,
-          content: currentPageContent.map((el) => el.outerHTML).join(""),
-          contentHeight: currentPageHeight,
-          availableHeight: availableHeight,
-        });
-      }
-
+      // Content doesn't fit - split into multiple pages
+      const result = splitContentIntoPages(measurementElement, availableHeight);
       document.body.removeChild(measurementElement);
-      return pages;
+
+      return result;
     },
     [createMeasurementElement, getElementHeight, getContentArea],
   );
@@ -192,58 +112,15 @@ export const useSmartPages = ({
     setIsCalculating(true);
 
     try {
-      // Wait for fonts to load
-      if (document.fonts) {
-        await document.fonts.ready;
-      }
-
-      // Wait for scoped CSS to be available if scopeClass is provided
-      if (scopeClass) {
-        let cssReady = false;
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (!cssReady && attempts < maxAttempts) {
-          // Check if scoped CSS is available by testing if the class exists
-          const testElement = document.createElement("div");
-          testElement.className = scopeClass;
-          testElement.style.position = "absolute";
-          testElement.style.left = "-9999px";
-          testElement.style.top = "-9999px";
-          testElement.style.visibility = "hidden";
-          document.body.appendChild(testElement);
-
-          const computedStyle = window.getComputedStyle(testElement);
-          const hasCustomProps =
-            computedStyle.getPropertyValue("--resume-font-family") !== "";
-
-          document.body.removeChild(testElement);
-
-          if (hasCustomProps) {
-            cssReady = true;
-          } else {
-            attempts++;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
-        }
-      }
-
-      // Small delay to ensure DOM is ready
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await waitForFontsReady();
+      await waitForScopedCSSReady(scopeClass);
+      await waitForDOMReady();
 
       const newPages = splitIntoPages(content);
       setPages(newPages);
     } catch (error) {
       console.error("Error calculating pages:", error);
-      // Fallback to single page
-      setPages([
-        {
-          pageNumber: 1,
-          content: content,
-          contentHeight: 0,
-          availableHeight: getContentArea().height,
-        },
-      ]);
+      setPages(createFallbackPage(content, getContentArea().height));
     } finally {
       setIsCalculating(false);
     }
@@ -263,3 +140,193 @@ export const useSmartPages = ({
     getContentArea,
   };
 };
+
+// Helper functions for better organization and readability
+
+function applyMeasurementStyles(
+  element: HTMLElement,
+  width: number,
+  scopeClass?: string,
+): void {
+  element.style.position = "absolute";
+  element.style.left = "-9999px";
+  element.style.top = "-9999px";
+  element.style.visibility = "hidden";
+  element.style.width = `${width}px`;
+  element.style.boxSizing = "border-box";
+
+  if (scopeClass) {
+    element.className = scopeClass;
+  }
+}
+
+function createEmptyPage(availableHeight: number): PageInfo[] {
+  return [
+    {
+      pageNumber: 1,
+      content: "",
+      contentHeight: 0,
+      availableHeight: availableHeight,
+    },
+  ];
+}
+
+function createSinglePage(
+  html: string,
+  totalHeight: number,
+  availableHeight: number,
+): PageInfo[] {
+  return [
+    {
+      pageNumber: 1,
+      content: html,
+      contentHeight: totalHeight,
+      availableHeight: availableHeight,
+    },
+  ];
+}
+
+function createFallbackPage(
+  content: string,
+  availableHeight: number,
+): PageInfo[] {
+  return [
+    {
+      pageNumber: 1,
+      content: content,
+      contentHeight: 0,
+      availableHeight: availableHeight,
+    },
+  ];
+}
+
+function splitContentIntoPages(
+  measurementElement: HTMLElement,
+  availableHeight: number,
+): PageInfo[] {
+  const children = Array.from(measurementElement.children) as HTMLElement[];
+
+  if (children.length === 0) {
+    return createSinglePage(
+      measurementElement.innerHTML,
+      measurementElement.offsetHeight,
+      availableHeight,
+    );
+  }
+
+  const pages: PageInfo[] = [];
+  let currentPageContent: HTMLElement[] = [];
+  let currentPageHeight = 0;
+  let pageNumber = 1;
+
+  for (const child of children) {
+    const childHeight = child.offsetHeight;
+
+    // If adding this element would exceed page height, start new page
+    if (
+      shouldStartNewPage(
+        currentPageHeight,
+        childHeight,
+        availableHeight,
+        currentPageContent,
+      )
+    ) {
+      pages.push(
+        createPageInfo(
+          pageNumber,
+          currentPageContent,
+          currentPageHeight,
+          availableHeight,
+        ),
+      );
+
+      currentPageContent = [child];
+      currentPageHeight = childHeight;
+      pageNumber++;
+    } else {
+      currentPageContent.push(child);
+      currentPageHeight += childHeight;
+    }
+  }
+
+  // Add the last page if it has content
+  if (currentPageContent.length > 0) {
+    pages.push(
+      createPageInfo(
+        pageNumber,
+        currentPageContent,
+        currentPageHeight,
+        availableHeight,
+      ),
+    );
+  }
+
+  return pages;
+}
+
+function shouldStartNewPage(
+  currentPageHeight: number,
+  childHeight: number,
+  availableHeight: number,
+  currentPageContent: HTMLElement[],
+): boolean {
+  return (
+    currentPageHeight + childHeight > availableHeight &&
+    currentPageContent.length > 0
+  );
+}
+
+function createPageInfo(
+  pageNumber: number,
+  content: HTMLElement[],
+  contentHeight: number,
+  availableHeight: number,
+): PageInfo {
+  return {
+    pageNumber,
+    content: content.map((el) => el.outerHTML).join(""),
+    contentHeight,
+    availableHeight,
+  };
+}
+
+async function waitForFontsReady(): Promise<void> {
+  if (document.fonts) {
+    await document.fonts.ready;
+  }
+}
+
+async function waitForScopedCSSReady(scopeClass?: string): Promise<void> {
+  if (!scopeClass) return;
+
+  let cssReady = false;
+  let attempts = 0;
+
+  while (!cssReady && attempts < CSS_READY_MAX_ATTEMPTS) {
+    cssReady = await checkScopedCSSReady(scopeClass);
+
+    if (!cssReady) {
+      attempts++;
+      await new Promise((resolve) => setTimeout(resolve, CSS_READY_DELAY));
+    }
+  }
+}
+
+async function checkScopedCSSReady(scopeClass: string): Promise<boolean> {
+  const testElement = document.createElement("div");
+  testElement.className = scopeClass;
+
+  applyMeasurementStyles(testElement, 100);
+  document.body.appendChild(testElement);
+
+  const computedStyle = window.getComputedStyle(testElement);
+  const hasCustomProps =
+    computedStyle.getPropertyValue("--resume-font-family") !== "";
+
+  document.body.removeChild(testElement);
+  return hasCustomProps;
+}
+
+async function waitForDOMReady(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, DOM_READY_DELAY));
+}

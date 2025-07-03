@@ -5,8 +5,6 @@ import {
 } from "@/lib/utils/styles";
 import { useCallback, useMemo, useRef } from "react";
 
-// No local constants needed - imported from styles.ts
-
 interface ScopedStylesConfig {
   styles: ResumeStyles;
   customCss?: string;
@@ -39,34 +37,68 @@ export const useScopedResumeStyles = ({
   const scopedCSS = useMemo(() => {
     const scopeSelector = `.${scopeClass}`;
 
-    // Helper function to scope CSS selectors
-    const scopeCSS = (css: string): string => {
-      return css.replace(/([^{}]+){/g, (match, selector) => {
-        // Don't scope @media, @keyframes, etc.
-        if (selector.trim().startsWith("@")) {
-          return match;
-        }
-        // Scope regular selectors
-        const scopedSelector = selector
-          .split(",")
-          .map((s: string) => `${scopeSelector} ${s.trim()}`)
-          .join(", ");
-        return `${scopedSelector}{`;
+    const customPropsCSS = generateCustomPropertiesCSS(customProperties);
+    const baseScopedCSS = generateBaseScopedCSS(scopeSelector);
+    const printScopedCSS = generatePrintScopedCSS(scopeSelector);
+    const userCustomCSS = scopeCustomCSS(customCss, scopeSelector);
+
+    return [customPropsCSS, baseScopedCSS, printScopedCSS, userCustomCSS].join(
+      "\n",
+    );
+  }, [scopeClass, customCss, customProperties]);
+
+  // Helper function to generate scoped selectors
+  const getScopedSelector = useCallback(
+    (selector: string): string => {
+      return `.${scopeClass} ${selector}`;
+    },
+    [scopeClass],
+  );
+
+  // Generate complete HTML for printing using the same scoped CSS as preview
+  const getContentForPrint = useCallback(
+    (content: string): string => {
+      const fontUrl = getFontUrl(styles.fontFamily);
+      const customPropsCSS = generateCustomPropertiesCSS(customProperties);
+
+      return generatePrintHTML({
+        fontUrl,
+        customPropsCSS,
+        scopedCSS,
+        scopeClass,
+        content,
       });
-    };
+    },
+    [styles, scopedCSS, scopeClass, customProperties],
+  );
 
-    // Generate CSS custom properties definition
-    const customPropsCSS = Object.entries(customProperties)
-      .map(([key, value]) => `${key}: ${value};`)
-      .join("\n        ");
+  return {
+    scopeClass,
+    scopedCSS,
+    customProperties,
+    getScopedSelector,
+    getContentForPrint,
+  };
+};
 
-    // Apply custom CSS directly with scoping
-    return `
+// Helper functions for better organization and readability
+
+function generateCustomPropertiesCSS(
+  customProperties: Record<string, string>,
+): string {
+  const customPropsCSS = Object.entries(customProperties)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join("\n        ");
+
+  return `
       /* Define CSS custom properties at root level */
       :root {
         ${customPropsCSS}
-      }
+      }`;
+}
 
+function generateBaseScopedCSS(scopeSelector: string): string {
+  return `
       /* Page container with white background and shadow */
       ${scopeSelector} {
         background-color: var(--resume-background-color);
@@ -77,8 +109,8 @@ export const useScopedResumeStyles = ({
         box-sizing: border-box;
       }
 
-      /* Default padding for single page content (when no print-page containers) */
-      ${scopeSelector}:not(:has(.print-page)) {
+      /* Default padding for main container */
+      ${scopeSelector} {
         padding: var(--resume-margin-v) var(--resume-margin-h);
       }
 
@@ -95,7 +127,6 @@ export const useScopedResumeStyles = ({
         break-before: page;
         height: 0;
         margin: 0;
-        padding: 0;
       }
 
       ${scopeSelector} .page-break:first-child {
@@ -135,14 +166,18 @@ export const useScopedResumeStyles = ({
       ${scopeSelector} table {
         page-break-inside: avoid;
         break-inside: avoid;
-      }
+      }`;
+}
 
+function generatePrintScopedCSS(scopeSelector: string): string {
+  return `
       /* Print styles */
       @media print {
         ${scopeSelector} {
           box-shadow: none;
           margin: 0;
-          padding: 0;
+          padding: var(--resume-margin-v) var(--resume-margin-h);
+          max-width: none;
         }
 
         ${scopeSelector} .print-page {
@@ -159,42 +194,57 @@ export const useScopedResumeStyles = ({
           break-before: page;
           height: 0;
           margin: 0;
-          padding: 0;
         }
 
         ${scopeSelector} .page-break:first-child {
           display: none;
         }
-      }
+      }`;
+}
 
+function scopeCustomCSS(customCss: string, scopeSelector: string): string {
+  if (!customCss) return "";
+
+  const scopedCustomCSS = customCss.replace(/([^{}]+){/g, (match, selector) => {
+    // Don't scope @media, @keyframes, etc.
+    if (selector.trim().startsWith("@")) {
+      return match;
+    }
+    // Scope regular selectors
+    const scopedSelector = selector
+      .split(",")
+      .map((s: string) => `${scopeSelector} ${s.trim()}`)
+      .join(", ");
+    return `${scopedSelector}{`;
+  });
+
+  return `
       /* User's custom CSS with scope applied */
-      ${scopeCSS(customCss || "")}
-    `;
-  }, [scopeClass, customCss, customProperties]);
+      ${scopedCustomCSS}`;
+}
 
-  // Helper function to generate scoped selectors
-  const getScopedSelector = useCallback(
-    (selector: string): string => {
-      return `.${scopeClass} ${selector}`;
-    },
-    [scopeClass],
-  );
+function getFontUrl(fontFamily?: string): string {
+  return fontFamily && !SYSTEM_FONTS.includes(fontFamily)
+    ? `https://fonts.googleapis.com/css2?family=${fontFamily}:wght@300;400;500;600;700&display=swap`
+    : "";
+}
 
-  // Generate complete HTML for printing using the same scoped CSS as preview
-  const getContentForPrint = useCallback(
-    (content: string): string => {
-      const fontUrl =
-        styles.fontFamily && !SYSTEM_FONTS.includes(styles.fontFamily)
-          ? `https://fonts.googleapis.com/css2?family=${styles.fontFamily}:wght@300;400;500;600;700&display=swap`
-          : "";
+interface PrintHTMLConfig {
+  fontUrl: string;
+  customPropsCSS: string;
+  scopedCSS: string;
+  scopeClass: string;
+  content: string;
+}
 
-      // Generate CSS custom properties definition
-      const customPropsCSS = Object.entries(customProperties)
-        .map(([key, value]) => `${key}: ${value};`)
-        .join("\n    ");
-
-      // Use the same scoped CSS structure as the preview
-      return `<!DOCTYPE html>
+function generatePrintHTML({
+  fontUrl,
+  customPropsCSS,
+  scopedCSS,
+  scopeClass,
+  content,
+}: PrintHTMLConfig): string {
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -211,7 +261,6 @@ export const useScopedResumeStyles = ({
     }
     body {
       margin: 0;
-      padding: 0;
       background-color: white;
     }
     /* Use the same scoped CSS as preview */
@@ -224,15 +273,4 @@ export const useScopedResumeStyles = ({
   </div>
 </body>
 </html>`;
-    },
-    [styles, scopedCSS, scopeClass, customProperties],
-  );
-
-  return {
-    scopeClass,
-    scopedCSS,
-    customProperties,
-    getScopedSelector,
-    getContentForPrint,
-  };
-};
+}
