@@ -151,8 +151,16 @@ export default function ResumePreview({
       return getContentForPrint(renderedHtml);
     }
 
-    // Combine all pages into a single HTML structure for printing
-    const combinedContent = pages.map((page) => page.content).join("");
+    // Combine pages with explicit page breaks for printing
+    const combinedContent = pages
+      .map((page, index) => {
+        const pageContent = `<div class="print-page">${page.content}</div>`;
+        return index === 0
+          ? pageContent
+          : `<div class="page-break"></div>${pageContent}`;
+      })
+      .join("");
+
     return getContentForPrint(combinedContent);
   }, [getContentForPrint, renderedHtml, pages]);
 

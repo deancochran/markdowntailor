@@ -74,8 +74,12 @@ export const useScopedResumeStyles = ({
         min-height: var(--resume-min-height);
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         margin: 0 auto;
-        padding: var(--resume-margin-v) var(--resume-margin-h);
         box-sizing: border-box;
+      }
+
+      /* Default padding for single page content (when no print-page containers) */
+      ${scopeSelector}:not(:has(.print-page)) {
+        padding: var(--resume-margin-v) var(--resume-margin-h);
       }
 
       /* Content styles within the page */
@@ -86,14 +90,26 @@ export const useScopedResumeStyles = ({
       }
 
       /* Page break styles */
-      ${scopeSelector}.page-break {
+      ${scopeSelector} .page-break {
         page-break-before: always;
         break-before: page;
+        height: 0;
+        margin: 0;
+        padding: 0;
       }
 
-      ${scopeSelector}.page-break:first-child {
+      ${scopeSelector} .page-break:first-child {
         page-break-before: avoid;
         break-before: avoid;
+      }
+
+      /* Print page container */
+      ${scopeSelector} .print-page {
+        min-height: var(--resume-min-height);
+        padding: var(--resume-margin-v) var(--resume-margin-h);
+        box-sizing: border-box;
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
 
       /* Avoid breaking inside these elements */
@@ -126,7 +142,28 @@ export const useScopedResumeStyles = ({
         ${scopeSelector} {
           box-shadow: none;
           margin: 0;
+          padding: 0;
+        }
+
+        ${scopeSelector} .print-page {
+          min-height: auto;
           padding: var(--resume-margin-v) var(--resume-margin-h);
+          margin: 0;
+          box-sizing: border-box;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+
+        ${scopeSelector} .page-break {
+          page-break-before: always;
+          break-before: page;
+          height: 0;
+          margin: 0;
+          padding: 0;
+        }
+
+        ${scopeSelector} .page-break:first-child {
+          display: none;
         }
       }
 
