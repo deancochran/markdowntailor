@@ -1,4 +1,5 @@
 import { useScopedResumeStyles } from "@/hooks/useScopedResumeStyles";
+import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { marked } from "marked";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -39,6 +40,12 @@ export default function ResumePreview({
   } = useScopedResumeStyles({
     styles,
     customCss,
+  });
+
+  // Use smart pages for page breaks
+  const { pages, totalPages, isCalculating, recalculatePages } = useSmartPages({
+    content: renderedHtml,
+    styles,
   });
 
   // Load the selected font
@@ -138,8 +145,14 @@ export default function ResumePreview({
 
   // Get content for printing
   const getResumeContentForPrint = useCallback(() => {
-    return getContentForPrint(renderedHtml);
-  }, [getContentForPrint, renderedHtml]);
+    if (pages.length === 0) {
+      return getContentForPrint(renderedHtml);
+    }
+
+    // Combine all pages into a single HTML structure for printing
+    const combinedContent = pages.map((page) => page.content).join("");
+    return getContentForPrint(combinedContent);
+  }, [getContentForPrint, renderedHtml, pages]);
 
   // Expose print function to parent components
   useEffect(() => {
@@ -149,6 +162,13 @@ export default function ResumePreview({
       containerRef.current.customProperties = customProperties;
     }
   }, [getResumeContentForPrint, getScopedSelector, customProperties]);
+
+  // Trigger page recalculation when content changes
+  useEffect(() => {
+    if (renderedHtml && !isLoading) {
+      recalculatePages();
+    }
+  }, [renderedHtml, isLoading, recalculatePages]);
 
   return (
     <div className="flex flex-col h-full" ref={containerRef}>
@@ -178,6 +198,9 @@ export default function ResumePreview({
         <div className="ml-2 text-sm text-gray-600" aria-live="polite">
           {Math.round(scale * 100)}%
         </div>
+        <div className="ml-4 text-sm text-gray-600" aria-live="polite">
+          {totalPages} {totalPages === 1 ? "page" : "pages"}
+        </div>
       </div>
 
       {/* Preview Container */}
@@ -187,40 +210,58 @@ export default function ResumePreview({
           backgroundColor: "#f1f5f9",
         }}
       >
-        {isLoading ? (
+        {isLoading || isCalculating ? (
           <div className="flex items-center justify-center h-40">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-gray-600">Loading preview...</span>
+              <span className="text-gray-600">
+                {isLoading ? "Loading preview..." : "Calculating pages..."}
+              </span>
             </div>
           </div>
         ) : (
           <div
-            className="flex-shrink-0"
+            className="flex flex-col gap-4"
             style={{
               transform: `scale(${scale})`,
               transformOrigin: "top center",
               transition: "transform 0.2s ease-out",
             }}
           >
-            {/* Resume Content with Scoped Styles */}
-            <div
-              className={scopeClass}
-              dangerouslySetInnerHTML={{ __html: renderedHtml }}
-              role="document"
-              aria-label="Resume preview"
-              style={{
-                // Apply CSS custom properties directly for immediate effect
-                ...Object.fromEntries(
-                  Object.entries(customProperties).map(([key, value]) => [
-                    key,
-                    value,
-                  ]),
-                ),
-                boxSizing: "border-box",
-                width: "100%",
-              }}
-            />
+            {/* Render each page */}
+            {pages.map((page, index) => (
+              <div
+                key={`page-${page.pageNumber}`}
+                className="relative"
+                style={{
+                  marginBottom: index === pages.length - 1 ? 0 : "20px",
+                }}
+              >
+                {/* Page number indicator */}
+                <div className="absolute -top-6 left-0 text-xs text-gray-500 print:hidden">
+                  Page {page.pageNumber} of {totalPages}
+                </div>
+
+                {/* Page content */}
+                <div
+                  className={scopeClass}
+                  dangerouslySetInnerHTML={{ __html: page.content }}
+                  role="document"
+                  aria-label={`Resume page ${page.pageNumber}`}
+                  style={{
+                    // Apply CSS custom properties directly for immediate effect
+                    ...Object.fromEntries(
+                      Object.entries(customProperties).map(([key, value]) => [
+                        key,
+                        value,
+                      ]),
+                    ),
+                    boxSizing: "border-box",
+                    width: "100%",
+                  }}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>

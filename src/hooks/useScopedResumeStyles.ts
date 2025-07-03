@@ -76,6 +76,51 @@ export const useScopedResumeStyles = ({
         line-height: var(--resume-line-height);
       }
 
+      /* Page break styles */
+      ${scopeSelector}.page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+
+      ${scopeSelector}.page-break:first-child {
+        page-break-before: avoid;
+        break-before: avoid;
+      }
+
+      /* Avoid breaking inside these elements */
+      ${scopeSelector} h1,
+      ${scopeSelector} h2,
+      ${scopeSelector} h3,
+      ${scopeSelector} h4,
+      ${scopeSelector} h5,
+      ${scopeSelector} h6 {
+        page-break-after: avoid;
+        break-after: avoid;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      ${scopeSelector} p,
+      ${scopeSelector} li,
+      ${scopeSelector} blockquote {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      ${scopeSelector} table {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      /* Print styles */
+      @media print {
+        ${scopeSelector} {
+          box-shadow: none;
+          margin: 0;
+          padding: var(--resume-margin-v) var(--resume-margin-h);
+        }
+      }
+
       /* User's custom CSS with scope applied */
       ${scopeCSS(customCss || "")}
     `;

@@ -138,6 +138,23 @@ export const PRINT_HTML_TEMPLATE = `<!DOCTYPE html>
       min-height: 1123px;
       background-color: white;
     }
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+    .page-break:first-child {
+      page-break-before: avoid;
+      break-before: avoid;
+    }
+    /* Avoid breaking inside these elements */
+    h1, h2, h3, h4, h5, h6 {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    p, li {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
     {{CUSTOM_CSS}}
   </style>
 </head>

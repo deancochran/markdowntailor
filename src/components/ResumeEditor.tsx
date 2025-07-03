@@ -1,9 +1,8 @@
 "use client";
 import ResumePreview from "@/components/ResumePreview";
+import StylesControls from "@/components/StylesControls";
 import { Button } from "@/components/ui/button";
 import { resume as Resume } from "@/db/schema";
-import { toast } from "sonner";
-import StylesControls from "@/components/StylesControls";
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useUser } from "@/hooks/use-user";
 import { useSaveResume } from "@/hooks/useSaveResume";
@@ -36,10 +35,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Messages } from "./ai/messages";
 import { MultimodalInput } from "./ai/multimodal-input";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
+
+// Add custom properties to HTMLDivElement type
+declare global {
+  interface HTMLDivElement {
+    getContentForPrint?: () => string;
+    getScopedSelector?: (selector: string) => string;
+    customProperties?: Record<string, string>;
+  }
+}
 
 class IRange {
   endColumn: number;
@@ -260,21 +269,10 @@ export default function ResumeEditor({
       return;
     }
 
-    // Find the resume content HTML
-    const resumePageElement = resumeElement.querySelector("#resume-page");
-    if (!resumePageElement) {
-      toast.error("Could not find resume content to print");
-      setIsPrinting(false);
-      return;
-    }
-
-    // Get the resume HTML content
-    const resumeContent = resumePageElement.innerHTML;
-
     // Access the container that has the getContentForPrint method
     const containerElement = resumeElement.querySelector(
       "div[class^='flex flex-col h-full']",
-    );
+    ) as HTMLDivElement;
     if (
       !containerElement ||
       typeof containerElement.getContentForPrint !== "function"
@@ -285,30 +283,24 @@ export default function ResumeEditor({
     }
 
     // Get the properly formatted HTML content for printing using the component's method
-    const htmlContent = containerElement.getContentForPrint(resumeContent);
+    const htmlContent = containerElement.getContentForPrint();
 
-    // Create a new window for printing only the resume content
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast.error("Please allow popups to download your resume as PDF");
-      setIsPrinting(false);
-      return;
-    }
+    // Save current document content
+    const originalContent = document.body.innerHTML;
+    const originalTitle = document.title;
 
-    // Write the content to the new window
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    // Replace current document content with resume content
+    document.body.innerHTML = htmlContent;
+    document.title = `${resume.name} - Resume`;
 
-    // Wait for resources to load before printing
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-      // Close the print window after printing (or after cancel)
-      setTimeout(() => {
-        printWindow.close();
-        setIsPrinting(false);
-      }, 1000);
-    }, 500);
+    // Print the current window
+    window.print();
+
+    // Restore original content after printing
+    document.body.innerHTML = originalContent;
+    document.title = originalTitle;
+
+    setIsPrinting(false);
   };
 
   const handleDuplicate = async () => {
