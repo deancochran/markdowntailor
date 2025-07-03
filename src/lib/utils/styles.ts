@@ -56,6 +56,9 @@ export const getDefaultCustomProperties = (
 
     // Set box-sizing for consistent measurements
     "--resume-box-sizing": "border-box",
+
+    // Ensure white background
+    "--resume-background-color": "white",
   };
 };
 
@@ -70,12 +73,16 @@ export const DEFAULT_RESUME_CSS = `
   body {
     margin: 0;
     padding: 0;
-    background: white;
+    background-color: white;
     box-sizing: border-box;
   }
 
   * {
     box-sizing: inherit;
+  }
+
+  .resume-container {
+    background-color: white;
   }
 
   /* Basic print settings */
@@ -88,6 +95,7 @@ export const DEFAULT_RESUME_CSS = `
     html, body {
       width: 210mm;
       height: 297mm;
+      background-color: white;
     }
   }
 `;
@@ -100,3 +108,42 @@ export const SCOPED_RESUME_CSS_TEMPLATE = `
   /* This template can be used for scoped CSS in the preview component */
   /* It intentionally contains no default styling */
 `;
+
+/**
+ * HTML template for printing a resume
+ * This generates a complete HTML document for printing/PDF export
+ */
+export const PRINT_HTML_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Resume</title>
+  {{FONT_LINK}}
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: white;
+    }
+    .resume-container {
+      font-family: "{{FONT_FAMILY}}", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: {{FONT_SIZE}}px;
+      line-height: {{LINE_HEIGHT}};
+      margin: {{MARGIN_V}}px {{MARGIN_H}}px;
+      max-width: 794px;
+      min-height: 1123px;
+      background-color: white;
+    }
+    {{CUSTOM_CSS}}
+  </style>
+</head>
+<body>
+  <div class="resume-container">
+    {{CONTENT}}
+  </div>
+</body>
+</html>`;

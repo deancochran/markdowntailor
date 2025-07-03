@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ResumeStyles, SYSTEM_FONTS } from "@/lib/utils/styles";
+import { defaultStyles, ResumeStyles, SYSTEM_FONTS } from "@/lib/utils/styles";
 
 interface StylesControlsProps {
   styles: ResumeStyles;

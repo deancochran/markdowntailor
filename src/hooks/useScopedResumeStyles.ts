@@ -1,8 +1,12 @@
-import { ResumeStyles, getDefaultCustomProperties } from "@/lib/utils/styles";
+import {
+  PRINT_HTML_TEMPLATE,
+  ResumeStyles,
+  SYSTEM_FONTS,
+  getDefaultCustomProperties,
+} from "@/lib/utils/styles";
 import { useCallback, useMemo, useRef } from "react";
 
-// Constants used within the hook
-const SYSTEM_FONTS = ["Georgia", "Times+New+Roman", "Arial"];
+// No local constants needed - imported from styles.ts
 
 interface ScopedStylesConfig {
   styles: ResumeStyles;
@@ -54,14 +58,22 @@ export const useScopedResumeStyles = ({
 
     // Apply custom CSS directly with scoping
     return `
-      /* Base styles with scope */
+      /* Page container with white background and shadow */
       ${scopeSelector} {
+        background-color: var(--resume-background-color);
+        max-width: var(--resume-max-width);
+        min-height: var(--resume-min-height);
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        margin: 0 auto;
+        padding: var(--resume-margin-v) var(--resume-margin-h);
+        box-sizing: border-box;
+      }
+
+      /* Content styles within the page */
+      ${scopeSelector} * {
         font-family: var(--resume-font-family);
         font-size: var(--resume-font-size);
         line-height: var(--resume-line-height);
-        margin: var(--resume-margin-v) var(--resume-margin-h);
-        max-width: var(--resume-max-width);
-        min-height: var(--resume-min-height);
       }
 
       /* User's custom CSS with scope applied */
@@ -77,7 +89,7 @@ export const useScopedResumeStyles = ({
     [scopeClass],
   );
 
-  // Generate complete HTML for printing
+  // Generate complete HTML for printing using template from styles.ts
   const getContentForPrint = useCallback(
     (content: string): string => {
       const fontFamily = styles.fontFamily.replace(/\+/g, " ");
@@ -86,40 +98,18 @@ export const useScopedResumeStyles = ({
           ? `https://fonts.googleapis.com/css2?family=${styles.fontFamily}:wght@300;400;500;600;700&display=swap`
           : "";
 
-      // Create a self-contained HTML document for printing
-      return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Resume</title>
-  ${fontUrl ? `<link href="${fontUrl}" rel="stylesheet">` : ""}
-  <style>
-    @page {
-      size: A4;
-      margin: 0;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      background: white;
-    }
-    .resume-container {
-      font-family: "${fontFamily}", -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: ${styles.fontSize}px;
-      line-height: ${styles.lineHeight};
-      margin: ${styles.marginV}px ${styles.marginH}px;
-      max-width: 794px;
-      min-height: 1123px;
-    }
-    ${customCss || ""}
-  </style>
-</head>
-<body>
-  <div class="resume-container">
-    ${content}
-  </div>
-</body>
-</html>`;
+      // Replace template placeholders with actual values
+      return PRINT_HTML_TEMPLATE.replace(
+        "{{FONT_LINK}}",
+        fontUrl ? `<link href="${fontUrl}" rel="stylesheet">` : "",
+      )
+        .replace("{{FONT_FAMILY}}", fontFamily)
+        .replace("{{FONT_SIZE}}", styles.fontSize.toString())
+        .replace("{{LINE_HEIGHT}}", styles.lineHeight.toString())
+        .replace("{{MARGIN_V}}", styles.marginV.toString())
+        .replace("{{MARGIN_H}}", styles.marginH.toString())
+        .replace("{{CUSTOM_CSS}}", customCss || "")
+        .replace("{{CONTENT}}", content);
     },
     [styles, customCss],
   );

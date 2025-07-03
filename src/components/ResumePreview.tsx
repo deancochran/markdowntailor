@@ -26,27 +26,8 @@ export default function ResumePreview({
   const [renderedHtml, setRenderedHtml] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [scale, setScale] = useState(0.8);
-  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const styleElementRef = useRef<HTMLStyleElement | null>(null);
-
-  // Detect mobile screen
-  useEffect(() => {
-    const checkMobile = () => {
-      const newIsMobile = window.innerWidth < 768;
-      setIsMobile(newIsMobile);
-      // Reset scale on mobile
-      if (newIsMobile) {
-        setScale(1);
-      } else if (scale === 1) {
-        setScale(0.8);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [scale]);
 
   // Generate scoped styles using our custom hook
   const {
@@ -58,7 +39,6 @@ export default function ResumePreview({
   } = useScopedResumeStyles({
     styles,
     customCss,
-    isPreview: true,
   });
 
   // Load the selected font
@@ -151,10 +131,10 @@ export default function ResumePreview({
     renderResume();
   }, [markdown, styles.fontFamily, loadFont, renderMarkdown]);
 
-  // Zoom controls (hidden on mobile)
+  // Zoom controls
   const zoomIn = () => setScale((prev) => Math.min(prev * 1.1, 1.5));
   const zoomOut = () => setScale((prev) => Math.max(prev / 1.1, 0.3));
-  const resetZoom = () => setScale(isMobile ? 1 : 0.8);
+  const resetZoom = () => setScale(0.8);
 
   // Get content for printing
   const getResumeContentForPrint = useCallback(() => {
@@ -172,48 +152,40 @@ export default function ResumePreview({
 
   return (
     <div className="flex flex-col h-full" ref={containerRef}>
-      {/* Controls - responsive visibility */}
-      <div
-        className={`flex items-center gap-2 p-2 border-b bg-white print:hidden ${isMobile ? "justify-center" : ""}`}
-      >
-        {!isMobile && (
-          <>
-            <button
-              onClick={zoomIn}
-              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              aria-label="Zoom in"
-            >
-              Zoom In
-            </button>
-            <button
-              onClick={zoomOut}
-              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              aria-label="Zoom out"
-            >
-              Zoom Out
-            </button>
-            <button
-              onClick={resetZoom}
-              className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-              aria-label="Reset zoom"
-            >
-              Reset
-            </button>
-            <div className="ml-2 text-sm text-gray-600" aria-live="polite">
-              {Math.round(scale * 100)}%
-            </div>
-          </>
-        )}
-        {isMobile && <div className="text-sm text-gray-600">Mobile View</div>}
+      {/* Controls */}
+      <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
+        <button
+          onClick={zoomIn}
+          className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+          aria-label="Zoom in"
+        >
+          Zoom In
+        </button>
+        <button
+          onClick={zoomOut}
+          className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+          aria-label="Zoom out"
+        >
+          Zoom Out
+        </button>
+        <button
+          onClick={resetZoom}
+          className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+          aria-label="Reset zoom"
+        >
+          Reset
+        </button>
+        <div className="ml-2 text-sm text-gray-600" aria-live="polite">
+          {Math.round(scale * 100)}%
+        </div>
       </div>
 
       {/* Preview Container */}
       <div
-        className={`flex-1 overflow-auto print:overflow-visible ${
-          isMobile
-            ? "bg-white"
-            : "bg-gray-100 p-4 flex justify-center items-start"
-        }`}
+        className="flex-1 overflow-auto print:overflow-visible bg-gray-100 p-4 flex justify-center items-start"
+        style={{
+          backgroundColor: "#f1f5f9",
+        }}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
@@ -224,11 +196,11 @@ export default function ResumePreview({
           </div>
         ) : (
           <div
-            className={`${isMobile ? "w-full" : "flex-shrink-0"}`}
+            className="flex-shrink-0"
             style={{
-              transform: isMobile ? "none" : `scale(${scale})`,
+              transform: `scale(${scale})`,
               transformOrigin: "top center",
-              transition: isMobile ? "none" : "transform 0.2s ease-out",
+              transition: "transform 0.2s ease-out",
             }}
           >
             {/* Resume Content with Scoped Styles */}
@@ -247,7 +219,6 @@ export default function ResumePreview({
                 ),
                 boxSizing: "border-box",
                 width: "100%",
-                margin: "0 auto",
               }}
             />
           </div>
