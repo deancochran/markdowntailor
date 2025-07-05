@@ -124,7 +124,12 @@ function useZoomControls(
 function createCombinedPageContent(
   pages: Array<{ content: string; pageNumber: number }>,
 ): string {
-  return pages.map((page) => page.content).join("\n");
+  return pages
+    .map(
+      (page, index) =>
+        `<div data-part="page" data-page-number="${page.pageNumber}" data-total-pages="${pages.length}">${page.content}</div>`,
+    )
+    .join("\n");
 }
 
 function useScopedCSSInjection(
