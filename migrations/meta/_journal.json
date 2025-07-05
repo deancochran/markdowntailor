@@ -148,6 +148,13 @@
       "when": 1750679263120,
       "tag": "0020_stiff_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1751740049844,
+      "tag": "0021_glossy_colossus",
+      "breakpoints": true
     }
   ]
 }

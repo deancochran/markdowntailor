@@ -31,6 +31,7 @@ const elementHeight = (element: Element): number => {
   const style = window.getComputedStyle(element);
   const marginTop = parseInt(style.marginTop) || 0;
   const marginBottom = parseInt(style.marginBottom) || 0;
+
   return element.clientHeight + marginTop + marginBottom;
 };
 
@@ -187,12 +188,14 @@ export const useSmartPages = ({
   const [isCalculating, setIsCalculating] = useState(false);
   const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get page dimensions (using millimeters for both width and height)
   const getPageDimensions = useCallback(() => {
-    // A4 dimensions: 210mm x 297mm
-    return { width: 210, height: 297 };
+    // Use the actual pixel dimensions that match your CSS
+    // 210mm at 96dpi ≈ 794px, 297mm ≈ 1123px
+    return {
+      width: 794, // 210mm in pixels
+      height: 1123, // 297mm in pixels
+    };
   }, []);
-
   // Get content area dimensions
   const getContentArea = useCallback(() => {
     const pageDimensions = getPageDimensions();

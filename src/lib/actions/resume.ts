@@ -75,6 +75,12 @@ const resumeUpdateSchema = z.object({
   title: z.string().min(1).max(100),
   markdown: z.string().max(10000).default(""),
   css: z.string().max(10000).default(""),
+  styles: z
+    .string()
+    .max(1000)
+    .default(
+      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
+    ),
 });
 
 // Update the saveResume function (around line 75)
@@ -94,7 +100,9 @@ export const saveResume = async (
   const validatedFields = resumeUpdateSchema.safeParse(sanitizedInput);
 
   if (!validatedFields.success) {
-    throw new Error("Must provide valid input for title, css, and markdown");
+    throw new Error(
+      "Must provide valid input for title, css, markdown, and styles",
+    );
   }
 
   const [existingResume] = await db
@@ -123,6 +131,7 @@ export const saveResume = async (
       title: validatedFields.data.title,
       markdown: validatedFields.data.markdown,
       css: validatedFields.data.css,
+      styles: validatedFields.data.styles,
     })
     .where(eq(resume.id, resumeId))
     .returning();

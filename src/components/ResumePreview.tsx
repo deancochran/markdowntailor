@@ -142,21 +142,18 @@ export default function ResumePreview({
   const renderMarkdown = useCallback(async (content: string) => {
     if (!content.trim()) return "";
 
-    // Set up the renderer to properly apply styles
-    const renderer = new marked.Renderer();
-    const originalParagraph = renderer.paragraph;
+    // // Set up the renderer to properly apply styles
+    // const renderer = new marked.Renderer();
+    // const originalParagraph = renderer.paragraph;
 
-    // Enhance paragraph rendering to add style attributes
-    renderer.paragraph = function (text) {
-      const paragraph = originalParagraph.call(this, text);
-      return paragraph;
-    };
+    // // Enhance paragraph rendering to add style attributes
+    // renderer.paragraph = function (text) {
+    //   const paragraph = originalParagraph.call(this, text);
+    //   return paragraph;
+    // };
 
     return marked(content, {
-      gfm: true,
-      breaks: true,
-      async: false,
-      renderer: renderer,
+      // renderer: renderer,
     });
   }, []);
 

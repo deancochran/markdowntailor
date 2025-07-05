@@ -10,13 +10,13 @@ import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { UseResumeActionsReturn } from "../types";
-
 export function useResumeActions(
   resumeId: string,
   resumeTitle: string,
   title: string,
   markdown: string,
   css: string,
+  styles: string,
   resumeRef: React.RefObject<HTMLDivElement>,
   onSaveSuccess: (updatedResume: InferSelectModel<typeof Resume>) => void,
 ): UseResumeActionsReturn {
@@ -30,6 +30,7 @@ export function useResumeActions(
     title,
     markdown,
     css,
+    styles,
     saveFunction: saveResume,
     onSaveSuccess,
   });

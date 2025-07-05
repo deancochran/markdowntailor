@@ -32,10 +32,17 @@ export default function ResumeEditor({
   const title = watch("title");
   const markdown = watch("markdown");
   const css = watch("css");
+  const stylesJson = watch("styles");
   const updatedAt = watch("updatedAt");
 
-  // Styles state
-  const [styles, setStyles] = useState(defaultStyles);
+  // Styles state - initialize from database or use default
+  const [styles, setStyles] = useState(() => {
+    try {
+      return stylesJson ? JSON.parse(stylesJson) : defaultStyles;
+    } catch {
+      return defaultStyles;
+    }
+  });
   const resumeRef = useRef<HTMLDivElement | null>(null);
 
   // Initialize custom hooks
@@ -61,24 +68,32 @@ export default function ResumeEditor({
     (error) => toast.error(`CSS sanitization: ${error}`),
   );
 
-  // Resume actions hook
   const resumeActions = useResumeActions(
     id,
     resume.title,
     sanitizedTitle,
     sanitizedMarkdown,
     sanitizedCSS,
+    JSON.stringify(styles),
     resumeRef,
     (updatedResume) => {
       // Update form values
       setValue("title", updatedResume.title);
       setValue("markdown", updatedResume.markdown);
       setValue("css", updatedResume.css);
+      setValue("styles", updatedResume.styles);
       setValue("updatedAt", updatedResume.updatedAt);
 
       // Update local state variables to stay in sync
       editorHooks.modifyMarkdown(updatedResume.markdown);
       editorHooks.modifyCss(updatedResume.css);
+
+      // Update styles state
+      try {
+        setStyles(JSON.parse(updatedResume.styles));
+      } catch {
+        setStyles(defaultStyles);
+      }
     },
   );
 
