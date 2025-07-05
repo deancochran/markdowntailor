@@ -48,7 +48,6 @@ export function useResumeActions(
       }
     }
   }, [resumeId]);
-
   const handlePrint = useCallback(() => {
     setIsPrinting(true);
     const resumeElement = resumeRef.current;
@@ -57,7 +56,7 @@ export function useResumeActions(
       return;
     }
 
-    // Access the container that has the getContentForPrint method
+    // Get content
     const containerElement = resumeElement.querySelector(
       "div[class^='flex flex-col h-full']",
     ) as HTMLDivElement;
@@ -71,25 +70,65 @@ export function useResumeActions(
       return;
     }
 
-    // Get the properly formatted HTML content for printing using the component's method
     const htmlContent = containerElement.getContentForPrint();
 
-    // Save current document content
-    const originalContent = document.body.innerHTML;
-    const originalTitle = document.title;
+    // Create a hidden iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
 
-    // Replace current document content with resume content
-    document.body.innerHTML = htmlContent;
-    document.title = `${resumeTitle} - Resume`;
+    // Add to DOM
+    document.body.appendChild(iframe);
 
-    // Print the current window
-    window.print();
+    // Write content to iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      setIsPrinting(false);
+      return;
+    }
 
-    // Restore original content after printing
-    document.body.innerHTML = originalContent;
-    document.title = originalTitle;
+    iframeDoc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${resumeTitle} - Resume</title>
+          <style>
+            @media print {
+              @page { margin: 0; }
+              body { margin: 0; }
+            }
+            body {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          </style>
+        </head>
+        <body>${htmlContent}</body>
+      </html>
+    `);
+    iframeDoc.close();
 
-    setIsPrinting(false);
+    // Print when loaded
+    iframe.onload = () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+
+      // Remove iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+        setIsPrinting(false);
+      }, 100);
+    };
+
+    // Fallback timeout
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+      setIsPrinting(false);
+    }, 5000);
   }, [resumeRef, resumeTitle]);
 
   const handleDuplicate = useCallback(async () => {

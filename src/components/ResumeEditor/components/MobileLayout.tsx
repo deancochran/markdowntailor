@@ -11,8 +11,8 @@ type MobileLayoutProps = {
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
-  resumeRef: React.RefObject<HTMLDivElement>;
-  userCredits: number | null;
+  resumeRef: React.RefObject<HTMLDivElement> | null;
+  userCredits: string | null;
 };
 
 export function MobileLayout({

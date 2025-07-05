@@ -14,8 +14,8 @@ type DesktopLayoutProps = {
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
-  resumeRef: React.RefObject<HTMLDivElement>;
-  userCredits: number | null;
+  resumeRef: React.RefObject<HTMLDivElement> | null;
+  userCredits: string | null;
 };
 
 export function DesktopLayout({
@@ -35,10 +35,7 @@ export function DesktopLayout({
     <div className="hidden lg:flex flex-row min-h-0 h-full w-full gap-4 overflow-hidden">
       {/* Left Column - Editors */}
       <div className="h-full w-full flex flex-col border">
-        <EditorTabs
-          activeTab={editorsTab}
-          onTabChange={onEditorsTabChange}
-        />
+        <EditorTabs activeTab={editorsTab} onTabChange={onEditorsTabChange} />
 
         <div className="flex-1 relative">
           <MarkdownEditor
@@ -69,10 +66,7 @@ export function DesktopLayout({
 
       {/* Right Column - Preview/Chat */}
       <div className="h-full w-full overflow-hidden flex flex-col border">
-        <PreviewTabs
-          activeTab={previewTab}
-          onTabChange={onPreviewTabChange}
-        />
+        <PreviewTabs activeTab={previewTab} onTabChange={onPreviewTabChange} />
 
         <div className="flex-1 relative">
           <PreviewPanel

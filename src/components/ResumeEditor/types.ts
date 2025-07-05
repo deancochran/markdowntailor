@@ -193,6 +193,6 @@ export type ChatPanelProps = {
   attachments: Attachment[];
   setAttachments: (attachments: Attachment[]) => void;
   featureDisabled: boolean;
-  userCredits: number | null;
+  userCredits: string | null;
   isVisible: boolean;
 };

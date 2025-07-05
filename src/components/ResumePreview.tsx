@@ -10,8 +10,13 @@ declare global {
     getContentForPrint?: () => string;
     getScopedSelector?: (selector: string) => string;
     customProperties?: Record<string, string>;
+    // Support for direct page break control
+    addPageBreak?: () => void;
   }
 }
+
+// Class used to force page breaks
+const PAGE_BREAK_CLASS = "page-break";
 
 interface ResumePreviewProps {
   markdown: string;
@@ -23,11 +28,16 @@ const SYSTEM_FONTS = ["Georgia", "Times+New+Roman", "Arial"];
 const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
+// A4 dimensions (width in mm, height in px for DOM compatibility)
+// A4 = 210mm x 297mm = 8.27" x 11.69" = 794px x 1123px at 96 DPI
 
-// Paper dimensions (US Letter at 96 DPI)
-const PAPER_WIDTH = 816; // 8.5 inches
-const PAPER_HEIGHT = 1056; // 11 inches
-const CONTAINER_MIN_WIDTH = 900; // Ensure container is wide enough for fixed-width pages
+// Paper dimensions (A4 in mm)
+const PAPER_WIDTH = 210; // mm
+const PAPER_HEIGHT = 297; // mm
+const CONTAINER_MIN_WIDTH = 900;
+
+// Pixel to mm conversion factor (for future use)
+const _PX_TO_MM = 0.264583; // 1px = 0.264583mm
 
 // Print-specific CSS for fixed paper dimensions
 const PRINT_CSS = `
@@ -42,11 +52,10 @@ const PRINT_CSS = `
       padding: 0 !important;
     }
 
-    .${PAPER_WIDTH}-fixed-page {
-      width: ${PAPER_WIDTH}px !important;
+    [data-part="page"] {
+      width: ${PAPER_WIDTH}mm !important;
       height: ${PAPER_HEIGHT}px !important;
       margin: 0 !important;
-      padding: 0 !important;
       box-sizing: border-box !important;
       page-break-after: always !important;
       border: none !important;
@@ -56,8 +65,26 @@ const PRINT_CSS = `
       overflow: visible !important;
     }
 
-    .${PAPER_WIDTH}-fixed-page:last-child {
+    [data-part="page"]:last-child {
       page-break-after: avoid !important;
+    }
+
+    .page-break {
+      display: none !important;
+    }
+
+    /* CSS to help control page breaks */
+    h1, h2, h3, .section-heading {
+      break-before: auto;
+      break-after: avoid;
+    }
+
+    li, tr, td, th, .keep-together {
+      break-inside: avoid;
+    }
+
+    .page-indicator {
+      display: none !important;
     }
 
     @page {
@@ -115,10 +142,21 @@ export default function ResumePreview({
   const renderMarkdown = useCallback(async (content: string) => {
     if (!content.trim()) return "";
 
+    // Set up the renderer to properly apply styles
+    const renderer = new marked.Renderer();
+    const originalParagraph = renderer.paragraph;
+
+    // Enhance paragraph rendering to add style attributes
+    renderer.paragraph = function (text) {
+      const paragraph = originalParagraph.call(this, text);
+      return paragraph;
+    };
+
     return marked(content, {
       gfm: true,
       breaks: true,
       async: false,
+      renderer: renderer,
     });
   }, []);
 
@@ -149,6 +187,9 @@ export default function ResumePreview({
     renderMarkdown,
     setRenderedHtml,
     setIsLoading,
+    recalculatePages,
+    scopeClass,
+    styles,
   );
 
   // Expose print function to parent components
@@ -159,8 +200,24 @@ export default function ResumePreview({
     customProperties,
   );
 
-  // Trigger page recalculation when content changes
-  usePageRecalculation(renderedHtml, isLoading, recalculatePages);
+  // Enable page break functionality on the container element
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.addPageBreak = () => {
+        // Create a page break element
+        const pageBreak = document.createElement("div");
+        pageBreak.className = PAGE_BREAK_CLASS;
+        pageBreak.style.height = "0";
+        pageBreak.style.width = "100%";
+
+        // Append it to the rendered content
+        if (containerRef.current) {
+          containerRef.current.appendChild(pageBreak);
+          recalculatePages();
+        }
+      };
+    }
+  }, [containerRef, recalculatePages]);
 
   return (
     <div className="flex flex-col h-full" ref={containerRef}>
@@ -226,7 +283,8 @@ function createCombinedPageContent(
 ): string {
   return pages
     .map((page, index) => {
-      const pageContent = `<div class="print-page">${page.content}</div>`;
+      // Use the proper data-part="page" structure that matches the preview
+      const pageContent = `<div data-part="page" data-page-number="${page.pageNumber}" data-total-pages="${pages.length}">${page.content}</div>`;
       return index === 0
         ? pageContent
         : `<div class="page-break"></div>${pageContent}`;
@@ -297,19 +355,40 @@ function useResumeRendering(
   renderMarkdown: (content: string) => Promise<string>,
   setRenderedHtml: (html: string) => void,
   setIsLoading: (loading: boolean) => void,
+  recalculatePages: () => void,
+  scopeClass: string,
+  resumeStyles: ResumeStyles,
 ): void {
   useEffect(() => {
     const renderResume = async () => {
       setIsLoading(true);
 
       try {
+        // Apply direct style attributes to the content to ensure styles are applied
+        const styleTag = document.createElement("style");
+        styleTag.textContent = `
+          .${scopeClass} * {
+            font-family: "${fontFamily.replace(/\+/g, " ")}", -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-size: ${resumeStyles.fontSize}px !important;
+            line-height: ${resumeStyles.lineHeight} !important;
+          }
+        `;
+        document.head.appendChild(styleTag);
+
         await loadFont(fontFamily);
         const html = await renderMarkdown(markdown);
+
         setRenderedHtml(html);
 
         if (document.fonts) {
           await document.fonts.ready;
         }
+
+        // Clean up the temporary style tag
+        document.head.removeChild(styleTag);
+
+        // Trigger page recalculation after content is fully loaded
+        setTimeout(recalculatePages, 300);
       } catch (error) {
         console.error("Resume rendering error:", error);
       } finally {
@@ -325,6 +404,9 @@ function useResumeRendering(
     renderMarkdown,
     setRenderedHtml,
     setIsLoading,
+    recalculatePages,
+    scopeClass,
+    resumeStyles,
   ]);
 }
 
@@ -348,17 +430,7 @@ function useParentComponentAPI(
   ]);
 }
 
-function usePageRecalculation(
-  renderedHtml: string,
-  isLoading: boolean,
-  recalculatePages: () => void,
-): void {
-  useEffect(() => {
-    if (renderedHtml && !isLoading) {
-      recalculatePages();
-    }
-  }, [renderedHtml, isLoading, recalculatePages]);
-}
+// Function removed as page recalculation is now handled directly in useResumeRendering
 
 // Component parts for better organization
 
@@ -493,7 +565,7 @@ function PagesContainer({
         transform: `scale(${scale})`,
         transformOrigin: "top center",
         transition: "transform 0.2s ease-out",
-        width: `${PAPER_WIDTH}px`,
+        width: `${PAPER_WIDTH}mm`,
         flexShrink: 0, // Prevent shrinking
       }}
     >
@@ -537,28 +609,31 @@ function PageRenderer({
       }}
     >
       {/* Page number indicator */}
-      <div className="absolute -top-6 left-0 text-xs text-gray-500 print:hidden">
+      <div className="absolute -top-6 left-0 text-xs text-gray-500 print:hidden page-indicator">
         Page {page.pageNumber} of {totalPages}
       </div>
-
       {/* Page content */}
       <div
-        className={`${scopeClass} ${PAPER_WIDTH}-fixed-page bg-white shadow-lg print:shadow-none`}
+        className={`${scopeClass} bg-white shadow-lg print:shadow-none`}
         dangerouslySetInnerHTML={{ __html: page.content }}
         role="document"
         aria-label={`Resume page ${page.pageNumber}`}
+        data-part="page"
+        data-page-number={page.pageNumber}
+        data-total-pages={totalPages}
         style={{
           boxSizing: "border-box",
-          width: `${PAPER_WIDTH}px`,
-          height: `${PAPER_HEIGHT}px`,
-          minWidth: `${PAPER_WIDTH}px`,
-          minHeight: `${PAPER_HEIGHT}px`,
-          maxWidth: `${PAPER_WIDTH}px`,
-          maxHeight: `${PAPER_HEIGHT}px`,
+          width: `${PAPER_WIDTH}mm`,
+          height: `${PAPER_HEIGHT}mm`,
+          minWidth: `${PAPER_WIDTH}mm`,
+          minHeight: `${PAPER_HEIGHT}mm`,
+          maxWidth: `${PAPER_WIDTH}mm`,
+          maxHeight: `${PAPER_HEIGHT}mm`,
           padding: `${styles.marginV}px ${styles.marginH}px`,
           border: "1px solid #e5e7eb",
           borderRadius: "4px",
-          overflow: "hidden",
+          overflow: "auto", // Allow scrolling for overflow content
+          position: "relative", // For proper positioning
         }}
       />
     </div>
