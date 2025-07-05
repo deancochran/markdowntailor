@@ -2,7 +2,14 @@ import { useScopedResumeStyles } from "@/hooks/useScopedResumeStyles";
 import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { marked } from "marked";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 // Add custom properties to HTMLDivElement type
 declare global {
@@ -10,234 +17,73 @@ declare global {
     getContentForPrint?: () => string;
     getScopedSelector?: (selector: string) => string;
     customProperties?: Record<string, string>;
-    // Support for direct page break control
     addPageBreak?: () => void;
   }
 }
 
-// Class used to force page breaks
-const PAGE_BREAK_CLASS = "page-break";
-
+// Types and interfaces
 interface ResumePreviewProps {
   markdown: string;
   styles: ResumeStyles;
   customCss?: string;
 }
 
+export interface ResumePreviewRef {
+  print: () => void;
+}
+
+interface PreviewControlsProps {
+  zoomControls: {
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetZoom: () => void;
+  };
+  scale: number;
+  totalPages: number;
+}
+
+interface PreviewContainerProps {
+  isLoading: boolean;
+  isCalculating: boolean;
+  scale: number;
+  pages: Array<{ content: string; pageNumber: number }>;
+  totalPages: number;
+  scopeClass: string;
+  styles: ResumeStyles;
+}
+
+interface LoadingSpinnerProps {
+  isLoading: boolean;
+}
+
+interface PagesContainerProps {
+  scale: number;
+  pages: Array<{ content: string; pageNumber: number }>;
+  totalPages: number;
+  scopeClass: string;
+  styles: ResumeStyles;
+}
+
+interface PageRendererProps {
+  page: { content: string; pageNumber: number };
+  index: number;
+  totalPages: number;
+  scopeClass: string;
+  isLastPage: boolean;
+  styles: ResumeStyles;
+}
+
+// Constants
+const PAGE_BREAK_CLASS = "page-break";
 const SYSTEM_FONTS = ["Georgia", "Times+New+Roman", "Arial"];
 const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
-// A4 dimensions (width in mm, height in px for DOM compatibility)
-// A4 = 210mm x 297mm = 8.27" x 11.69" = 794px x 1123px at 96 DPI
-
-// Paper dimensions (A4 in mm)
 const PAPER_WIDTH = 210; // mm
 const PAPER_HEIGHT = 297; // mm
 const CONTAINER_MIN_WIDTH = 900;
 
-// Pixel to mm conversion factor (for future use)
-const _PX_TO_MM = 0.264583; // 1px = 0.264583mm
-
-// Print-specific CSS for fixed paper dimensions
-const PRINT_CSS = `
-  @media print {
-    * {
-      -webkit-print-color-adjust: exact !important;
-      color-adjust: exact !important;
-    }
-
-    body {
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
-    [data-part="page"] {
-      width: ${PAPER_WIDTH}mm !important;
-      height: ${PAPER_HEIGHT}px !important;
-      margin: 0 !important;
-      box-sizing: border-box !important;
-      page-break-after: always !important;
-      border: none !important;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-      transform: none !important;
-      overflow: visible !important;
-    }
-
-    [data-part="page"]:last-child {
-      page-break-after: avoid !important;
-    }
-
-    .page-break {
-      display: none !important;
-    }
-
-    /* CSS to help control page breaks */
-    h1, h2, h3, .section-heading {
-      break-before: auto;
-      break-after: avoid;
-    }
-
-    li, tr, td, th, .keep-together {
-      break-inside: avoid;
-    }
-
-    .page-indicator {
-      display: none !important;
-    }
-
-    @page {
-      size: letter;
-      margin: 0;
-    }
-  }
-`;
-
-export default function ResumePreview({
-  markdown,
-  styles,
-  customCss,
-}: ResumePreviewProps) {
-  const [renderedHtml, setRenderedHtml] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [scale, setScale] = useState(INITIAL_SCALE);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const styleElementRef = useRef<HTMLStyleElement | null>(null);
-
-  // Generate scoped styles using our custom hook
-  const scopedStylesConfig = useScopedResumeStyles({ styles, customCss });
-  const {
-    scopeClass,
-    scopedCSS,
-    customProperties,
-    getScopedSelector,
-    getContentForPrint,
-  } = scopedStylesConfig;
-
-  // Use smart pages for page breaks
-  const smartPagesConfig = useSmartPages({
-    content: renderedHtml,
-    styles,
-    scopeClass,
-    customProperties,
-  });
-  const { pages, totalPages, isCalculating, recalculatePages } =
-    smartPagesConfig;
-
-  // Load the selected font
-  const loadFont = useCallback(async (fontFamily: string) => {
-    if (!fontFamily || SYSTEM_FONTS.includes(fontFamily)) {
-      return;
-    }
-
-    if (isFontAlreadyLoaded(fontFamily)) {
-      return;
-    }
-
-    await loadGoogleFont(fontFamily);
-  }, []);
-
-  // Render markdown to HTML
-  const renderMarkdown = useCallback(async (content: string) => {
-    if (!content.trim()) return "";
-
-    // // Set up the renderer to properly apply styles
-    // const renderer = new marked.Renderer();
-    // const originalParagraph = renderer.paragraph;
-
-    // // Enhance paragraph rendering to add style attributes
-    // renderer.paragraph = function (text) {
-    //   const paragraph = originalParagraph.call(this, text);
-    //   return paragraph;
-    // };
-
-    return marked(content, {
-      // renderer: renderer,
-    });
-  }, []);
-
-  // Zoom controls
-  const zoomControls = useZoomControls(scale, setScale);
-
-  // Get content for printing
-  const getResumeContentForPrint = useCallback(() => {
-    if (pages.length === 0) {
-      return getContentForPrint(renderedHtml);
-    }
-
-    const combinedContent = createCombinedPageContent(pages);
-    return getContentForPrint(combinedContent);
-  }, [getContentForPrint, renderedHtml, pages]);
-
-  // Inject scoped CSS into document head
-  useScopedCSSInjection(scopedCSS, scopeClass, styleElementRef);
-
-  // Inject print CSS for fixed dimensions
-  usePrintCSSInjection();
-
-  // Handle font loading and markdown rendering
-  useResumeRendering(
-    markdown,
-    styles.fontFamily,
-    loadFont,
-    renderMarkdown,
-    setRenderedHtml,
-    setIsLoading,
-    recalculatePages,
-    scopeClass,
-    styles,
-  );
-
-  // Expose print function to parent components
-  useParentComponentAPI(
-    containerRef,
-    getResumeContentForPrint,
-    getScopedSelector,
-    customProperties,
-  );
-
-  // Enable page break functionality on the container element
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.addPageBreak = () => {
-        // Create a page break element
-        const pageBreak = document.createElement("div");
-        pageBreak.className = PAGE_BREAK_CLASS;
-        pageBreak.style.height = "0";
-        pageBreak.style.width = "100%";
-
-        // Append it to the rendered content
-        if (containerRef.current) {
-          containerRef.current.appendChild(pageBreak);
-          recalculatePages();
-        }
-      };
-    }
-  }, [containerRef, recalculatePages]);
-
-  return (
-    <div className="flex flex-col h-full" ref={containerRef}>
-      <PreviewControls
-        zoomControls={zoomControls}
-        scale={scale}
-        totalPages={totalPages}
-      />
-      <PreviewContainer
-        isLoading={isLoading}
-        isCalculating={isCalculating}
-        scale={scale}
-        pages={pages}
-        totalPages={totalPages}
-        scopeClass={scopeClass}
-        styles={styles}
-      />
-    </div>
-  );
-}
-
-// Helper functions and custom hooks for better organization
-
+// Helper functions
 function isFontAlreadyLoaded(fontFamily: string): boolean {
   return !!document.querySelector(`link[href*="${fontFamily}"]`);
 }
@@ -278,15 +124,7 @@ function useZoomControls(
 function createCombinedPageContent(
   pages: Array<{ content: string; pageNumber: number }>,
 ): string {
-  return pages
-    .map((page, index) => {
-      // Use the proper data-part="page" structure that matches the preview
-      const pageContent = `<div data-part="page" data-page-number="${page.pageNumber}" data-total-pages="${pages.length}">${page.content}</div>`;
-      return index === 0
-        ? pageContent
-        : `<div class="page-break"></div>${pageContent}`;
-    })
-    .join("");
+  return pages.map((page) => page.content).join("\n");
 }
 
 function useScopedCSSInjection(
@@ -302,11 +140,13 @@ function useScopedCSSInjection(
       styleElementRef.current.remove();
     }
 
-    // Create and inject new style element
+    // Create new style element
     const styleElement = document.createElement("style");
     styleElement.id = styleId;
     styleElement.textContent = scopedCSS;
     document.head.appendChild(styleElement);
+
+    // Store reference for cleanup
     styleElementRef.current = styleElement;
 
     // Cleanup function
@@ -319,7 +159,7 @@ function useScopedCSSInjection(
   }, [scopedCSS, scopeClass, styleElementRef]);
 }
 
-function usePrintCSSInjection(): void {
+function usePrintCSSInjection(marginV: number, marginH: number): void {
   useEffect(() => {
     const styleId = "resume-print-styles";
 
@@ -329,20 +169,20 @@ function usePrintCSSInjection(): void {
       existingStyle.remove();
     }
 
-    // Create and inject print style element
-    const styleElement = document.createElement("style");
-    styleElement.id = styleId;
-    styleElement.textContent = PRINT_CSS;
-    document.head.appendChild(styleElement);
+    // Create and inject print style element with correct margins
+    const printStyle = document.createElement("style");
+    printStyle.id = styleId;
+    printStyle.textContent = generatePrintCSS(marginV, marginH);
+    document.head.appendChild(printStyle);
 
     // Cleanup function
     return () => {
-      const style = document.getElementById(styleId);
-      if (style) {
-        style.remove();
+      const styleElement = document.getElementById(styleId);
+      if (styleElement) {
+        styleElement.remove();
       }
     };
-  }, []);
+  }, [marginV, marginH]);
 }
 
 function useResumeRendering(
@@ -357,43 +197,28 @@ function useResumeRendering(
   resumeStyles: ResumeStyles,
 ): void {
   useEffect(() => {
-    const renderResume = async () => {
+    const processContent = async () => {
       setIsLoading(true);
-
       try {
-        // Apply direct style attributes to the content to ensure styles are applied
-        const styleTag = document.createElement("style");
-        styleTag.textContent = `
-          .${scopeClass} * {
-            font-family: "${fontFamily.replace(/\+/g, " ")}", -apple-system, BlinkMacSystemFont, sans-serif !important;
-            font-size: ${resumeStyles.fontSize}px !important;
-            line-height: ${resumeStyles.lineHeight} !important;
-          }
-        `;
-        document.head.appendChild(styleTag);
-
+        // Load font first
         await loadFont(fontFamily);
-        const html = await renderMarkdown(markdown);
 
+        // Render markdown
+        const html = await renderMarkdown(markdown);
         setRenderedHtml(html);
 
-        if (document.fonts) {
-          await document.fonts.ready;
-        }
-
-        // Clean up the temporary style tag
-        document.head.removeChild(styleTag);
-
-        // Trigger page recalculation after content is fully loaded
-        setTimeout(recalculatePages, 300);
+        // Small delay to ensure DOM is updated before recalculating pages
+        setTimeout(() => {
+          recalculatePages();
+          setIsLoading(false);
+        }, 100);
       } catch (error) {
-        console.error("Resume rendering error:", error);
-      } finally {
+        console.error("Error processing content:", error);
         setIsLoading(false);
       }
     };
 
-    renderResume();
+    processContent();
   }, [
     markdown,
     fontFamily,
@@ -403,7 +228,10 @@ function useResumeRendering(
     setIsLoading,
     recalculatePages,
     scopeClass,
-    resumeStyles,
+    resumeStyles.fontSize,
+    resumeStyles.lineHeight,
+    resumeStyles.marginV,
+    resumeStyles.marginH,
   ]);
 }
 
@@ -420,27 +248,96 @@ function useParentComponentAPI(
       containerRef.current.customProperties = customProperties;
     }
   }, [
+    containerRef,
     getResumeContentForPrint,
     getScopedSelector,
     customProperties,
-    containerRef,
   ]);
 }
 
-// Function removed as page recalculation is now handled directly in useResumeRendering
+// Generate print CSS with proper margins
+const generatePrintCSS = (marginV: number, marginH: number) => `
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
 
-// Component parts for better organization
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
 
-interface PreviewControlsProps {
-  zoomControls: {
-    zoomIn: () => void;
-    zoomOut: () => void;
-    resetZoom: () => void;
-  };
-  scale: number;
-  totalPages: number;
-}
+    [data-part="page"] {
+      width: ${PAPER_WIDTH}mm !important;
+      height: ${PAPER_HEIGHT}mm !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      page-break-after: always !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      transform: none !important;
+      overflow: hidden !important;
+      padding: ${marginV}px ${marginH}px !important;
 
+      /* Font rendering consistency */
+      font-size: inherit !important;
+      line-height: inherit !important;
+      font-family: inherit !important;
+
+      /* Text rendering optimization */
+      text-rendering: optimizeLegibility !important;
+      -webkit-font-smoothing: antialiased !important;
+      -moz-osx-font-smoothing: grayscale !important;
+    }
+
+    [data-part="page"]:last-child {
+      page-break-after: avoid !important;
+    }
+
+    .page-break {
+      display: none !important;
+    }
+
+    /* CSS to help control page breaks */
+    h1, h2, h3, .section-heading {
+      break-before: auto;
+      break-after: avoid;
+    }
+
+    li, tr, td, th, .keep-together {
+      break-inside: avoid;
+    }
+
+    .page-indicator {
+      display: none !important;
+    }
+
+    /* Force A4 page size */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @page :first {
+      size: A4;
+      margin: 0;
+    }
+
+    @page :left {
+      size: A4;
+      margin: 0;
+    }
+
+    @page :right {
+      size: A4;
+      margin: 0;
+    }
+  }
+`;
+
+// Component functions
 function PreviewControls({
   zoomControls,
   scale,
@@ -452,43 +349,31 @@ function PreviewControls({
     <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
       <button
         onClick={zoomIn}
-        className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-        aria-label="Zoom in"
+        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        title="Zoom In"
       >
-        Zoom In
+        +
       </button>
       <button
         onClick={zoomOut}
-        className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-        aria-label="Zoom out"
+        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        title="Zoom Out"
       >
-        Zoom Out
+        -
       </button>
       <button
         onClick={resetZoom}
-        className="px-3 py-1.5 text-sm bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-        aria-label="Reset zoom"
+        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        title="Reset Zoom"
       >
         Reset
       </button>
-      <div className="ml-2 text-sm text-gray-600" aria-live="polite">
-        {Math.round(scale * 100)}%
-      </div>
-      <div className="ml-4 text-sm text-gray-600" aria-live="polite">
-        {totalPages} {totalPages === 1 ? "page" : "pages"}
-      </div>
+      <span className="text-sm text-gray-600">
+        {Math.round(scale * 100)}% | {totalPages} page
+        {totalPages !== 1 ? "s" : ""}
+      </span>
     </div>
   );
-}
-
-interface PreviewContainerProps {
-  isLoading: boolean;
-  isCalculating: boolean;
-  scale: number;
-  pages: Array<{ content: string; pageNumber: number }>;
-  totalPages: number;
-  scopeClass: string;
-  styles: ResumeStyles;
 }
 
 function PreviewContainer({
@@ -501,30 +386,24 @@ function PreviewContainer({
   styles,
 }: PreviewContainerProps) {
   return (
-    <div
-      className="flex-1 overflow-auto print:overflow-visible bg-gray-100 p-4 flex justify-center items-start"
-      style={{
-        backgroundColor: "#f1f5f9",
-        minWidth: `${CONTAINER_MIN_WIDTH}px`,
-      }}
-    >
-      {isLoading || isCalculating ? (
-        <LoadingSpinner isLoading={isLoading} />
-      ) : (
-        <PagesContainer
-          scale={scale}
-          pages={pages}
-          totalPages={totalPages}
-          scopeClass={scopeClass}
-          styles={styles}
-        />
-      )}
+    <div className="flex-1 overflow-auto bg-gray-100 p-4 print:p-0 print:bg-white">
+      <div className="flex justify-center min-h-full">
+        <div className="w-full max-w-4xl">
+          {isLoading || isCalculating ? (
+            <LoadingSpinner isLoading={isLoading} />
+          ) : (
+            <PagesContainer
+              scale={scale}
+              pages={pages}
+              totalPages={totalPages}
+              scopeClass={scopeClass}
+              styles={styles}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
-}
-
-interface LoadingSpinnerProps {
-  isLoading: boolean;
 }
 
 function LoadingSpinner({ isLoading }: LoadingSpinnerProps) {
@@ -540,14 +419,6 @@ function LoadingSpinner({ isLoading }: LoadingSpinnerProps) {
   );
 }
 
-interface PagesContainerProps {
-  scale: number;
-  pages: Array<{ content: string; pageNumber: number }>;
-  totalPages: number;
-  scopeClass: string;
-  styles: ResumeStyles;
-}
-
 function PagesContainer({
   scale,
   pages,
@@ -561,9 +432,8 @@ function PagesContainer({
       style={{
         transform: `scale(${scale})`,
         transformOrigin: "top center",
-        transition: "transform 0.2s ease-out",
-        width: `${PAPER_WIDTH}mm`,
-        flexShrink: 0, // Prevent shrinking
+        minWidth: `${CONTAINER_MIN_WIDTH}px`,
+        flexShrink: 0,
       }}
     >
       {pages.map((page, index) => (
@@ -579,15 +449,6 @@ function PagesContainer({
       ))}
     </div>
   );
-}
-
-interface PageRendererProps {
-  page: { content: string; pageNumber: number };
-  index: number;
-  totalPages: number;
-  scopeClass: string;
-  isLastPage: boolean;
-  styles: ResumeStyles;
 }
 
 function PageRenderer({
@@ -629,10 +490,181 @@ function PageRenderer({
           padding: `${styles.marginV}px ${styles.marginH}px`,
           border: "1px solid #e5e7eb",
           borderRadius: "4px",
-          overflow: "auto", // Allow scrolling for overflow content
-          position: "relative", // For proper positioning
+          overflow: "hidden",
+          position: "relative",
         }}
       />
     </div>
   );
 }
+
+// Main component
+const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
+  ({ markdown, styles, customCss }, ref) => {
+    const [renderedHtml, setRenderedHtml] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [scale, setScale] = useState(INITIAL_SCALE);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const styleElementRef = useRef<HTMLStyleElement | null>(null);
+
+    // Generate scoped styles using our custom hook
+    const scopedStylesConfig = useScopedResumeStyles({ styles, customCss });
+    const {
+      scopeClass,
+      scopedCSS,
+      customProperties,
+      getScopedSelector,
+      getContentForPrint,
+    } = scopedStylesConfig;
+
+    // Use smart pages for page breaks
+    const smartPagesConfig = useSmartPages({
+      content: renderedHtml,
+      styles,
+      scopeClass,
+      customProperties,
+    });
+    const { pages, totalPages, isCalculating, recalculatePages } =
+      smartPagesConfig;
+
+    // Load the selected font
+    const loadFont = useCallback(async (fontFamily: string) => {
+      if (!fontFamily || SYSTEM_FONTS.includes(fontFamily)) {
+        return;
+      }
+
+      if (isFontAlreadyLoaded(fontFamily)) {
+        return;
+      }
+
+      await loadGoogleFont(fontFamily);
+    }, []);
+
+    // Render markdown to HTML
+    const renderMarkdown = useCallback(async (content: string) => {
+      if (!content.trim()) return "";
+      return marked(content);
+    }, []);
+
+    // Zoom controls
+    const zoomControls = useZoomControls(scale, setScale);
+
+    // Get content for printing
+    const getResumeContentForPrint = useCallback(() => {
+      if (pages.length === 0) {
+        return getContentForPrint(renderedHtml);
+      }
+
+      const combinedContent = createCombinedPageContent(pages);
+      return getContentForPrint(combinedContent);
+    }, [getContentForPrint, renderedHtml, pages]);
+
+    // Print method for creating a new window with just the resume content
+    const handlePrintPreview = useCallback(() => {
+      // Create a new window for printing
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) return;
+
+      // Get the print-ready content
+      const printContent = getResumeContentForPrint();
+      const printCSS = generatePrintCSS(
+        styles.marginV || 20,
+        styles.marginH || 20,
+      );
+
+      // Write the content to the new window
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Resume - ${document.title}</title>
+            <style>${scopedCSS}</style>
+            <style>${printCSS}</style>
+          </head>
+          <body>
+            ${printContent}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, [getResumeContentForPrint, scopedCSS, styles.marginV, styles.marginH]);
+
+    // Expose print function to parent components via ref
+    useImperativeHandle(ref, () => ({
+      print: handlePrintPreview,
+    }));
+
+    // Inject scoped CSS into document head
+    useScopedCSSInjection(scopedCSS, scopeClass, styleElementRef);
+
+    // Inject print CSS for fixed dimensions with correct margins
+    usePrintCSSInjection(styles.marginV || 20, styles.marginH || 20);
+
+    // Handle font loading and markdown rendering
+    useResumeRendering(
+      markdown,
+      styles.fontFamily,
+      loadFont,
+      renderMarkdown,
+      setRenderedHtml,
+      setIsLoading,
+      recalculatePages,
+      scopeClass,
+      styles,
+    );
+
+    // Expose print function to parent components
+    useParentComponentAPI(
+      containerRef,
+      getResumeContentForPrint,
+      getScopedSelector,
+      customProperties,
+    );
+
+    // Enable page break functionality on the container element
+    useEffect(() => {
+      if (containerRef.current) {
+        containerRef.current.addPageBreak = () => {
+          // Create a page break element
+          const pageBreak = document.createElement("div");
+          pageBreak.className = PAGE_BREAK_CLASS;
+          pageBreak.style.height = "0";
+          pageBreak.style.width = "100%";
+
+          // Append it to the rendered content
+          if (containerRef.current) {
+            containerRef.current.appendChild(pageBreak);
+            recalculatePages();
+          }
+        };
+      }
+    }, [containerRef, recalculatePages]);
+
+    return (
+      <div className="flex flex-col h-full" ref={containerRef}>
+        <PreviewControls
+          zoomControls={zoomControls}
+          scale={scale}
+          totalPages={totalPages}
+        />
+        <PreviewContainer
+          isLoading={isLoading}
+          isCalculating={isCalculating}
+          scale={scale}
+          pages={pages}
+          totalPages={totalPages}
+          scopeClass={scopeClass}
+          styles={styles}
+        />
+      </div>
+    );
+  },
+);
+
+ResumePreview.displayName = "ResumePreview";
+
+export default ResumePreview;

@@ -1,5 +1,6 @@
 "use client";
 
+import { ResumePreviewRef } from "@/components/ResumePreview";
 import { resume as Resume } from "@/db/schema";
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
 import { useUser } from "@/hooks/use-user";
@@ -43,7 +44,8 @@ export default function ResumeEditor({
       return defaultStyles;
     }
   });
-  const resumeRef = useRef<HTMLDivElement | null>(null);
+  const resumeRef = useRef<HTMLDivElement>(null!);
+  const resumePreviewRef = useRef<ResumePreviewRef>(null!);
 
   // Initialize custom hooks
   const editorHooks = useResumeEditors(markdown, css);
@@ -75,7 +77,7 @@ export default function ResumeEditor({
     sanitizedMarkdown,
     sanitizedCSS,
     JSON.stringify(styles),
-    resumeRef,
+    resumePreviewRef,
     (updatedResume) => {
       // Update form values
       setValue("title", updatedResume.title);
@@ -184,6 +186,7 @@ export default function ResumeEditor({
           editorHooks={editorHooks}
           chatHooks={chatHooks}
           resumeRef={resumeRef}
+          resumePreviewRef={resumePreviewRef}
           userCredits={userCredits}
         />
 
@@ -194,6 +197,7 @@ export default function ResumeEditor({
           editorHooks={editorHooks}
           chatHooks={chatHooks}
           resumeRef={resumeRef}
+          resumePreviewRef={resumePreviewRef}
           userCredits={userCredits}
         />
       </div>

@@ -1,3 +1,4 @@
+import { ResumePreviewRef } from "@/components/ResumePreview";
 import { resume as Resume } from "@/db/schema";
 import { useSaveResume } from "@/hooks/useSaveResume";
 import {
@@ -17,7 +18,7 @@ export function useResumeActions(
   markdown: string,
   css: string,
   styles: string,
-  resumeRef: React.RefObject<HTMLDivElement>,
+  resumePreviewRef: React.RefObject<ResumePreviewRef | null>,
   onSaveSuccess: (updatedResume: InferSelectModel<typeof Resume>) => void,
 ): UseResumeActionsReturn {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -51,87 +52,22 @@ export function useResumeActions(
   }, [resumeId]);
   const handlePrint = useCallback(() => {
     setIsPrinting(true);
-    const resumeElement = resumeRef.current;
-    if (!resumeElement) {
-      setIsPrinting(false);
-      return;
-    }
 
-    // Get content
-    const containerElement = resumeElement.querySelector(
-      "div[class^='flex flex-col h-full']",
-    ) as HTMLDivElement;
-
-    if (
-      !containerElement ||
-      typeof containerElement.getContentForPrint !== "function"
-    ) {
-      toast.error("Could not prepare resume for printing");
-      setIsPrinting(false);
-      return;
-    }
-
-    const htmlContent = containerElement.getContentForPrint();
-
-    // Create a hidden iframe
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-
-    // Add to DOM
-    document.body.appendChild(iframe);
-
-    // Write content to iframe
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) {
-      setIsPrinting(false);
-      return;
-    }
-
-    iframeDoc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${resumeTitle} - Resume</title>
-          <style>
-            @media print {
-              @page { margin: 0; }
-              body { margin: 0; }
-            }
-            body {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-          </style>
-        </head>
-        <body>${htmlContent}</body>
-      </html>
-    `);
-    iframeDoc.close();
-
-    // Print when loaded
-    iframe.onload = () => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-
-      // Remove iframe after printing
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-        setIsPrinting(false);
-      }, 100);
-    };
-
-    // Fallback timeout
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
+    try {
+      // Call the print method on the preview component
+      if (resumePreviewRef.current?.print) {
+        resumePreviewRef.current.print();
+      } else {
+        // Fallback to window.print if ref not available
+        window.print();
       }
+    } catch (error) {
+      console.error("Print failed:", error);
+      toast.error("Failed to print resume");
+    } finally {
       setIsPrinting(false);
-    }, 5000);
-  }, [resumeRef, resumeTitle]);
-
+    }
+  }, [resumePreviewRef]);
   const handleDuplicate = useCallback(async () => {
     setIsDuplicating(true);
     let response;

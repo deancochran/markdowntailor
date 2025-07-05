@@ -1,3 +1,4 @@
+import { ResumePreviewRef } from "@/components/ResumePreview";
 import { useTheme } from "next-themes";
 import { EditorState, UseAIChatReturn, UseResumeEditorsReturn } from "../types";
 import { CSSEditor } from "./CSSEditor";
@@ -14,7 +15,8 @@ type DesktopLayoutProps = {
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
-  resumeRef: React.RefObject<HTMLDivElement> | null;
+  resumeRef: React.RefObject<HTMLDivElement | null>;
+  resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
   userCredits: string | null;
 };
 
@@ -27,6 +29,7 @@ export function DesktopLayout({
   editorHooks,
   chatHooks,
   resumeRef,
+  resumePreviewRef,
   userCredits,
 }: DesktopLayoutProps) {
   const { theme } = useTheme();
@@ -74,6 +77,7 @@ export function DesktopLayout({
             css={editorState.sanitizedCSS}
             styles={editorState.styles}
             resumeRef={resumeRef}
+            resumePreviewRef={resumePreviewRef}
             isVisible={previewTab === "preview"}
           />
 

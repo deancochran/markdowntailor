@@ -1,3 +1,4 @@
+import { ResumePreviewRef } from "@/components/ResumePreview";
 import { resume as Resume } from "@/db/schema";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { Attachment, Message } from "ai";
@@ -178,6 +179,7 @@ export type PreviewPanelProps = {
   css: string;
   styles: ResumeStyles;
   resumeRef: React.RefObject<HTMLDivElement | null>;
+  resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
   isVisible: boolean;
 };
 
