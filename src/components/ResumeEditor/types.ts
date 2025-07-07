@@ -1,7 +1,8 @@
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { resume as Resume } from "@/db/schema";
 import { ResumeStyles } from "@/lib/utils/styles";
-import { Attachment, Message } from "ai";
+import { UseChatHelpers } from "@ai-sdk/react";
+import { Attachment } from "ai";
 import { InferSelectModel } from "drizzle-orm";
 import type { editor } from "monaco-editor";
 
@@ -99,16 +100,16 @@ export type UseTabManagerReturn = {
 };
 
 export type UseAIChatReturn = {
-  messages: Message[];
-  setMessages: (messages: Message[]) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  input: string;
-  setInput: (input: string) => void;
-  status: string;
-  stop: () => void;
-  reload: () => void;
+  messages: UseChatHelpers["messages"];
+  setMessages: UseChatHelpers["setMessages"];
+  handleSubmit: UseChatHelpers["handleSubmit"];
+  input: UseChatHelpers["input"];
+  setInput: UseChatHelpers["setInput"];
+  status: UseChatHelpers["status"];
+  stop: UseChatHelpers["stop"];
+  reload: UseChatHelpers["reload"];
   attachments: Attachment[];
-  setAttachments: (attachments: Attachment[]) => void;
+  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
   featureDisabled: boolean;
 };
 
@@ -184,16 +185,16 @@ export type PreviewPanelProps = {
 };
 
 export type ChatPanelProps = {
-  messages: Message[];
-  setMessages: (messages: Message[]) => void;
-  input: string;
-  setInput: (input: string) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  status: string;
-  stop: () => void;
-  reload: () => void;
+  messages: UseChatHelpers["messages"];
+  setMessages: UseChatHelpers["setMessages"];
+  input: UseChatHelpers["input"];
+  setInput: UseChatHelpers["setInput"];
+  handleSubmit: UseChatHelpers["handleSubmit"];
+  status: UseChatHelpers["status"];
+  stop: UseChatHelpers["stop"];
+  reload: UseChatHelpers["reload"];
   attachments: Attachment[];
-  setAttachments: (attachments: Attachment[]) => void;
+  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
   featureDisabled: boolean;
   userCredits: string | null;
   isVisible: boolean;
