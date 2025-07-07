@@ -3,6 +3,7 @@
  * These utilities help with metadata generation, structured data, and other SEO-related tasks
  */
 
+import { env } from "@/env";
 import { Metadata } from "next";
 import { headers } from "next/headers";
 
@@ -26,7 +27,7 @@ export interface PageSEOProps {
 export function getCanonicalUrl(path: string): string {
   // Remove trailing slash if it exists (except for homepage)
   const normalizedPath = path === "/" ? "/" : path.replace(/\/$/, "");
-  return `${process.env.NEXT_PUBLIC_BASE_URL}${normalizedPath}`;
+  return `${env.NEXT_PUBLIC_BASE_URL}${normalizedPath}`;
 }
 
 /**
@@ -64,7 +65,7 @@ export function generateOpenGraph(props: PageSEOProps) {
       {
         url: image.startsWith("http")
           ? image
-          : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`,
+          : `${env.NEXT_PUBLIC_BASE_URL}${image}`,
         width: 1200,
         height: 630,
         alt: imageAlt || title,
@@ -87,9 +88,7 @@ export function generateTwitterCard(props: PageSEOProps) {
     description,
     creator: "@markdowntailor",
     images: [
-      image.startsWith("http")
-        ? image
-        : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`,
+      image.startsWith("http") ? image : `${env.NEXT_PUBLIC_BASE_URL}${image}`,
     ],
     url: getCanonicalUrl("/"),
   };
@@ -120,25 +119,25 @@ export function generateBlogPostSchema(props: {
     description,
     image: image.startsWith("http")
       ? image
-      : `${process.env.NEXT_PUBLIC_BASE_URL}${image}`,
+      : `${env.NEXT_PUBLIC_BASE_URL}${image}`,
     datePublished: publishedDate,
     dateModified: modifiedDate || publishedDate,
     author: {
       "@type": "Organization",
       name: authorName,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+      url: `${env.NEXT_PUBLIC_BASE_URL}`,
     },
     publisher: {
       "@type": "Organization",
       name: "markdowntailor",
       logo: {
         "@type": "ImageObject",
-        url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+        url: `${env.NEXT_PUBLIC_BASE_URL}/logo.png`,
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${slug}`,
+      "@id": `${env.NEXT_PUBLIC_BASE_URL}/blog/${slug}`,
     },
   };
 }
@@ -151,8 +150,8 @@ export function generateOrganizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "markdowntailor",
-    url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-    logo: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+    url: `${env.NEXT_PUBLIC_BASE_URL}`,
+    logo: `${env.NEXT_PUBLIC_BASE_URL}/logo.png`,
     sameAs: [
       "https://twitter.com/markdowntailor",
       "https://github.com/markdowntailor",
@@ -198,7 +197,7 @@ export function generatePageMetadata(props: PageSEOProps): Metadata {
       ...(type === "article"
         ? {
             types: {
-              "application/rss+xml": `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss`,
+              "application/rss+xml": `${env.NEXT_PUBLIC_BASE_URL}/api/rss`,
             },
           }
         : {}),

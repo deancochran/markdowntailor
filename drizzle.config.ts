@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
@@ -6,10 +7,10 @@ export default defineConfig({
   dialect: "postgresql",
 
   dbCredentials: {
-    url: process.env.DATABASE_SSL_DISABLED
-      ? `${process.env.DATABASE_URL as string}`
-      : `${process.env.DATABASE_URL as string}?sslmode=no-verify`,
-    ssl: process.env.DATABASE_SSL_DISABLED ? false : true,
+    url: env.DATABASE_SSL_DISABLED
+      ? `${env.DATABASE_URL as string}`
+      : `${env.DATABASE_URL as string}?sslmode=no-verify`,
+    ssl: env.DATABASE_SSL_DISABLED ? false : true,
   },
   strict: true,
 });

@@ -126,7 +126,7 @@ function createCombinedPageContent(
 ): string {
   return pages
     .map(
-      (page, index) =>
+      (page, _index) =>
         `<div data-part="page" data-page-number="${page.pageNumber}" data-total-pages="${pages.length}">${page.content}</div>`,
     )
     .join("\n");

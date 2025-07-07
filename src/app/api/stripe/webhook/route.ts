@@ -1,5 +1,6 @@
 import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
+import { env } from "@/env";
 import { updateUserWithStripeCustomerId } from "@/lib/actions/users";
 import Decimal from "decimal.js";
 import { eq, sql } from "drizzle-orm";
@@ -8,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY as string, {
     apiVersion: "2025-06-30.basil",
   });
   try {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
     const event = stripe.webhooks.constructEvent(
       Buffer.from(body),
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET as string,
+      env.STRIPE_WEBHOOK_SECRET as string,
     );
 
     console.log(`📨 Stripe Webhook ${event.id}: ${event.type}`);

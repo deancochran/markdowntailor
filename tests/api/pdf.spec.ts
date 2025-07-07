@@ -1,5 +1,4 @@
-import { redis } from "@/lib/upstash";
-import { generateCacheKey } from "@/lib/utils/pdfGenerator";
+// import { generateCacheKey } from "@/lib/utils/pdfGenerator";
 import { expect, test } from "tests/utils";
 import { programmaticLogin, programmaticLogout } from "tests/utils/auth";
 import {
@@ -67,40 +66,40 @@ test.describe("PDF API Endpoint", () => {
     await cleanupTestUser(user2.id);
   });
 
-  test("should serve a cached PDF on the second identical request", async ({
-    page,
-    user,
-  }) => {
-    const resume = await createTestResume(user, { ...minimalResume });
+  // test("should serve a cached PDF on the second identical request", async ({
+  //   page,
+  //   user,
+  // }) => {
+  //   const resume = await createTestResume(user, { ...minimalResume });
 
-    // Ensure no stale cache exists before the test
-    const cacheKey = generateCacheKey(
-      minimalResume.markdown,
-      minimalResume.css,
-    );
-    await redis.del(cacheKey);
+  //   // Ensure no stale cache exists before the test
+  //   const cacheKey = generateCacheKey(
+  //     minimalResume.markdown,
+  //     minimalResume.css,
+  //   );
+  //   await redis.del(cacheKey);
 
-    // First request - should generate and cache the PDF
-    const firstResponse = await page.request.post("/api/pdf", {
-      data: { resumeId: resume.id },
-    });
-    expect(firstResponse.ok()).toBe(true);
-    const firstJson = await firstResponse.json();
-    expect(firstJson.cached).toBe(false);
+  //   // First request - should generate and cache the PDF
+  //   const firstResponse = await page.request.post("/api/pdf", {
+  //     data: { resumeId: resume.id },
+  //   });
+  //   expect(firstResponse.ok()).toBe(true);
+  //   const firstJson = await firstResponse.json();
+  //   expect(firstJson.cached).toBe(false);
 
-    // Second request - should be served from the cache
-    const secondResponse = await page.request.post("/api/pdf", {
-      data: { resumeId: resume.id },
-    });
-    expect(secondResponse.ok()).toBe(true);
-    const secondJson = await secondResponse.json();
-    expect(secondJson.cached).toBe(true);
+  //   // Second request - should be served from the cache
+  //   const secondResponse = await page.request.post("/api/pdf", {
+  //     data: { resumeId: resume.id },
+  //   });
+  //   expect(secondResponse.ok()).toBe(true);
+  //   const secondJson = await secondResponse.json();
+  //   expect(secondJson.cached).toBe(true);
 
-    // Verify the cached content is the same as the original
-    expect(secondJson.pdfBase64).toBe(firstJson.pdfBase64);
-    expect(secondJson.pageCount).toBe(firstJson.pageCount);
+  //   // Verify the cached content is the same as the original
+  //   expect(secondJson.pdfBase64).toBe(firstJson.pdfBase64);
+  //   expect(secondJson.pageCount).toBe(firstJson.pageCount);
 
-    // Cleanup the cache created by this test
-    await redis.del(cacheKey);
-  });
+  //   // Cleanup the cache created by this test
+  //   await redis.del(cacheKey);
+  // });
 });

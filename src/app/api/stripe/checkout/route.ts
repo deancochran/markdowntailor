@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
+import { env } from "@/env";
 import { apiRateLimiter } from "@/lib/upstash";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 export async function GET() {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  const stripe = new Stripe(env.STRIPE_SECRET_KEY as string, {
     apiVersion: "2025-06-30.basil",
   });
   try {
@@ -25,7 +26,7 @@ export async function GET() {
       mode: "payment",
       line_items: [
         {
-          price: process.env.STRIPE_ALPHA_PRICE_ID,
+          price: env.STRIPE_ALPHA_PRICE_ID,
           quantity: 1,
         },
       ],
@@ -35,8 +36,8 @@ export async function GET() {
       metadata: {
         user_id: session.user.id,
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=cancelled`,
+      success_url: `${env.NEXT_PUBLIC_BASE_URL}/settings?payment=success`,
+      cancel_url: `${env.NEXT_PUBLIC_BASE_URL}/settings?payment=cancelled`,
       ...(!!session.user.stripeCustomerId
         ? { customer: session.user.stripeCustomerId }
         : {

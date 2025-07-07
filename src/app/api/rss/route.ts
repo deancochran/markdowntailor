@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { getPosts } from "@/lib/blog";
 import { Feed } from "feed";
 
@@ -7,22 +8,22 @@ export async function GET(request: Request) {
     title: "markdowntailor Blog",
     description:
       "Articles on resume building, job hunting, and ATS optimization",
-    id: `${process.env.NEXT_PUBLIC_BASE_URL}`,
-    link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+    id: `${env.NEXT_PUBLIC_BASE_URL}`,
+    link: `${env.NEXT_PUBLIC_BASE_URL}`,
     language: "en",
-    image: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
-    favicon: `${process.env.NEXT_PUBLIC_BASE_URL}/favicon.ico`,
+    image: `${env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+    favicon: `${env.NEXT_PUBLIC_BASE_URL}/favicon.ico`,
     copyright: `Copyright © ${new Date().getFullYear()} markdowntailor`,
     updated: new Date(),
     generator: "markdowntailor",
     feedLinks: {
-      json: `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss/json`,
-      atom: `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss/atom`,
+      json: `${env.NEXT_PUBLIC_BASE_URL}/api/rss/json`,
+      atom: `${env.NEXT_PUBLIC_BASE_URL}/api/rss/atom`,
     },
     author: {
       name: "markdowntailor Team",
       email: "info@markdowntailor.com",
-      link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+      link: `${env.NEXT_PUBLIC_BASE_URL}`,
     },
   });
 
@@ -35,15 +36,15 @@ export async function GET(request: Request) {
 
     feed.addItem({
       title: post.title,
-      id: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
-      link: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+      id: `${env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+      link: `${env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
       description: post.description || "",
       content: post.content,
       author: [
         {
           name: "markdowntailor Team",
           email: "info@markdowntailor.com",
-          link: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+          link: `${env.NEXT_PUBLIC_BASE_URL}`,
         },
       ],
       date: postDate,

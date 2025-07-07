@@ -6,6 +6,7 @@ import {
 } from "ai";
 import { NextAuthRequest } from "next-auth";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { env } from "./env";
 import { middlewareRateLimiter, redis } from "./lib/upstash";
 
 export default async function middleware(
@@ -14,7 +15,7 @@ export default async function middleware(
 ): Promise<Response | undefined> {
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   // // Skip rate limiting in test environment
-  if (!process.env.RATE_LIMITING_DISABLED) {
+  if (!env.RATE_LIMITING_DISABLED) {
     const { success } = await middlewareRateLimiter.limit(ip);
     if (!success) {
       return NextResponse.redirect(new URL("/blocked", request.url));
@@ -30,8 +31,7 @@ export default async function middleware(
     isProtected &&
     new Date() >
       new Date(
-        process.env.ALPHA_ACCESS_CUTOFF_DATE ??
-          ("2025-08-01T00:00:00Z" as string),
+        env.ALPHA_ACCESS_CUTOFF_DATE ?? ("2025-08-01T00:00:00Z" as string),
       )
   ) {
     return NextResponse.redirect(new URL("/", request.url));

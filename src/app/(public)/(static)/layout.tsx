@@ -1,4 +1,5 @@
 import AppFooter from "@/components/AppFooter";
+import { env } from "@/env";
 import { Metadata } from "next";
 
 import { headers } from "next/headers";
@@ -58,7 +59,7 @@ export async function generateMetadata(): Promise<Metadata> {
         };
 
   // Construct canonical URL
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${pathname}`;
+  const canonicalUrl = `${env.NEXT_PUBLIC_BASE_URL}${pathname}`;
 
   return {
     title: currentPage.title,
@@ -90,7 +91,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "markdowntailor",
       images: [
         {
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+          url: `${env.NEXT_PUBLIC_BASE_URL}/logo.png`,
           width: 1200,
           height: 630,
           alt: currentPage.title,
@@ -102,7 +103,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: currentPage.title,
       description: currentPage.description,
       creator: "@markdowntailor",
-      images: [`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`],
+      images: [`${env.NEXT_PUBLIC_BASE_URL}/logo.png`],
     },
     verification: {
       // Add your verification codes when ready

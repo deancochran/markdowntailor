@@ -19,7 +19,7 @@ type MobileLayoutProps = {
 
 export function MobileLayout({
   mobileTab,
-  onMobileTabChange,
+  onMobileTabChange: _onMobileTabChange,
   editorState,
   editorHooks,
   chatHooks,
