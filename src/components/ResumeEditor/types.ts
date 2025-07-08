@@ -179,8 +179,7 @@ export type PreviewPanelProps = {
   markdown: string;
   css: string;
   styles: ResumeStyles;
-  resumeRef: React.RefObject<HTMLDivElement | null>;
-  resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
+  resumeRef: React.RefObject<ResumePreviewRef | null>;
   isVisible: boolean;
 };
 

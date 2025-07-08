@@ -394,6 +394,147 @@ export default function Home() {
             ))}
           </div>
         </div>
+        {/* Templates Section */}
+        <section className="px-4 max-w-6xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              Professional Templates
+            </h2>
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
+              Every template is pixel-perfect, ATS-optimized, and ready to be
+              updated with your content.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                tag: "FEATURED",
+                title: "Modern Professional",
+                description:
+                  "Clean, contemporary design that passes ATS systems while maintaining visual appeal.",
+                features: ["ATS-Optimized", "Pixel Perfect", "Professional"],
+              },
+              {
+                tag: "POPULAR",
+                title: "Minimalist Executive",
+                description:
+                  "Elegant simplicity that highlights your achievements without distraction.",
+                features: ["ATS-Optimized", "Minimalist", "Elegant"],
+              },
+              {
+                tag: "NEW",
+                title: "Creative Designer",
+                description:
+                  "Stand out with creative flair while maintaining professional standards.",
+                features: ["ATS-Optimized", "Creative", "Modern"],
+              },
+              {
+                tag: "ATS",
+                title: "Corporate Standard",
+                description:
+                  "Traditional format optimized for corporate environments and ATS parsing.",
+                features: ["ATS-Optimized", "Corporate", "Professional"],
+              },
+              {
+                tag: "ACADEMIC",
+                title: "Academic Research",
+                description:
+                  "Structured format perfect for academic positions and research roles.",
+                features: ["ATS-Optimized", "Academic", "Professional"],
+              },
+              {
+                tag: "MODERN",
+                title: "Tech Professional",
+                description:
+                  "Modern design tailored for technology and startup environments.",
+                features: ["ATS-Optimized", "Modern", "Professional"],
+              },
+            ].map((template, index) => (
+              <Card
+                key={index}
+                className="group hover:shadow-lg transition-shadow"
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {template.tag}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{template.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    {template.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {template.features.map((feature, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button className="px-8 py-4 text-lg" size="lg" asChild>
+              <Link href="/templates">
+                Browse All Templates
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <div className="px-4 max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
+              Get Started in Minutes
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Create a professional resume in 3 simple steps
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Choose Your Style",
+                description:
+                  "Pick from professionally designed templates optimized for your industry",
+              },
+              {
+                step: "02",
+                title: "Write with Markdown",
+                description:
+                  "Use simple formatting while our AI suggests improvements and catches errors",
+              },
+              {
+                step: "03",
+                title: "Export & Apply",
+                description:
+                  "Download your professional PDF resume for your applications",
+              },
+            ].map((item, index) => (
+              <div key={index} className="text-center group">
+                <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                  {item.step}
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground text-lg">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
         {/* Final Call to Action */}
         <div className="px-4 text-center w-full">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
