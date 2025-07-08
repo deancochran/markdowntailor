@@ -1,10 +1,5 @@
 import createMDX from "@next/mdx";
 import { recmaCodeHike, remarkCodeHike } from "codehike/mdx";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /** @type {import('codehike/mdx').CodeHikeConfig} */
 const chConfig = {
