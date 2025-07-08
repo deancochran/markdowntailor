@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -107,45 +108,23 @@ function useZoomControls(
   return { zoomIn, zoomOut, resetZoom };
 }
 
-function useCssService(
+function useDynamicCss(
   styles: ResumeStyles,
   customCss: string = "",
 ): DynamicCssService {
-  const [cssService] = useState(() => new DynamicCssService(styles, customCss));
-  return cssService;
-}
+  const cssService = useMemo(
+    () => new DynamicCssService(styles, customCss),
+    [styles, customCss],
+  );
 
-function useScopedCSSInjection(
-  scopedCSS: string,
-  scopeClass: string,
-  styleElementRef: React.RefObject<HTMLStyleElement | null>,
-): void {
   useEffect(() => {
-    const styleId = `scoped-resume-styles-${scopeClass}`;
-
-    // Remove existing style element
-    const existingStyle = document.getElementById(styleId);
-    if (existingStyle) {
-      existingStyle.remove();
-    }
-
-    // Create and inject new style element
-    const styleElement = document.createElement("style");
-    styleElement.id = styleId;
-    styleElement.textContent = scopedCSS;
-    document.head.appendChild(styleElement);
-
-    // Store reference for cleanup
-    styleElementRef.current = styleElement;
-
-    // Cleanup function
+    cssService.inject();
     return () => {
-      const styleElement = document.getElementById(styleId);
-      if (styleElement) {
-        styleElement.remove();
-      }
+      cssService.dispose();
     };
-  }, [scopedCSS, scopeClass, styleElementRef]);
+  }, [cssService]);
+
+  return cssService;
 }
 
 function useResumeRendering(
@@ -159,14 +138,10 @@ function useResumeRendering(
     const processContent = async () => {
       setIsLoading(true);
       try {
-        // Load font first
         await googleFontsService.loadFont(styles.fontFamily);
-
-        // Parse markdown to HTML
         const { content: html } = markdownService.parse(markdown);
         setRenderedHtml(html);
 
-        // Small delay to ensure DOM is updated before recalculating pages
         setTimeout(() => {
           recalculatePages();
           setIsLoading(false);
@@ -212,7 +187,7 @@ function createCombinedPageContent(
 ): string {
   return pages
     .map(
-      (page, _index) =>
+      (page) =>
         `<div data-part="page" data-page-number="${page.pageNumber}" data-total-pages="${pages.length}">${page.content}</div>`,
     )
     .join("\n");
@@ -347,11 +322,9 @@ function PageRenderer({
         marginBottom: isLastPage ? 0 : "20px",
       }}
     >
-      {/* Page number indicator */}
       <div className="absolute -top-6 left-0 text-xs text-gray-500 print:hidden page-indicator">
         Page {page.pageNumber} of {totalPages}
       </div>
-      {/* Page content */}
       <div
         className={`${scopeClass} bg-white shadow-lg print:shadow-none`}
         dangerouslySetInnerHTML={{ __html: page.content }}
@@ -386,44 +359,33 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
     const [isLoading, setIsLoading] = useState(true);
     const [scale, setScale] = useState(INITIAL_SCALE);
     const containerRef = useRef<HTMLDivElement>(null);
-    const styleElementRef = useRef<HTMLStyleElement | null>(null);
 
-    // Initialize CSS service
-    const cssService = useCssService(styles, customCss);
+    const cssService = useDynamicCss(styles, customCss);
 
-    // Use smart pages for page breaks
-    const smartPagesConfig = useSmartPages({
-      content: renderedHtml,
-      styles,
-      scopeClass: cssService.scopeClass,
-      customProperties: cssService.customProperties,
-    });
     const { pages, totalPages, isCalculating, recalculatePages } =
-      smartPagesConfig;
+      useSmartPages({
+        content: renderedHtml,
+        styles,
+        scopeClass: cssService.scopeClass,
+        customProperties: cssService.customProperties,
+      });
 
-    // Zoom controls
     const zoomControls = useZoomControls(scale, setScale);
 
-    // Get content for printing
     const getResumeContentForPrint = useCallback(() => {
       if (pages.length === 0) {
         return cssService.getContentForPrint(renderedHtml);
       }
-
       const combinedContent = createCombinedPageContent(pages);
       return cssService.getContentForPrint(combinedContent);
     }, [cssService, renderedHtml, pages]);
 
-    // Print method for creating a new window with just the resume content
     const handlePrintPreview = useCallback(() => {
-      // Create a new window for printing
       const printWindow = window.open("", "_blank");
       if (!printWindow) return;
 
-      // Get the print-ready content
       const printContent = getResumeContentForPrint();
 
-      // Write the content to the new window
       printWindow.document.write(printContent);
       printWindow.document.close();
       printWindow.focus();
@@ -431,19 +393,10 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
       printWindow.close();
     }, [getResumeContentForPrint]);
 
-    // Expose print function to parent components via ref
     useImperativeHandle(ref, () => ({
       print: handlePrintPreview,
     }));
 
-    // Inject scoped CSS into document head
-    useScopedCSSInjection(
-      cssService.scopedCSS,
-      cssService.scopeClass,
-      styleElementRef,
-    );
-
-    // Handle font loading and markdown rendering
     useResumeRendering(
       markdown,
       styles,
@@ -452,20 +405,16 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
       recalculatePages,
     );
 
-    // Expose API methods to parent components
     useParentComponentAPI(containerRef, cssService);
 
-    // Enable page break functionality on the container element
     useEffect(() => {
       if (containerRef.current) {
         containerRef.current.addPageBreak = () => {
-          // Create a page break element
           const pageBreak = document.createElement("div");
           pageBreak.className = PAGE_BREAK_CLASS;
           pageBreak.style.height = "0";
           pageBreak.style.width = "100%";
 
-          // Append it to the rendered content
           if (containerRef.current) {
             containerRef.current.appendChild(pageBreak);
             recalculatePages();

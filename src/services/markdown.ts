@@ -4,7 +4,7 @@ import { marked } from "marked";
 // Define the structure for the parsed front matter.
 // This can be expanded with more specific fields as needed.
 interface FrontMatter {
-  [key: string]: any;
+  [key: string]: string;
 }
 
 // Define the structure for the result of markdown processing.
@@ -43,9 +43,6 @@ export class MarkdownService {
       pedantic: false, // Don't be strict about oddities
       gfm: true, // Enable GitHub Flavored Markdown
       breaks: false, // Don't add <br> on single line breaks
-      sanitize: false, // IMPORTANT: Do not sanitize HTML. We trust the source and need the flexibility.
-      smartypants: false, // Don't use smart quotes, dashes, etc.
-      xhtml: false, // Don't output self-closing tags
     }) as string;
 
     return {

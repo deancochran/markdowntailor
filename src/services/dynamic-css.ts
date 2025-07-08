@@ -1,7 +1,7 @@
 import {
-    ResumeStyles,
-    SYSTEM_FONTS,
-    getDefaultCustomProperties,
+  ResumeStyles,
+  SYSTEM_FONTS,
+  getDefaultCustomProperties,
 } from "@/lib/utils/styles";
 
 /**
@@ -13,6 +13,7 @@ export class DynamicCssService {
   public readonly scopeClass: string;
   public readonly scopedCSS: string;
   public readonly customProperties: Record<string, string>;
+  private readonly styleElementId: string;
 
   /**
    * Creates an instance of DynamicCssService.
@@ -23,14 +24,48 @@ export class DynamicCssService {
   constructor(
     private readonly styles: ResumeStyles,
     private readonly customCss: string = "",
-    scopeId?: string
+    scopeId?: string,
   ) {
     const id =
       scopeId ||
       `resume-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     this.scopeClass = `resume-scope-${id}`;
+    this.styleElementId = `dynamic-css-${id}`;
     this.customProperties = getDefaultCustomProperties(styles);
     this.scopedCSS = this.generateScopedCSS();
+  }
+
+  /**
+   * Injects the scoped CSS into the document head.
+   * Creates a <style> element with the generated CSS and appends it to the head.
+   */
+  public inject(): void {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (document.getElementById(this.styleElementId)) {
+      return;
+    }
+
+    const styleElement = document.createElement("style");
+    styleElement.id = this.styleElementId;
+    styleElement.innerHTML = this.scopedCSS;
+    document.head.appendChild(styleElement);
+  }
+
+  /**
+   * Removes the injected CSS from the document head.
+   * Finds the <style> element by its ID and removes it.
+   */
+  public dispose(): void {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const styleElement = document.getElementById(this.styleElementId);
+    if (styleElement) {
+      document.head.removeChild(styleElement);
+    }
   }
 
   /**
@@ -191,10 +226,7 @@ export class DynamicCssService {
   /**
    * Scopes user-provided CSS to the component's scope.
    */
-  private scopeCustomCSS(
-    customCss: string,
-    scopeSelector: string
-  ): string {
+  private scopeCustomCSS(customCss: string, scopeSelector: string): string {
     if (!customCss) return "";
     const scopedCustomCSS = customCss.replace(
       /([^{}]+){/g,
@@ -207,7 +239,7 @@ export class DynamicCssService {
           .map((s: string) => `${scopeSelector} ${s.trim()}`)
           .join(", ");
         return `${scopedSelector}{`;
-      }
+      },
     );
     return `/* User's custom CSS */\n${scopedCustomCSS}`;
   }
