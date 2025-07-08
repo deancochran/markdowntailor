@@ -240,7 +240,7 @@ function PreviewContainer({
   return (
     <div className="flex-1 overflow-auto bg-gray-100 p-4 print:p-0 print:bg-white">
       <div className="flex justify-center min-h-full">
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
           {isLoading || isCalculating ? (
             <LoadingSpinner isLoading={isLoading || isCalculating} />
           ) : (

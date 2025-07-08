@@ -55,7 +55,7 @@ export function TemplatePreview() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+      <DialogContent className="!max-w-7xl w-[90vw] h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Template Preview: {previewTemplate.name}</DialogTitle>
           <DialogDescription>{previewTemplate.description}</DialogDescription>

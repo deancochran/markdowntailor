@@ -76,9 +76,7 @@ export default function TemplatesPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline">
                   <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {selectedTags.length > 0
-                    ? selectedTags.join(", ")
-                    : "Filter by tag"}
+                  Filter by tag
                 </Button>
               </PopoverTrigger>
               <PopoverContent

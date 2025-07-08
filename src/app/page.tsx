@@ -246,7 +246,7 @@ export default function Home() {
       {/* Alpha Program Banner */}
       <AlphaProgramBanner />
 
-      <div className="flex flex-col gap-48 py-32 px-4 max-w-full">
+      <div className="flex flex-col gap-48 py-12 md:py-32 px-4 max-w-full">
         {/* Hero Section */}
         <div className="relative ">
           <div
@@ -257,7 +257,7 @@ export default function Home() {
             }`}
           >
             <div className="flex flex-col gap-4 items-center justify-center text-center ">
-              <h1 className="text-8xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
+              <h1 className="text-7xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
                 Pixel. Perfect. Resumes.
               </h1>
               <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground leading-relaxed">
@@ -437,26 +437,29 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {TEMPLATES.slice(0, 6).map((template, index) => (
-              <Card
-                key={index}
-                className="group hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    {template.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {template.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={index} href={`/templates?slug=${template.slug}`}>
+                <Card className="bg-card max-h-full h-full group hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      {template.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {template.tags.map((tag, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>
