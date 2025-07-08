@@ -1,15 +1,15 @@
 "use client";
 
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ export function CreateResumeDialog() {
       try {
         const newResume = await createResume({ title, markdown, css });
         toast.success("Resume created successfully!");
-        router.push(`/editor/${newResume.id}`);
+        router.push(`/resumes/${newResume.id}`);
         setOpen(false);
       } catch (error) {
         toast.error("Failed to create resume.");
