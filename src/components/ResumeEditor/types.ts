@@ -9,7 +9,7 @@ import type { editor } from "monaco-editor";
 // Add custom properties to HTMLDivElement type
 declare global {
   interface HTMLDivElement {
-    getContentForPrint?: () => string;
+    getContentForPrint?: (content: string) => string;
     getScopedSelector?: (selector: string) => string;
     customProperties?: Record<string, string>;
   }
