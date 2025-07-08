@@ -1,18 +1,10 @@
 import { auth } from "@/auth";
-import { CreateResumeForm } from "@/components/forms/CreateResumeForm";
+import { CreateResumeDialog } from "@/components/CreateResumeDialog";
 import ResumeListing from "@/components/ResumeListing";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getResumes } from "@/lib/actions/resume";
-import { ArrowRight, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -36,66 +28,31 @@ export default async function ResumesPage() {
                 Create, manage, and export your professional resumes
               </p>
             </div>
+            <CreateResumeDialog />
           </div>
         </header>
 
-        {/* Two Cards Section */}
-        <div className="flex flex-row flex-wrap gap-6 mb-8">
-          {/* Create Resume Card */}
-          <div className="flex-1 min-w-[300px]">
-            <Card className="h-full border-2 hover:border-primary/20 transition-colors">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Create New Resume
-                </CardTitle>
-                <CardDescription>
-                  Start from scratch and build your resume step by step
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CreateResumeForm session={session} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Templates Card */}
-          <div className="flex-1 min-w-[300px]">
-            <Card className="h-full border-2 hover:border-primary/20 transition-colors justify-between">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Start with a Template
-                </CardTitle>
-                {/* <CardDescription>
-                  Choose from professionally designed templates to get started
-                  quickly
-                </CardDescription> */}
-              </CardHeader>
-              <CardContent className="flex flex-col justify-center items-center py-8">
-                <div className="w-full text-center mb-6">
-                  <h3 className="text-lg font-semibold mb-2">
-                    Professional Templates
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Browse our collection of modern, ATS-friendly resume
-                    templates
-                  </p>
-                </div>
-              </CardContent>
-              <CardFooter className="w-full flex items-end">
-                <Link href="/templates" className="w-full">
-                  <Button className="w-full group " size="lg">
-                    View Templates
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
+        <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <FileText className="h-6 w-6 text-gray-400" />
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm text-gray-700">
+                Want to save time?{" "}
+                <Link
+                  href="/templates"
+                  className="font-medium text-primary hover:underline"
+                >
+                  Browse our templates
+                </Link>{" "}
+                to get a head start on your resume.
+              </p>
+            </div>
           </div>
         </div>
 
-        <ResumeListing resumes={resumes} />
+        <ResumeListing initialResumes={resumes} />
       </div>
     </Suspense>
   );
@@ -107,47 +64,22 @@ function LoadingSkeleton() {
       <div className="animate-pulse">
         {/* Header skeleton */}
         <div className="mb-8">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-96" />
+          <div className="flex justify-between items-center">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
         </div>
 
-        {/* Two Cards skeleton */}
-        <div className="flex flex-row flex-wrap gap-6 mb-8">
-          {/* Create Resume Card Skeleton */}
-          <div className="flex-1 min-w-[300px]">
-            <Card className="h-full">
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-6 w-40" />
-                </div>
-                <Skeleton className="h-4 w-64" />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-10 w-32" />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Templates Card Skeleton */}
-          <div className="flex-1 min-w-[300px]">
-            <Card className="h-full">
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Skeleton className="h-5 w-5 rounded" />
-                  <Skeleton className="h-6 w-48" />
-                </div>
-                <Skeleton className="h-4 w-72" />
-              </CardHeader>
-              <CardContent className="flex flex-col justify-center items-center py-8">
-                <Skeleton className="h-16 w-16 rounded-full mb-4" />
-                <Skeleton className="h-6 w-48 mb-2" />
-                <Skeleton className="h-4 w-64 mb-6" />
-                <Skeleton className="h-11 w-full" />
-              </CardContent>
-            </Card>
+        {/* Notice skeleton */}
+        <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Skeleton className="h-6 w-6 rounded-full" />
+            <div className="ml-3 flex-1">
+              <Skeleton className="h-4 w-3/4" />
+            </div>
           </div>
         </div>
 

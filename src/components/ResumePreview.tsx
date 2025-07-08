@@ -374,7 +374,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
       const printWindow = window.open("", "_blank");
       if (!printWindow) return;
 
-      const printContent = getResume_content_for_print();
+      const printContent = getResumeContentForPrint();
 
       printWindow.document.write(printContent);
       printWindow.document.close();

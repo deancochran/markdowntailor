@@ -1,30 +1,29 @@
 "use server";
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
-import {
-  insertResumeSchema,
-  type InsertResumeSchema,
-  resume,
-  resumeVersions,
-  UpdateResumeSchema,
-} from "@/db/schema";
+import { resume, resumeVersions, UpdateResumeSchema } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sanitizeResumeInput } from "../utils/sanitization";
 
-export type addResumeType = Omit<z.infer<InsertResumeSchema>, "userId">;
+// Define a schema for creating a resume
+const createResumeSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  markdown: z.string().optional(),
+  css: z.string().optional(),
+});
 
-export const addResume = async (values: addResumeType) => {
+export const createResume = async (
+  values: z.infer<typeof createResumeSchema>,
+) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("You must be logged in to create a resume");
   }
 
-  const validatedFields = insertResumeSchema
-    .omit({ userId: true })
-    .safeParse(values);
+  const validatedFields = createResumeSchema.safeParse(values);
 
   if (!validatedFields.success) {
     throw new Error("Failed to create Resume");
@@ -37,7 +36,9 @@ export const addResume = async (values: addResumeType) => {
       userId: session.user.id,
     })
     .returning();
-  return newResume.id;
+
+  revalidatePath("/resumes");
+  return newResume;
 };
 
 export const getResume = async (resumeId: string) => {

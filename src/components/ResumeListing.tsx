@@ -1,169 +1,104 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createResumeFromVersion, deleteResume } from "@/lib/actions/resume";
-
-import {
-  Calendar,
-  Clock,
-  Copy,
-  Edit,
-  FileText,
-  MoreVertical,
-  Trash2,
-} from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 import { Button } from "./ui/button";
+import { Card, CardFooter, CardHeader, CardTitle } from "./ui/card";
 
-type Resume = {
+// Resume type with added optimistic state flags
+export type Resume = {
   id: string;
   userId: string;
   title: string;
   markdown: string;
   css: string;
+  styles: string;
   createdAt: Date;
   updatedAt: Date;
   _isOptimistic?: boolean;
   _isDeleting?: boolean;
 };
 
+// Main component to list resumes
 export default function ResumeListing({
-  resumes: initialResumes,
+  initialResumes = [],
 }: {
-  resumes: Resume[];
+  initialResumes: Resume[];
 }) {
   const [_isPending, startTransition] = useTransition();
   const [optimisticResumes, updateOptimisticResumes] = useOptimistic(
     initialResumes,
     (
       state: Resume[],
-      action: { type: string; resume?: Resume; id?: string },
+      action: {
+        type: string;
+        resume?: Resume;
+        id?: string;
+        title?: string;
+        isDeleting?: boolean;
+      },
     ) => {
       switch (action.type) {
         case "ADD":
           return action.resume
-            ? [{ ...action.resume, _isOptimistic: true }, ...state]
+            ? [...state, { ...action.resume, _isOptimistic: true }]
             : state;
         case "DELETE":
           return state.map((r) =>
-            r.id === action.id ? { ...r, _isDeleting: true } : r,
+            r.id === action.id ? { ...r, _isDeleting: action.isDeleting } : r,
           );
         case "REMOVE":
           return state.filter((r) => r.id !== action.id);
+        case "RENAME":
+          return state.map((r) =>
+            r.id === action.id && action.title
+              ? { ...r, title: action.title }
+              : r,
+          );
         default:
           return state;
       }
     },
   );
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: {
-      opacity: 0,
-      y: 20,
-      scale: 0.95,
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 500,
-        damping: 25,
-      },
-    },
-    exit: {
-      opacity: 0,
-      y: -20,
-      scale: 0.95,
-      transition: {
-        duration: 0.2,
-      },
-    },
-  };
-
   return (
-    <div className="w-full h-full">
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <FileText className="h-6 w-6" />
-            My Resumes
-          </CardTitle>
-        </CardHeader>
-        {optimisticResumes.length === 0 ? (
-          <CardContent className="flex flex-col items-center justify-center p-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="bg-muted flex flex-col p-4">
-                <span className="flex flex-row gap-2">
-                  <FileText className="text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">No Resumes Yet</h3>
-                </span>
-                <p className="text-muted-foreground  max-w-md">
-                  Get started by creating your first resume using the form
-                  above. Build professional resumes with our easy-to-use editor.
-                </p>
-              </div>
-            </motion.div>
-          </CardContent>
-        ) : (
-          <CardContent className="p-6">
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <AnimatePresence mode="popLayout">
-                {optimisticResumes.map((resume) => (
-                  <motion.div
-                    key={resume.id}
-                    variants={{ itemVariants }}
-                    layout
-                    exit="exit"
-                    className={resume._isDeleting ? "pointer-events-none" : ""}
-                  >
-                    <ResumeCard
-                      resume={resume}
-                      updateOptimisticResumes={updateOptimisticResumes}
-                      startTransition={startTransition}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          </CardContent>
-        )}
-      </Card>
+    <div className="container mx-auto">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {optimisticResumes.map((resume) => (
+          <ResumeCard
+            key={resume.id}
+            resume={resume}
+            updateOptimisticResumes={updateOptimisticResumes}
+            startTransition={startTransition}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
+// Card component for a single resume
 function ResumeCard({
   resume,
   updateOptimisticResumes,
@@ -177,142 +112,45 @@ function ResumeCard({
   }) => void;
   startTransition: (callback: () => Promise<void> | void) => void;
 }) {
-  const cardVariants = {
-    hover: {
-      scale: 1.02,
-      y: -4,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 25,
-      },
-    },
-    tap: {
-      scale: 0.98,
-      transition: {
-        duration: 0.1,
-      },
-    },
-  };
+  const isLoading = resume._isOptimistic || resume._isDeleting;
 
   return (
-    <motion.div variants={{ cardVariants }} whileHover="hover" whileTap="tap">
-      <Card
-        data-testid="resume-card"
-        className={`
-        group transition-all duration-200 border bg-card
-        ${resume._isOptimistic ? "bg-blue-50/50 border-blue-200" : "hover:shadow-lg hover:border-primary/20"}
-      `}
-      >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <Link href={`/resumes/${resume.id}`} className="flex-1 min-w-0">
-              <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
-                {resume.title}
-                {resume._isOptimistic && (
-                  <motion.span
-                    className="text-xs text-blue-600 ml-2 font-normal"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    (Saving...)
-                  </motion.span>
-                )}
-                {resume._isDeleting && (
-                  <motion.span
-                    className="text-xs ml-2 font-normal"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    (Deleting...)
-                  </motion.span>
-                )}
-              </CardTitle>
-            </Link>
-            <ResumeDropdownMenu
-              resume={resume}
-              resumeId={resume.id}
-              resumeTitle={resume.title}
-              updateOptimisticResumes={updateOptimisticResumes}
-              startTransition={startTransition}
-              isOptimistic={resume._isOptimistic}
-              isDeleting={resume._isDeleting}
-            />
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-3">
-            {/* Metadata */}
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  Created:{" "}
-                  {(() => {
-                    const created = new Date(resume.createdAt);
-                    const now = new Date();
-                    const isSameDay =
-                      created.getFullYear() === now.getFullYear() &&
-                      created.getMonth() === now.getMonth() &&
-                      created.getDate() === now.getDate();
-                    return isSameDay
-                      ? created.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : created.toLocaleDateString();
-                  })()}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>
-                  Updated:{" "}
-                  {(() => {
-                    const updated = new Date(resume.updatedAt);
-                    const now = new Date();
-                    const isSameDay =
-                      updated.getFullYear() === now.getFullYear() &&
-                      updated.getMonth() === now.getMonth() &&
-                      updated.getDate() === now.getDate();
-                    return isSameDay
-                      ? updated.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : updated.toLocaleDateString();
-                  })()}
-                </span>
-              </div>
-            </div>
+    <Card className={`transition-opacity ${isLoading ? "opacity-50" : ""}`}>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-medium truncate">
+            {resume.title}
+          </CardTitle>
+          <ResumeDropdownMenu
+            resume={resume}
+            resumeId={resume.id}
+            resumeTitle={resume.title}
+            updateOptimisticResumes={updateOptimisticResumes}
+            startTransition={startTransition}
+            isOptimistic={resume._isOptimistic}
+            isDeleting={resume._isDeleting}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Updated {new Date(resume.updatedAt).toLocaleDateString()}
+        </p>
+      </CardHeader>
 
-            {/* Quick actions */}
-            <div className="flex gap-2 pt-2">
-              <Link href={`/resumes/${resume.id}`} className="flex-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full "
-                  disabled={resume._isOptimistic || resume._isDeleting}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+      <CardFooter className="pt-0">
+        <div className="flex w-full gap-2">
+          <Button asChild variant="default" className="flex-1">
+            <Link href={`/editor/${resume.id}`}>Edit</Link>
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
   );
 }
 
+// Dropdown menu with actions for a resume
 function ResumeDropdownMenu({
   resume,
   resumeId,
-  resumeTitle,
   updateOptimisticResumes,
   startTransition,
   isOptimistic,
@@ -325,109 +163,104 @@ function ResumeDropdownMenu({
     type: string;
     resume?: Resume;
     id?: string;
+    title?: string;
+    isDeleting?: boolean;
   }) => void;
   startTransition: (callback: () => Promise<void> | void) => void;
   isOptimistic?: boolean;
   isDeleting?: boolean;
 }) {
-  const router = useRouter();
+  const [isDeletingOpen, setIsDeletingOpen] = useState(false);
 
-  const handleDuplicate = async () => {
+  const handleCopy = async () => {
     try {
-      // Create optimistic duplicate
-      const optimisticResume: Resume = {
-        id: `temp-${Date.now()}`,
-        userId: "",
-        title: `${resumeTitle} (Copy)`,
-        markdown: "",
-        css: "",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        _isOptimistic: true,
+      const optimisticResume = {
+        ...resume,
+        title: `${resume.title} (Copy)`,
       };
 
       updateOptimisticResumes({ type: "ADD", resume: optimisticResume });
 
       startTransition(async () => {
-        await createResumeFromVersion(resumeId);
-        toast.success("Duplicated Resume");
-        router.refresh();
+        await createResumeFromVersion(resume.id);
+        toast.success("Resume copied successfully");
       });
-    } catch {
-      toast.error("Error duplicating resume");
+    } catch (_error) {
+      toast.error("Failed to copy resume");
     }
   };
+
   const handleDelete = async () => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${resumeTitle}"? This action cannot be undone.`,
-      )
-    ) {
-      try {
-        // Show deleting state
-        updateOptimisticResumes({ type: "DELETE", id: resumeId });
-
-        startTransition(async () => {
-          await deleteResume(resumeId);
-          toast.success("Deleted Resume");
-
-          // Remove after a brief delay to show the animation
-          setTimeout(() => {
-            startTransition(() => {
-              updateOptimisticResumes({ type: "REMOVE", id: resumeId });
-            });
-          }, 300);
-
-          router.refresh();
+    try {
+      startTransition(async () => {
+        updateOptimisticResumes({
+          type: "DELETE",
+          id: resumeId,
+          isDeleting: true,
         });
-      } catch {
-        toast.error("Error deleting resume");
-      }
+
+        await deleteResume(resumeId);
+        toast.success("Resume deleted successfully");
+      });
+    } catch (_error) {
+      toast.error("Failed to delete resume");
+      updateOptimisticResumes({
+        type: "DELETE",
+        id: resumeId,
+        isDeleting: false,
+      });
     }
   };
+
+  if (isOptimistic || isDeleting) {
+    return (
+      <Button variant="ghost" size="icon" disabled>
+        <MoreHorizontal className="h-4 w-4 animate-pulse" />
+      </Button>
+    );
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 "
-            disabled={isOptimistic || isDeleting}
-          >
-            <MoreVertical className="h-4 w-4" />
-            <span className="sr-only">Open menu</span>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
-        </motion.div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48" align="end">
-        <DropdownMenuItem>
-          <Button
-            onClick={handleDuplicate}
-            variant="ghost"
-            size="sm"
-            className="w-full "
-            disabled={isOptimistic || isDeleting}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={handleCopy}>Copy Resume</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onSelect={() => setIsDeletingOpen(true)}
           >
-            <Copy className="h-4 w-4 mr-2" />
-            Duplicate
-          </Button>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Button
-            onClick={handleDelete}
-            variant="ghost"
-            size="sm"
-            className="w-full "
-            disabled={isOptimistic || isDeleting}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+            Delete Resume
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={isDeletingOpen} onOpenChange={setIsDeletingOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Resume</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this resume? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
