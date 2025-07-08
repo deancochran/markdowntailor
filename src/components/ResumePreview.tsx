@@ -142,10 +142,10 @@ function useResumeRendering(
         const { content: html } = markdownService.parse(markdown);
         setRenderedHtml(html);
 
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           recalculatePages();
           setIsLoading(false);
-        }, 100);
+        });
       } catch (error) {
         console.error("Error processing content:", error);
         setIsLoading(false);
