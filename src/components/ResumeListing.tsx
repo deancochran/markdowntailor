@@ -81,9 +81,22 @@ export default function ResumeListing({
       }
     },
   );
+  if (optimisticResumes.length === 0) {
+    return (
+      <div className="mb-8 p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center">
+          <div className="ml-3 flex-1">
+            <p className="text-sm text-gray-700">
+              You haven&apos;t created any resumes yet.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto p-4 rounded-lg border border-gray-200">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {optimisticResumes.map((resume) => (
           <ResumeCard
