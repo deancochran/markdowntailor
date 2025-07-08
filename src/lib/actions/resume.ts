@@ -4,11 +4,14 @@ import { db } from "@/db/drizzle";
 import { resume, resumeVersions, UpdateResumeSchema } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { sanitizeResumeInput } from "../utils/sanitization";
+import { Template } from "../utils/templates";
 
 // Define a schema for creating a resume
 const createResumeSchema = z.object({
+  userId: z.string().uuid().optional(),
   title: z.string().min(1, "Title is required"),
   markdown: z.string().optional(),
   css: z.string().optional(),
@@ -332,3 +335,25 @@ export const getResumeVersion = async (versionId: string, resumeId: string) => {
 
   return version;
 };
+
+export async function createResumeFromTemplate(template: Template) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const [newResume] = await db
+    .insert(resume)
+    .values({
+      userId: session.user.id,
+      title: `${template.name} (Copy)`,
+      markdown: template.markdown,
+      css: template.css,
+      styles: JSON.stringify(template.styles),
+    })
+    .returning();
+
+  revalidatePath("/resumes");
+  return newResume;
+}

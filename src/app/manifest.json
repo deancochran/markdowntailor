@@ -20,10 +20,31 @@
   ],
   "shortcuts": [
     {
-      "name": "Create Resume",
-      "short_name": "Create",
-      "description": "Start creating a new resume",
-      "url": "/resumes",
+      "name": "View Templates",
+      "short_name": "Templates",
+      "description": "Browse and preview resume templates",
+      "url": "/templates",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Features",
+      "short_name": "Features",
+      "description": "View all features",
+      "url": "/features",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pricing",
+      "short_name": "Pricing",
+      "description": "View Pricing of our services",
+      "url": "/pricing",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Login to your account",
+      "url": "/login",
       "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
     },
     {

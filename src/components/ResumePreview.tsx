@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Button } from "./ui/button";
 
 // Add custom properties to HTMLDivElement type
 declare global {
@@ -198,28 +199,28 @@ function PreviewControls({
 
   return (
     <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
-      <button
+      <Button
         onClick={zoomIn}
         className="px-2 py-1 text-sm border rounded"
         title="Zoom In"
       >
         +
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={zoomOut}
         className="px-2 py-1 text-sm border rounded"
         title="Zoom Out"
       >
         -
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={resetZoom}
         className="px-2 py-1 text-sm border rounded"
         title="Reset Zoom"
       >
         Reset
-      </button>
-      <span className="text-sm text-gray-600">
+      </Button>
+      <span className="text-sm text-black">
         {Math.round(scale * 100)}% | {totalPages} page
         {totalPages !== 1 ? "s" : ""}
       </span>

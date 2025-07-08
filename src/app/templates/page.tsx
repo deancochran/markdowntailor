@@ -81,7 +81,7 @@ export default function TemplatesPage() {
                     : "Filter by tag"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[180px] p-0">
+              <PopoverContent className="w-[180px] p-2 z-50 bg">
                 <Command>
                   <CommandGroup>
                     {Object.values(TemplateTag).map((tag) => (

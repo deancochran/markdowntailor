@@ -1,5 +1,3 @@
-"use client";
-
 import ResumePreview, { ResumePreviewRef } from "@/components/ResumePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createResume } from "@/lib/actions/resume";
+import { createResumeFromTemplate } from "@/lib/actions/resume";
 import { Template, TEMPLATES } from "@/lib/utils/templates";
 import { Loader2, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { toast } from "sonner";
 
 export function TemplatePreview() {
   const router = useRouter();
@@ -25,7 +22,7 @@ export function TemplatePreview() {
   const previewSlug = searchParams.get("slug");
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, _startTransition] = useTransition();
   const resumeRef = useRef<ResumePreviewRef>(null);
 
   const previewTemplate = previewSlug
@@ -45,21 +42,11 @@ export function TemplatePreview() {
     setIsOpen(open);
   };
 
-  const handleUseTemplate = (template: Template) => {
-    startTransition(async () => {
-      try {
-        const newResumeId = await createResume({
-          title: template.name,
-          markdown: template.markdown,
-          css: template.css,
-          styles: JSON.stringify(template.styles),
-        });
-        toast.success("Template added to your resumes");
-        router.push(`/editor/${newResumeId}`);
-      } catch (_error) {
-        toast.error("Failed to use template");
-      }
-    });
+  const handleUseTemplate = async (template: Template) => {
+    const newResume = await createResumeFromTemplate(template);
+    if (newResume) {
+      router.push(`/resumes/${newResume.id}`);
+    }
   };
 
   if (!previewTemplate) {
@@ -93,7 +80,7 @@ export function TemplatePreview() {
         <DialogFooter className="pt-4 border-t">
           <Button
             onClick={() => handleUseTemplate(previewTemplate)}
-            className="w-full sm:w-auto"
+            className="w-full"
             size="lg"
             disabled={isPending}
           >
@@ -102,7 +89,7 @@ export function TemplatePreview() {
             ) : (
               <Sparkles className="h-4 w-4 mr-2" />
             )}
-            Use This Template
+            {"Use This Template"}
           </Button>
         </DialogFooter>
       </DialogContent>
