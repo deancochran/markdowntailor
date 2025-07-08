@@ -359,7 +359,7 @@ function TemplateCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent>
         {/* Tags */}
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -375,14 +375,9 @@ function TemplateCard({
             )}
           </div>
         )}
-
-        {/* Preview Area */}
-        <div className="bg-muted rounded-md p-3 min-h-[100px] flex items-center justify-center">
-          <p className="text-xs text-muted-foreground">Template preview</p>
-        </div>
       </CardContent>
 
-      <CardFooter className="pt-0 space-y-2">
+      <CardFooter className="pt-3">
         <div className="flex w-full gap-2">
           <Button
             variant="outline"
@@ -400,7 +395,7 @@ function TemplateCard({
             onClick={handleCopy}
           >
             <Copy className="h-4 w-4 mr-2" />
-            Use Template
+            Copy
           </Button>
         </div>
       </CardFooter>
@@ -440,7 +435,7 @@ function TemplateDropdownMenu({
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={onCopy}>
           <Copy className="h-4 w-4 mr-2" />
-          Use Template
+          Copy
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
