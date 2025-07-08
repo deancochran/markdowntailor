@@ -166,6 +166,7 @@ export const PRINT_HTML_TEMPLATE = `<!DOCTYPE html>
       width: {{WIDTH}};
       min-height: {{HEIGHT}};
       background-color: white;
+      color: black;
     }
     .page-break {
       page-break-before: always;

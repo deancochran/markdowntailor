@@ -38,7 +38,7 @@ export function CreateResumeDialog() {
         toast.success("Resume created successfully!");
         router.push(`/resumes/${newResume.id}`);
         setOpen(false);
-      } catch (error) {
+      } catch (_error) {
         toast.error("Failed to create resume.");
       }
     });

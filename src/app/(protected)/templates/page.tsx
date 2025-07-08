@@ -1,6 +1,6 @@
 "use client";
 
-import { TemplatePreview } from "@/components/templatePreview";
+import { TemplatePreview } from "@/components/template-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";

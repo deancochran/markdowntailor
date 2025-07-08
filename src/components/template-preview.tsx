@@ -52,7 +52,7 @@ export function TemplatePreview() {
           title: template.name,
           markdown: template.markdown,
           css: template.css,
-          styles: template.styles,
+          styles: JSON.stringify(template.styles),
         });
         toast.success("Template added to your resumes");
         router.push(`/editor/${newResumeId}`);

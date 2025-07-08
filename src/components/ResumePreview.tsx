@@ -321,7 +321,7 @@ function PageRenderer({
         Page {page.pageNumber} of {totalPages}
       </div>
       <div
-        className={`${scopeClass} bg-white shadow-lg print:shadow-none`}
+        className={`${scopeClass} bg-white shadow-lg print:shadow-none text-black`}
         dangerouslySetInnerHTML={{ __html: page.content }}
         role="document"
         aria-label={`Resume page ${page.pageNumber}`}
