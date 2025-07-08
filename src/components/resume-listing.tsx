@@ -1,19 +1,6 @@
 "use client";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { createResumeFromVersion, deleteResume } from "@/lib/actions/resume";
-import { MoreHorizontal } from "lucide-react";
-import Link from "next/link";
-import { useOptimistic, useState, useTransition } from "react";
-import { toast } from "sonner";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -22,9 +9,37 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import { Button } from "./ui/button";
-import { Card, CardFooter, CardHeader, CardTitle } from "./ui/card";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  createResume,
+  createResumeFromVersion,
+  deleteResume,
+} from "@/lib/actions/resume";
+import { MoreHorizontal, Plus } from "lucide-react";
+import Link from "next/link";
+import { useOptimistic, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 // Resume type with added optimistic state flags
 export type Resume = {
@@ -81,32 +96,31 @@ export default function ResumeListing({
       }
     },
   );
-  if (optimisticResumes.length === 0) {
-    return (
-      <div className="mb-8 p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center">
-          <div className="ml-3 flex-1">
-            <p className="text-sm text-gray-700">
-              You haven&apos;t created any resumes yet.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto p-4 rounded-lg border border-gray-200">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {optimisticResumes.map((resume) => (
-          <ResumeCard
-            key={resume.id}
-            resume={resume}
-            updateOptimisticResumes={updateOptimisticResumes}
-            startTransition={startTransition}
-          />
-        ))}
+    <div className="container mx-auto">
+      <div className="flex justify-end mb-6">
+        <CreateResume />
       </div>
+      {optimisticResumes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+          <p className="text-lg text-muted-foreground">No resumes found.</p>
+          <p className="text-sm text-muted-foreground">
+            Get started by creating a new resume.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {optimisticResumes.map((resume) => (
+            <ResumeCard
+              key={resume.id}
+              resume={resume}
+              updateOptimisticResumes={updateOptimisticResumes}
+              startTransition={startTransition}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -275,5 +289,131 @@ function ResumeDropdownMenu({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+function CreateResume() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [markdown, setMarkdown] = useState<string | undefined>();
+  const [css, setCss] = useState<string | undefined>();
+  const [markdownFileName, setMarkdownFileName] = useState("");
+  const [cssFileName, setCssFileName] = useState("");
+  const markdownFileRef = useRef<HTMLInputElement>(null);
+  const cssFileRef = useRef<HTMLInputElement>(null);
+  const [_isPending, startTransition] = useTransition();
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (value: string) => void,
+    fileNameSetter: (value: string) => void,
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      fileNameSetter(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setter(event.target?.result as string);
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    startTransition(async () => {
+      try {
+        await createResume({ title, markdown, css });
+        toast.success("Resume created successfully!");
+        setIsOpen(false);
+        // Reset form
+        setTitle("");
+        setMarkdown(undefined);
+        setCss(undefined);
+        setMarkdownFileName("");
+        setCssFileName("");
+        if (markdownFileRef.current) markdownFileRef.current.value = "";
+        if (cssFileRef.current) cssFileRef.current.value = "";
+      } catch (error) {
+        toast.error("Failed to create resume.");
+      }
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Resume
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Resume</DialogTitle>
+          <DialogDescription>
+            Enter a title for your new resume. You can also import existing
+            markdown and CSS files.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="markdown-file" className="text-right">
+                Markdown
+              </Label>
+              <Input
+                id="markdown-file"
+                type="file"
+                accept=".md"
+                ref={markdownFileRef}
+                onChange={(e) =>
+                  handleFileChange(e, setMarkdown, setMarkdownFileName)
+                }
+                className="col-span-3"
+              />
+            </div>
+            {markdownFileName && (
+              <p className="col-span-4 text-sm text-center">
+                {markdownFileName}
+              </p>
+            )}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="css-file" className="text-right">
+                CSS
+              </Label>
+              <Input
+                id="css-file"
+                type="file"
+                accept=".css"
+                ref={cssFileRef}
+                onChange={(e) => handleFileChange(e, setCss, setCssFileName)}
+                className="col-span-3"
+              />
+            </div>
+            {cssFileName && (
+              <p className="col-span-4 text-sm text-center">{cssFileName}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={!title.trim() || _isPending}>
+              {_isPending ? "Creating..." : "Create Resume"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
