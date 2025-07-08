@@ -3,6 +3,7 @@ import AppFooter from "@/components/AppFooter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TEMPLATES } from "@/lib/utils/templates";
 import {
   ArrowRight,
   Brain,
@@ -145,42 +146,81 @@ export default function Home() {
   const testimonials = [
     {
       text: "The Markdown format makes it so easy to organize my experience. I appreciate how clean and professional the templates look.",
+      author: "John Doe",
+      position: "Software Engineer",
+      company: "ABC Corp",
     },
     {
       text: "I love how I can quickly create different versions of my resume for different industries. The ATS-friendly format gives me confidence when applying.",
+      author: "Jane Smith",
+      position: "Marketing Manager",
+      company: "XYZ Inc",
     },
     {
       text: "The AI suggestions helped me highlight my achievements with stronger action verbs. Very intuitive interface!",
+      author: "Alice Johnson",
+      position: "Product Manager",
+      company: "DEF Ltd",
     },
     {
       text: "Being able to use Markdown for my resume is perfect for a developer like me. The templates are clean and modern.",
+      author: "Bob Brown",
+      position: "Full Stack Developer",
+      company: "GHI Tech",
     },
     {
       text: "The keyword suggestions helped me tailor my resume to match the job descriptions much more effectively.",
+      author: "Charlie Davis",
+      position: "UX Designer",
+      company: "LMN Design",
     },
     {
       text: "The version control feature is invaluable for keeping track of different resume versions for different positions.",
+      author: "David Miller",
+      position: "Project Manager",
+      company: "OPQ Corp",
     },
     {
       text: "As someone who cares about design, I'm impressed with how professional and well-designed the templates are.",
+      author: "Emily Wilson",
+      position: "UI Designer",
+      company: "PQR Studio",
     },
     {
       text: "The AI suggestions helped me translate my industry-specific experience into more universally understood achievements.",
+      author: "Frank Garcia",
+      position: "Marketing Manager",
+      company: "STU Inc.",
     },
     {
       text: "The structured format helps me organize my publications and research experience in a clean, readable way.",
+      author: "Grace Kim",
+      position: "Research Scientist",
+      company: "XYZ Labs",
     },
     {
       text: "I appreciate how easy it is to highlight my metrics and achievements with the formatting options.",
+      author: "Hannah Lee",
+      position: "Data Analyst",
+      company: "ABC Corp",
     },
     {
       text: "The technical skills section formatting is perfect for showcasing my certifications and expertise.",
+      author: "Ian Chen",
+      position: "Software Engineer",
+      company: "DEF Tech",
     },
     {
       text: "As someone new to the job market, the AI suggestions helped me present my limited experience in the most effective way.",
+      author: "John Doe",
+      position: "Entry-Level Developer",
+      company: "GHI Corp",
     },
     {
       text: "The templates helped me create a professional resume that highlights my leadership experience and community impact.",
+      author: "Jane Smith",
+      position: "Community Manager",
+      company: "JKL Inc.",
     },
   ];
 
@@ -206,9 +246,9 @@ export default function Home() {
       {/* Alpha Program Banner */}
       <AlphaProgramBanner />
 
-      <div className="flex flex-col gap-20 py-10 px-4 max-w-full">
+      <div className="flex flex-col gap-48 py-32 px-4 max-w-full">
         {/* Hero Section */}
-        <div className="relative py-24">
+        <div className="relative ">
           <div
             className={`relative flex flex-col items-center justify-evenly gap-8 transition-all duration-1000 ${
               isVisible
@@ -216,40 +256,84 @@ export default function Home() {
                 : "opacity-0 translate-y-10"
             }`}
           >
-            <div className="flex flex-col items-center justify-center text-center ">
-              <h1 className="text-5xl md:text-7xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
-                Pixel Perfect Resumes
+            <div className="flex flex-col gap-4 items-center justify-center text-center ">
+              <h1 className="text-8xl font-bold bg-foreground bg-clip-text text-transparent leading-tight">
+                Pixel. Perfect. Resumes.
               </h1>
               <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground leading-relaxed">
-                Create ATS-optimized, professional resumes using Markdown.
+                Trusted by Job Seekers Worldwide
               </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="px-8 w-full " size={"lg"} asChild>
-                <Link href="/resumes">
-                  Create Your Resume
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
+            <Card className="max-w-3xl p-8">
+              <CardContent className="flex flex-col gap-4 justify-between">
+                <blockquote className="text-xl text-muted-foreground italic">
+                  &quot;{testimonials[currentTestimonial].text}&quot;
+                </blockquote>
+                <span className="w-full text-right text-xl text-muted-foreground italic">
+                  - {testimonials[currentTestimonial].author}
+                  {" | "}
+                  {testimonials[currentTestimonial].position}
+                  {" @ "}
+                  {testimonials[currentTestimonial].company}{" "}
+                </span>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Why Choose Us Section */}
+        {/* FEATURES */}
         <section
           id="features"
           className="px-4 max-w-6xl mx-auto space-y-10 scroll-mt-20 flex flex-col items-center justify-center"
         >
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Why Choose Us?
+              Ready to Create Your Resume?
             </h2>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
               Our platform is designed to help you create professional,
               ATS-optimized resumes.
             </p>
           </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Choose Your Style",
+                description:
+                  "Pick from professionally designed templates optimized for your industry",
+              },
+              {
+                step: "02",
+                title: "Write with Markdown",
+                description:
+                  "Use simple formatting while our AI suggests improvements and catches errors",
+              },
+              {
+                step: "03",
+                title: "Export & Apply",
+                description:
+                  "Download your professional PDF resume for your applications",
+              },
+            ].map((item, index) => (
+              <div key={index} className="text-center group">
+                <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 group-hover:scale-110 transition-transform shadow-lg">
+                  {item.step}
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground text-lg">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+          <Button asChild className="mb-8" size="lg">
+            <Link href="/resumes">
+              Get Started Today <ArrowRight />
+            </Link>
+          </Button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center gap-3">
@@ -331,69 +415,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <div className="w-full">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-4xl font-bold text-foreground mb-12">
-              Trusted by Job Seekers Worldwide
-            </h2>
-
-            <Card className="bg-card/80 backdrop-blur border-0 shadow-xl overflow-hidden">
-              <CardContent className="p-8">
-                <blockquote className="text-xl text-muted-foreground mb-6 italic">
-                  &quot;{testimonials[currentTestimonial].text}&quot;
-                </blockquote>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* How It Works */}
-        <div className="px-4 max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">
-              Get Started in Minutes
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Create a professional resume in 3 simple steps
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Choose Your Style",
-                description:
-                  "Pick from professionally designed templates optimized for your industry",
-              },
-              {
-                step: "02",
-                title: "Write with Markdown",
-                description:
-                  "Use simple formatting while our AI suggests improvements and catches errors",
-              },
-              {
-                step: "03",
-                title: "Export & Apply",
-                description:
-                  "Download your professional PDF resume for your applications",
-              },
-            ].map((item, index) => (
-              <div key={index} className="text-center group">
-                <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mb-4">
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground text-lg">
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
         {/* Templates Section */}
         <section className="px-4 max-w-6xl mx-auto space-y-10">
           <div className="text-center space-y-2">
@@ -405,80 +426,6 @@ export default function Home() {
               updated with your content.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                tag: "FEATURED",
-                title: "Modern Professional",
-                description:
-                  "Clean, contemporary design that passes ATS systems while maintaining visual appeal.",
-                features: ["ATS-Optimized", "Pixel Perfect", "Professional"],
-              },
-              {
-                tag: "POPULAR",
-                title: "Minimalist Executive",
-                description:
-                  "Elegant simplicity that highlights your achievements without distraction.",
-                features: ["ATS-Optimized", "Minimalist", "Elegant"],
-              },
-              {
-                tag: "NEW",
-                title: "Creative Designer",
-                description:
-                  "Stand out with creative flair while maintaining professional standards.",
-                features: ["ATS-Optimized", "Creative", "Modern"],
-              },
-              {
-                tag: "ATS",
-                title: "Corporate Standard",
-                description:
-                  "Traditional format optimized for corporate environments and ATS parsing.",
-                features: ["ATS-Optimized", "Corporate", "Professional"],
-              },
-              {
-                tag: "ACADEMIC",
-                title: "Academic Research",
-                description:
-                  "Structured format perfect for academic positions and research roles.",
-                features: ["ATS-Optimized", "Academic", "Professional"],
-              },
-              {
-                tag: "MODERN",
-                title: "Tech Professional",
-                description:
-                  "Modern design tailored for technology and startup environments.",
-                features: ["ATS-Optimized", "Modern", "Professional"],
-              },
-            ].map((template, index) => (
-              <Card
-                key={index}
-                className="group hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {template.tag}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-lg">{template.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    {template.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {template.features.map((feature, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           <div className="text-center">
             <Button className="px-8 py-4 text-lg" size="lg" asChild>
               <Link href="/templates">
@@ -487,66 +434,32 @@ export default function Home() {
               </Link>
             </Button>
           </div>
-        </section>
 
-        {/* How It Works */}
-        <div className="px-4 max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4">
-              Get Started in Minutes
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Create a professional resume in 3 simple steps
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Choose Your Style",
-                description:
-                  "Pick from professionally designed templates optimized for your industry",
-              },
-              {
-                step: "02",
-                title: "Write with Markdown",
-                description:
-                  "Use simple formatting while our AI suggests improvements and catches errors",
-              },
-              {
-                step: "03",
-                title: "Export & Apply",
-                description:
-                  "Download your professional PDF resume for your applications",
-              },
-            ].map((item, index) => (
-              <div key={index} className="text-center group">
-                <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-6 group-hover:scale-110 transition-transform shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mb-4">
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground text-lg">
-                  {item.description}
-                </p>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {TEMPLATES.slice(0, 6).map((template, index) => (
+              <Card
+                key={index}
+                className="group hover:shadow-lg transition-shadow"
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    {template.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {template.tags.map((tag, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </div>
-        {/* Final Call to Action */}
-        <div className="px-4 text-center w-full">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Create Your Professional Resume?
-          </h2>
-          <Button className="px-8 py-4 text-lg " size={"lg"} asChild>
-            <Link href="/resumes">
-              Start Building Now
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Link>
-          </Button>
-        </div>
+        </section>
       </div>
 
       <AppFooter />
