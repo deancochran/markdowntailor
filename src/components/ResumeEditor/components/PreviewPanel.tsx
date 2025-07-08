@@ -6,7 +6,7 @@ export function PreviewPanel({
   markdown,
   css,
   styles,
-  resumeRef,
+  resumePreviewRef,
   isVisible,
 }: PreviewPanelProps) {
   return (
@@ -18,7 +18,7 @@ export function PreviewPanel({
     >
       <div className="relative flex-1 h-full overflow-hidden">
         <ResumePreview
-          ref={resumeRef}
+          ref={resumePreviewRef}
           markdown={markdown}
           styles={styles}
           customCss={css}

@@ -15,7 +15,6 @@ type DesktopLayoutProps = {
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
-  resumeRef: React.RefObject<HTMLDivElement | null>;
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
   userCredits: string | null;
 };
@@ -28,7 +27,6 @@ export function DesktopLayout({
   editorState,
   editorHooks,
   chatHooks,
-  resumeRef,
   resumePreviewRef,
   userCredits,
 }: DesktopLayoutProps) {
@@ -76,7 +74,6 @@ export function DesktopLayout({
             markdown={editorState.sanitizedMarkdown}
             css={editorState.sanitizedCSS}
             styles={editorState.styles}
-            resumeRef={resumeRef}
             resumePreviewRef={resumePreviewRef}
             isVisible={previewTab === "preview"}
           />

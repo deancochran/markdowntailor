@@ -44,7 +44,6 @@ export default function ResumeEditor({
       return defaultStyles;
     }
   });
-  const resumeRef = useRef<HTMLDivElement>(null!);
   const resumePreviewRef = useRef<ResumePreviewRef>(null!);
 
   // Initialize custom hooks
@@ -185,7 +184,6 @@ export default function ResumeEditor({
           editorState={editorState}
           editorHooks={editorHooks}
           chatHooks={chatHooks}
-          resumeRef={resumeRef}
           resumePreviewRef={resumePreviewRef}
           userCredits={userCredits}
         />
@@ -196,7 +194,6 @@ export default function ResumeEditor({
           editorState={editorState}
           editorHooks={editorHooks}
           chatHooks={chatHooks}
-          resumeRef={resumeRef}
           resumePreviewRef={resumePreviewRef}
           userCredits={userCredits}
         />
