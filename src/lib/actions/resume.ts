@@ -14,10 +14,10 @@ const createResumeSchema = z.object({
   css: z.string().optional(),
   styles: z
     .string()
+    .optional()
     .default(
       '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
-    )
-    .optional(),
+    ),
 });
 
 export const createResume = async (
@@ -171,6 +171,7 @@ export const deleteResume = async (resumeId: string) => {
   }
 
   await db.delete(resume).where(eq(resume.id, resumeId));
+  revalidatePath("/resumes");
 };
 
 export const getResumeVersions = async (resumeId: string) => {
@@ -299,6 +300,7 @@ export const createResumeFromVersion = async (resumeId: string) => {
     })
     .returning();
 
+  revalidatePath("/resumes");
   return { success: true, resumeId: newResume.id };
 };
 

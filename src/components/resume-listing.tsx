@@ -36,6 +36,7 @@ import {
   createResumeFromVersion,
   deleteResume,
 } from "@/lib/actions/resume";
+import { defaultStyles } from "@/lib/utils/styles";
 import { MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useRef, useState, useTransition } from "react";
@@ -80,12 +81,16 @@ export default function ResumeListing({
             ? [...state, { ...action.resume, _isOptimistic: true }]
             : state;
         case "DELETE":
+          // Mark as deleting
           return state.map((r) =>
             r.id === action.id ? { ...r, _isDeleting: action.isDeleting } : r,
           );
         case "REMOVE":
+          // This case might be used if we want to immediately remove from UI
+          // but revalidation handles this better.
           return state.filter((r) => r.id !== action.id);
         case "RENAME":
+          // Example for renaming if that feature is added
           return state.map((r) =>
             r.id === action.id && action.title
               ? { ...r, title: action.title }
@@ -151,7 +156,6 @@ function ResumeCard({
           <ResumeDropdownMenu
             resume={resume}
             resumeId={resume.id}
-            resumeTitle={resume.title}
             updateOptimisticResumes={updateOptimisticResumes}
             startTransition={startTransition}
             isOptimistic={resume._isOptimistic}
@@ -185,7 +189,6 @@ function ResumeDropdownMenu({
 }: {
   resume: Resume;
   resumeId: string;
-  resumeTitle: string;
   updateOptimisticResumes: (action: {
     type: string;
     resume?: Resume;
@@ -200,43 +203,56 @@ function ResumeDropdownMenu({
   const [isDeletingOpen, setIsDeletingOpen] = useState(false);
 
   const handleCopy = async () => {
-    try {
-      const optimisticResume = {
+    startTransition(async () => {
+      // Create a temporary resume for the optimistic update
+      const optimisticResume: Resume = {
         ...resume,
+        id: crypto.randomUUID(), // Temporary ID
         title: `${resume.title} (Copy)`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _isOptimistic: true,
       };
 
       updateOptimisticResumes({ type: "ADD", resume: optimisticResume });
 
-      startTransition(async () => {
+      try {
         await createResumeFromVersion(resume.id);
         toast.success("Resume copied successfully");
-      });
-    } catch (_error) {
-      toast.error("Failed to copy resume");
-    }
+      } catch (_error) {
+        toast.error("Failed to copy resume. Reverting changes.");
+        // This is tricky because revalidation might happen anyway.
+        // A full solution might involve passing the temporary ID back from the server
+        // to replace it, but for now, letting revalidation handle it is simplest.
+      }
+    });
   };
 
   const handleDelete = async () => {
-    try {
-      startTransition(async () => {
-        updateOptimisticResumes({
-          type: "DELETE",
-          id: resumeId,
-          isDeleting: true,
-        });
-
-        await deleteResume(resumeId);
-        toast.success("Resume deleted successfully");
-      });
-    } catch (_error) {
-      toast.error("Failed to delete resume");
+    // Close the dialog first
+    setIsDeletingOpen(false);
+    startTransition(async () => {
+      // Optimistically mark the resume as deleting
       updateOptimisticResumes({
         type: "DELETE",
         id: resumeId,
-        isDeleting: false,
+        isDeleting: true,
       });
-    }
+
+      try {
+        await deleteResume(resumeId);
+        toast.success("Resume deleted successfully");
+        // No need to remove from state here, revalidation will do it.
+      } catch (_error) {
+        toast.error("Failed to delete resume");
+        // Revert the optimistic update on failure
+        updateOptimisticResumes({
+          type: "DELETE",
+          id: resumeId,
+          isDeleting: false,
+        });
+      }
+    });
   };
 
   if (isOptimistic || isDeleting) {
@@ -301,7 +317,7 @@ function CreateResume() {
   const [cssFileName, setCssFileName] = useState("");
   const markdownFileRef = useRef<HTMLInputElement>(null);
   const cssFileRef = useRef<HTMLInputElement>(null);
-  const [_isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -321,9 +337,16 @@ function CreateResume() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim() || isPending) return;
+
     startTransition(async () => {
       try {
-        await createResume({ title, markdown, css });
+        await createResume({
+          title,
+          markdown,
+          css,
+          styles: JSON.stringify(defaultStyles),
+        });
         toast.success("Resume created successfully!");
         setIsOpen(false);
         // Reset form
@@ -334,7 +357,7 @@ function CreateResume() {
         setCssFileName("");
         if (markdownFileRef.current) markdownFileRef.current.value = "";
         if (cssFileRef.current) cssFileRef.current.value = "";
-      } catch (error) {
+      } catch (_error) {
         toast.error("Failed to create resume.");
       }
     });
@@ -408,8 +431,8 @@ function CreateResume() {
             )}
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={!title.trim() || _isPending}>
-              {_isPending ? "Creating..." : "Create Resume"}
+            <Button type="submit" disabled={!title.trim() || isPending}>
+              {isPending ? "Creating..." : "Create Resume"}
             </Button>
           </DialogFooter>
         </form>
