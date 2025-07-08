@@ -81,7 +81,15 @@ export default function TemplatesPage() {
                     : "Filter by tag"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[180px] p-2 z-50 bg">
+              <PopoverContent
+                className="w-[180px] p-2 z-50 bg"
+                onMouseEnter={(e) => e.stopPropagation()}
+                onMouseLeave={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
+                onMouseOver={(e) => e.stopPropagation()}
+                onMouseOut={(e) => e.stopPropagation()}
+              >
                 <Command>
                   <CommandGroup>
                     {Object.values(TemplateTag).map((tag) => (
