@@ -34,20 +34,17 @@ import {
   Filter,
   MoreHorizontal,
   Search,
-  Sparkles,
 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { TemplatePreview } from "./components/template-preview";
 
 // Main page component
 export default function TemplatesPage() {
   const resumes = TEMPLATES;
   const [_isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const previewSlug = searchParams.get("slug");
 
   const [optimisticResumes, updateOptimisticResumes] = useOptimistic(
     resumes,
@@ -56,8 +53,6 @@ export default function TemplatesPage() {
       action: {
         type: string;
         template?: Template;
-        id?: string;
-        title?: string;
       },
     ) => {
       switch (action.type) {
@@ -89,7 +84,6 @@ export default function TemplatesPage() {
           tag.toLowerCase().includes(searchQuery.toLowerCase()),
         );
 
-      // Check tag filters
       const matchesTag =
         selectedTags.length === 0 ||
         template.tags?.some((tag) => selectedTags.includes(tag));
@@ -98,41 +92,14 @@ export default function TemplatesPage() {
     });
   }, [optimisticResumes, searchQuery, selectedTags]);
 
-  // Find preview template
-  const previewTemplate = previewSlug
-    ? optimisticResumes.find((r) => r.slug === previewSlug)
-    : null;
-
-  const handleUseTemplate = (template: Template) => {
-    startTransition(async () => {
-      try {
-        const newResumeId = await createResume({
-          title: template.name,
-          markdown: template.markdown,
-          css: template.css,
-          styles: template.styles,
-        });
-        toast.success("Template added to your resumes");
-        router.push(`/editor/${newResumeId}`);
-      } catch (_error) {
-        toast.error("Failed to use template");
-      }
-    });
-  };
-
-  const clearPreview = () => {
-    router.push("/templates");
-  };
-
   return (
     <div className="container mx-auto py-6 space-y-6">
+      <TemplatePreview />
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Template Templates
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Templates</h1>
         <p className="text-muted-foreground">
-          Choose from professionally designed templates to get started
+          Choose from professionally designed templates to get started.
         </p>
       </div>
 
@@ -150,7 +117,6 @@ export default function TemplatesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[180px] justify-between">
@@ -205,52 +171,6 @@ export default function TemplatesPage() {
         {filteredResumes.length !== 1 ? "s" : ""} found
       </div>
 
-      {/* Preview Section */}
-      {previewTemplate && (
-        <Card className="border-2 border-primary">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-primary" />
-                  Template Preview: {previewTemplate.name}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {previewTemplate.description}
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={clearPreview}>
-                Close Preview
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {previewTemplate.tags?.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            <div className="bg-muted rounded-lg p-4 min-h-[200px] flex items-center justify-center">
-              <p className="text-muted-foreground">
-                Template preview would render here
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              onClick={() => handleUseTemplate(previewTemplate)}
-              className="w-full"
-              size="lg"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Use This Template
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredResumes.map((template) => (
@@ -259,7 +179,6 @@ export default function TemplatesPage() {
             template={template}
             updateOptimisticResumes={updateOptimisticResumes}
             startTransition={startTransition}
-            isPreview={previewSlug === template.slug}
           />
         ))}
       </div>
@@ -273,7 +192,7 @@ export default function TemplatesPage() {
             </div>
             <h3 className="text-lg font-semibold mb-2">No templates found</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Try adjusting your search or filter to find what you`&apos;re
+              Try adjusting your search or filter to find what you&apos;re
               looking for.
             </p>
             <Button
@@ -297,37 +216,37 @@ function TemplateCard({
   template,
   updateOptimisticResumes,
   startTransition,
-  isPreview,
 }: {
   template: Template;
   updateOptimisticResumes: (action: {
     type: string;
     template?: Template;
-    id?: string;
   }) => void;
   startTransition: (callback: () => Promise<void> | void) => void;
-  isPreview?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const handlePreview = () => {
-    if (template.slug) {
-      router.push(`/templates?slug=${template.slug}`);
-    }
+    const params = new URLSearchParams(searchParams);
+    params.set("slug", template.slug);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleCopy = async () => {
     try {
       const optimisticResume = {
         ...template,
-        title: `${template.name} (Copy)`,
+        slug: `${template.slug}-${Date.now()}`,
+        name: `${template.name} (Copy)`,
       };
 
       updateOptimisticResumes({ type: "ADD", template: optimisticResume });
 
       startTransition(async () => {
         await createResume({
-          title: optimisticResume.title,
+          title: optimisticResume.name,
           markdown: optimisticResume.markdown,
           css: optimisticResume.css,
           styles: optimisticResume.styles,
@@ -340,9 +259,7 @@ function TemplateCard({
   };
 
   return (
-    <Card
-      className={`group transition-all duration-200 hover:shadow-lg ${isPreview ? "ring-2 ring-primary" : ""}`}
-    >
+    <Card className="group transition-all duration-200 hover:shadow-lg">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1">
@@ -355,12 +272,15 @@ function TemplateCard({
               </p>
             )}
           </div>
-          <TemplateDropdownMenu template={template} onCopy={handleCopy} />
+          <TemplateDropdownMenu
+            template={template}
+            onCopy={handleCopy}
+            onPreview={handlePreview}
+          />
         </div>
       </CardHeader>
 
       <CardContent>
-        {/* Tags */}
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {template.tags.slice(0, 3).map((tag) => (
@@ -405,21 +325,13 @@ function TemplateCard({
 
 // Dropdown menu with actions for a template
 function TemplateDropdownMenu({
-  template,
   onCopy,
+  onPreview,
 }: {
   template: Template;
-  isOptimistic?: boolean;
   onCopy: () => void;
+  onPreview: () => void;
 }) {
-  const router = useRouter();
-
-  const handlePreview = () => {
-    if (template.slug) {
-      router.push(`/templates?slug=${template.slug}`);
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -429,7 +341,7 @@ function TemplateDropdownMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={handlePreview}>
+        <DropdownMenuItem onSelect={onPreview}>
           <Eye className="h-4 w-4 mr-2" />
           Preview Template
         </DropdownMenuItem>
