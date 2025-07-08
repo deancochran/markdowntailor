@@ -3,16 +3,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { createResume } from "@/lib/actions/resume";
 import { Template, TEMPLATES } from "@/lib/utils/templates";
-import { Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -24,7 +24,7 @@ export function TemplatePreview() {
   const previewSlug = searchParams.get("slug");
 
   const [isOpen, setIsOpen] = useState(false);
-  const [_isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const previewTemplate = previewSlug
     ? TEMPLATES.find((t) => t.slug === previewSlug)
@@ -90,8 +90,13 @@ export function TemplatePreview() {
             onClick={() => handleUseTemplate(previewTemplate)}
             className="w-full sm:w-auto"
             size="lg"
+            disabled={isPending}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
+            {isPending ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
             Use This Template
           </Button>
         </DialogFooter>

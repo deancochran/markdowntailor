@@ -10,15 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { createResume } from "@/lib/actions/resume";
 import { cn } from "@/lib/utils";
 import { Template, TEMPLATES, TemplateTag } from "@/lib/utils/templates";
 import {
@@ -26,47 +18,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
-import { Check, Copy, Eye, Filter, MoreHorizontal, Search } from "lucide-react";
+import { Check, Eye, Filter, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useMemo, useState } from "react";
 import { TemplatePreview } from "./components/template-preview";
 
 // Main page component
 export default function TemplatesPage() {
-  const resumes = TEMPLATES;
-  const [_isPending, startTransition] = useTransition();
   const [searchQuery, setSearchQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<TemplateTag[]>([]);
 
-  const [optimisticResumes, updateOptimisticResumes] = useOptimistic(
-    resumes,
-    (
-      state: Template[],
-      action: {
-        type: string;
-        template?: Template;
-      },
-    ) => {
-      switch (action.type) {
-        case "ADD":
-          return action.template ? [...state, { ...action.template }] : state;
-
-        default:
-          return state;
-      }
-    },
-  );
   const toggleTag = (tag: TemplateTag) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
-  const [open, setOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<TemplateTag[]>([]);
-
   const filteredResumes = useMemo(() => {
-    return optimisticResumes.filter((template) => {
+    return TEMPLATES.filter((template) => {
       const matchesSearch =
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         template.description
@@ -82,7 +52,7 @@ export default function TemplatesPage() {
 
       return matchesSearch && matchesTag;
     });
-  }, [optimisticResumes, searchQuery, selectedTags]);
+  }, [searchQuery, selectedTags]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -166,12 +136,7 @@ export default function TemplatesPage() {
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredResumes.map((template) => (
-          <TemplateCard
-            key={template.slug}
-            template={template}
-            updateOptimisticResumes={updateOptimisticResumes}
-            startTransition={startTransition}
-          />
+          <TemplateCard key={template.slug} template={template} />
         ))}
       </div>
 
@@ -204,18 +169,7 @@ export default function TemplatesPage() {
 }
 
 // Card component for a single template
-function TemplateCard({
-  template,
-  updateOptimisticResumes,
-  startTransition,
-}: {
-  template: Template;
-  updateOptimisticResumes: (action: {
-    type: string;
-    template?: Template;
-  }) => void;
-  startTransition: (callback: () => Promise<void> | void) => void;
-}) {
+function TemplateCard({ template }: { template: Template }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -226,49 +180,22 @@ function TemplateCard({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const handleCopy = async () => {
-    try {
-      const optimisticResume = {
-        ...template,
-        slug: `${template.slug}-${Date.now()}`,
-        name: `${template.name} (Copy)`,
-      };
-
-      updateOptimisticResumes({ type: "ADD", template: optimisticResume });
-
-      startTransition(async () => {
-        await createResume({
-          title: optimisticResume.name,
-          markdown: optimisticResume.markdown,
-          css: optimisticResume.css,
-          styles: optimisticResume.styles,
-        });
-        toast.success("Template copied successfully");
-      });
-    } catch (_error) {
-      toast.error("Failed to copy template");
-    }
-  };
-
   return (
-    <Card className="group transition-all duration-200 hover:shadow-lg">
+    <Card className="group transition-all duration-200 hover:shadow-lg flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 flex-1">
-            <CardTitle className="text-lg font-semibold leading-tight">
-              {template.name}
-            </CardTitle>
-            {template.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {template.description}
-              </p>
-            )}
-          </div>
-          <TemplateDropdownMenu onCopy={handleCopy} onPreview={handlePreview} />
+        <div className="space-y-1 flex-1">
+          <CardTitle className="text-lg font-semibold leading-tight">
+            {template.name}
+          </CardTitle>
+          {template.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {template.description}
+            </p>
+          )}
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="flex-grow">
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {template.tags.slice(0, 3).map((tag) => (
@@ -286,57 +213,16 @@ function TemplateCard({
       </CardContent>
 
       <CardFooter className="pt-3">
-        <div className="flex w-full gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handlePreview}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Preview
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handleCopy}
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Copy
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={handlePreview}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          Preview
+        </Button>
       </CardFooter>
     </Card>
-  );
-}
-
-// Dropdown menu with actions for a template
-function TemplateDropdownMenu({
-  onCopy,
-  onPreview,
-}: {
-  onCopy: () => void;
-  onPreview: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={onPreview}>
-          <Eye className="h-4 w-4 mr-2" />
-          Preview Template
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onCopy}>
-          <Copy className="h-4 w-4 mr-2" />
-          Copy
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
