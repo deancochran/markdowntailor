@@ -7,10 +7,9 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import LinkedIn from "next-auth/providers/linkedin";
 import { user } from "./db/schema";
-import { env } from "./env";
 
 const providers = [GitHub, LinkedIn, Google];
-if (env.AUTH_CREDENTIALS_ENABLED) {
+if (process.env.AUTH_CREDENTIALS_ENABLED) {
   providers.push(
     //@ts-expect-error issue https://github.com/nextauthjs/next-auth/issues/6174
     Credentials({

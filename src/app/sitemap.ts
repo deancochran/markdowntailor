@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { getPosts } from "@/lib/blog";
 import type { MetadataRoute } from "next";
 
@@ -6,43 +5,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes with metadata
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/about`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/features`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/features`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/pricing`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.9,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/blog`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/blog`,
       lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/privacy-policy`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/privacy-policy`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.5,
     },
     {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/terms-of-service`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/terms-of-service`,
       lastModified: new Date(),
       changeFrequency: "yearly",
       priority: 0.5,
@@ -58,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const publishDate = new Date(post.publishedOn);
 
     return {
-      url: `${env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/blog/${post.slug}`,
       lastModified: publishDate,
       changeFrequency: "monthly",
       priority: 0.6,

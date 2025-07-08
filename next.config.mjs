@@ -25,26 +25,22 @@ const nextConfig = {
   cacheHandler: resolve(__dirname, "./cache-handler.ts"),
   cacheMaxMemorySize: 0, // disable default in-memory caching
 
-  // Ensure proper module resolution for server-side code
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Server-side webpack config adjustments if needed
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-      };
-    } else {
-      // Client-side: disable Node.js modules
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        dns: false,
-        net: false,
-        tls: false,
-        fs: false,
-        path: false,
-      };
-    }
-    return config;
-  },
+  // // Ensure proper module resolution for server-side code
+  // webpack: (config, { isServer }) => {
+  //   if (!isServer) {
+  //     config.resolve.fallback = {
+  //       ...config.resolve.fallback,
+  //       fs: false,
+  //       path: false,
+  //       stream: false,
+  //       crypto: false,
+  //       os: false,
+  //       net: false,
+  //       tls: false,
+  //     };
+  //   }
+  //   return config;
+  // },
 };
 
 const withMDX = createMDX({
