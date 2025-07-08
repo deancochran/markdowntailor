@@ -1,4 +1,4 @@
-import { defaultStyles } from "./styles";
+import { defaultStyles, ResumeStyles } from "./styles";
 
 export enum TemplateTag {
   Creative = "Creative",
@@ -24,7 +24,7 @@ export interface Template {
   tags: TemplateTag[];
   markdown: string;
   css: string;
-  styles: string;
+  styles: ResumeStyles;
 }
 
 export const TEMPLATES: Template[] = [
@@ -75,11 +75,11 @@ h1 {
   margin-bottom: 16px;
 }
 `,
-    styles: JSON.stringify({
+    styles: {
       ...defaultStyles,
       fontFamily: "Inter",
       paperSize: "Letter",
-    }),
+    },
   },
   {
     slug: "minimalist",
@@ -121,7 +121,7 @@ h2 {
     font-weight: 400;
 }
 `,
-    styles: JSON.stringify({
+    styles: {
       ...defaultStyles,
       fontFamily: "Roboto",
       fontSize: 11,
@@ -129,6 +129,6 @@ h2 {
       paperSize: "A4",
       marginV: 50,
       marginH: 50,
-    }),
+    },
   },
 ];

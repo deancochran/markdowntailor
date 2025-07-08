@@ -1,14 +1,8 @@
 "use client";
 
+import { TemplatePreview } from "@/components/templatePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -21,7 +15,6 @@ import {
 import { Check, Eye, Filter, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { TemplatePreview } from "./components/template-preview";
 
 // Main page component
 export default function TemplatesPage() {
@@ -174,55 +167,55 @@ function TemplateCard({ template }: { template: Template }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handlePreview = () => {
-    const params = new URLSearchParams(searchParams);
+  const handlePreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("slug", template.slug);
     router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
-    <Card className="group transition-all duration-200 hover:shadow-lg flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="space-y-1 flex-1">
-          <CardTitle className="text-lg font-semibold leading-tight">
-            {template.name}
-          </CardTitle>
-          {template.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {template.description}
-            </p>
+    <div
+      onClick={handlePreview}
+      className="cursor-pointer group relative border rounded-lg p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-lg hover:border-primary h-full min-h-[160px]"
+    >
+      <div className="flex-1">
+        <h3 className="text-lg font-semibold leading-tight group-hover:text-primary">
+          {template.name}
+        </h3>
+        {template.description && (
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            {template.description}
+          </p>
+        )}
+      </div>
+
+      {template.tags && template.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-3">
+          {template.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+          {template.tags.length > 3 && (
+            <Badge variant="secondary" className="text-xs">
+              +{template.tags.length - 3} more
+            </Badge>
           )}
         </div>
-      </CardHeader>
+      )}
 
-      <CardContent className="flex-grow">
-        {template.tags && template.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {template.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {template.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{template.tags.length - 3} more
-              </Badge>
-            )}
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="pt-3">
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
-          className="w-full"
+          className="shadow-lg"
           onClick={handlePreview}
         >
           <Eye className="h-4 w-4 mr-2" />
           Preview
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

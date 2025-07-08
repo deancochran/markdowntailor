@@ -1,5 +1,6 @@
 "use client";
 
+import ResumePreview, { ResumePreviewRef } from "@/components/ResumePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,7 @@ import { createResume } from "@/lib/actions/resume";
 import { Template, TEMPLATES } from "@/lib/utils/templates";
 import { Loader2, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 export function TemplatePreview() {
@@ -25,6 +26,7 @@ export function TemplatePreview() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const resumeRef = useRef<ResumePreviewRef>(null);
 
   const previewTemplate = previewSlug
     ? TEMPLATES.find((t) => t.slug === previewSlug)
@@ -66,12 +68,12 @@ export function TemplatePreview() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Template Preview: {previewTemplate.name}</DialogTitle>
           <DialogDescription>{previewTemplate.description}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
           <div className="flex flex-wrap gap-2">
             {previewTemplate.tags?.map((tag) => (
               <Badge key={tag} variant="secondary">
@@ -79,13 +81,16 @@ export function TemplatePreview() {
               </Badge>
             ))}
           </div>
-          <div className="bg-muted rounded-lg p-4 min-h-[400px] flex items-center justify-center">
-            <p className="text-muted-foreground">
-              Template preview would render here
-            </p>
+          <div className="flex-1 relative">
+            <ResumePreview
+              ref={resumeRef}
+              markdown={previewTemplate.markdown}
+              styles={previewTemplate.styles}
+              customCss={previewTemplate.css}
+            />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="pt-4 border-t">
           <Button
             onClick={() => handleUseTemplate(previewTemplate)}
             className="w-full sm:w-auto"
