@@ -200,21 +200,21 @@ function PreviewControls({
     <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
       <button
         onClick={zoomIn}
-        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        className="px-2 py-1 text-sm border rounded"
         title="Zoom In"
       >
         +
       </button>
       <button
         onClick={zoomOut}
-        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        className="px-2 py-1 text-sm border rounded"
         title="Zoom Out"
       >
         -
       </button>
       <button
         onClick={resetZoom}
-        className="px-2 py-1 text-sm border rounded hover:bg-gray-100"
+        className="px-2 py-1 text-sm border rounded"
         title="Reset Zoom"
       >
         Reset

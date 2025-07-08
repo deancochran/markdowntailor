@@ -48,7 +48,7 @@ export default function TemplatesPage() {
   }, [searchQuery, selectedTags]);
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto p-4 space-y-6">
       <TemplatePreview />
       {/* Header */}
       <div className="space-y-2">
