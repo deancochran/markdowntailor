@@ -1,3 +1,4 @@
+import { defaultStyles } from "@/lib/utils/styles";
 import {
   boolean,
   decimal,
@@ -146,11 +147,7 @@ export const resume = pgTable("resume", {
   title: text("title").notNull(),
   markdown: text("markdown").notNull().default(""),
   css: text("css").notNull().default(""),
-  styles: text("styles")
-    .notNull()
-    .default(
-      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
-    ),
+  styles: text("styles").notNull().default(JSON.stringify(defaultStyles)),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -169,11 +166,7 @@ export const resumeVersions = pgTable("resume_versions", {
   title: text("title").notNull(),
   markdown: text("markdown").notNull().default(""),
   css: text("css").notNull().default(""),
-  styles: text("styles")
-    .notNull()
-    .default(
-      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
-    ),
+  styles: text("styles").notNull().default(JSON.stringify(defaultStyles)),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

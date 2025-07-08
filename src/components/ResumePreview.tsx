@@ -80,8 +80,6 @@ const PAGE_BREAK_CLASS = "page-break";
 const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
-const PAPER_WIDTH = 210; // mm
-const PAPER_HEIGHT = 297; // mm
 const CONTAINER_MIN_WIDTH = 900;
 
 // Services
@@ -132,7 +130,6 @@ function useResumeRendering(
   styles: ResumeStyles,
   setRenderedHtml: (html: string) => void,
   setIsLoading: (loading: boolean) => void,
-  recalculatePages: () => void,
 ): void {
   useEffect(() => {
     const processContent = async () => {
@@ -141,13 +138,11 @@ function useResumeRendering(
         await googleFontsService.loadFont(styles.fontFamily);
         const { content: html } = markdownService.parse(markdown);
         setRenderedHtml(html);
-
-        requestAnimationFrame(() => {
-          recalculatePages();
-          setIsLoading(false);
-        });
       } catch (error) {
         console.error("Error processing content:", error);
+      } finally {
+        // The `useSmartPages` hook will now take over the loading state
+        // via its `isCalculating` flag. We just need to stop this initial loading.
         setIsLoading(false);
       }
     };
@@ -160,9 +155,9 @@ function useResumeRendering(
     styles.lineHeight,
     styles.marginV,
     styles.marginH,
+    styles.paperSize,
     setRenderedHtml,
     setIsLoading,
-    recalculatePages,
   ]);
 }
 
@@ -246,7 +241,7 @@ function PreviewContainer({
       <div className="flex justify-center min-h-full">
         <div className="w-full max-w-4xl">
           {isLoading || isCalculating ? (
-            <LoadingSpinner isLoading={isLoading} />
+            <LoadingSpinner isLoading={isLoading || isCalculating} />
           ) : (
             <PagesContainer
               scale={scale}
@@ -335,10 +330,8 @@ function PageRenderer({
         data-total-pages={totalPages}
         style={{
           boxSizing: "border-box",
-          width: `${PAPER_WIDTH}mm`,
-          minWidth: `${PAPER_WIDTH}mm`,
-          minHeight: `${PAPER_HEIGHT}mm`,
-          maxWidth: `${PAPER_WIDTH}mm`,
+          width: "var(--resume-paper-width)",
+          minHeight: "var(--resume-paper-height)",
           padding: `${styles.marginV}px ${styles.marginH}px`,
           border: "1px solid #e5e7eb",
           borderRadius: "4px",
@@ -365,7 +358,6 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
         content: renderedHtml,
         styles,
         scopeClass: cssService.scopeClass,
-        customProperties: cssService.customProperties,
       });
 
     const zoomControls = useZoomControls(scale, setScale);
@@ -382,7 +374,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
       const printWindow = window.open("", "_blank");
       if (!printWindow) return;
 
-      const printContent = getResumeContentForPrint();
+      const printContent = getResume_content_for_print();
 
       printWindow.document.write(printContent);
       printWindow.document.close();
@@ -395,13 +387,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
       print: handlePrintPreview,
     }));
 
-    useResumeRendering(
-      markdown,
-      styles,
-      setRenderedHtml,
-      setIsLoading,
-      recalculatePages,
-    );
+    useResumeRendering(markdown, styles, setRenderedHtml, setIsLoading);
 
     useParentComponentAPI(containerRef, cssService);
 

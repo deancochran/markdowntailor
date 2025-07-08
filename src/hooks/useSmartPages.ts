@@ -1,5 +1,10 @@
-import { ResumeStyles } from "@/lib/utils/styles";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  MM_TO_PX,
+  PAPER_SIZES,
+  ResumeStyles,
+  defaultStyles,
+} from "@/lib/utils/styles";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Constants
 const NEW_PAGE_CLASS = "page-break";
@@ -14,7 +19,6 @@ interface UseSmartPagesProps {
   content: string;
   styles: ResumeStyles;
   scopeClass?: string;
-  customProperties?: Record<string, string>;
 }
 
 interface UseSmartPagesReturn {
@@ -26,53 +30,18 @@ interface UseSmartPagesReturn {
   getContentArea: () => { width: number; height: number };
 }
 
-// Helper functions
+// Helper function to get the full height of an element including margins
 const elementHeight = (element: Element): number => {
   const style = window.getComputedStyle(element);
-  const marginTop = parseInt(style.marginTop) || 0;
-  const marginBottom = parseInt(style.marginBottom) || 0;
-
-  return element.clientHeight + marginTop + marginBottom;
+  const marginTop = parseInt(style.marginTop, 10) || 0;
+  const marginBottom = parseInt(style.marginBottom, 10) || 0;
+  return (element as HTMLElement).offsetHeight + marginTop + marginBottom;
 };
 
-const createPage = (
-  size: { width: number; height: number },
-  margins: { top: number; bottom: number; left: number; right: number },
-  pageNumber: number,
-  totalPages: number,
-  scopeClass?: string,
-  styles?: ResumeStyles,
-): HTMLElement => {
-  const page = document.createElement("div");
-
-  // Dataset attributes for identification
-  page.dataset.part = "page";
-  page.dataset.pageNumber = pageNumber.toString();
-  page.dataset.totalPages = totalPages.toString();
-
-  if (scopeClass) {
-    page.classList.add(scopeClass);
-  }
-
-  // Apply styles directly
-  page.style.width = `${size.width}mm`;
-  page.style.height = `${size.height}mm`;
-  page.style.padding = `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px`;
-  page.style.position = "relative";
-  page.style.boxSizing = "border-box";
-  page.style.overflow = "hidden";
-
-  // Apply user styles if provided
-  if (styles) {
-    // Set font properties
-    page.style.fontFamily = `"${styles.fontFamily.replace(/\+/g, " ")}", -apple-system, BlinkMacSystemFont, sans-serif`;
-    page.style.fontSize = `${styles.fontSize}px`;
-    page.style.lineHeight = styles.lineHeight.toString();
-  }
-
-  return page;
-};
-
+/**
+ * Breaks HTML content into pages based on specified dimensions and styles.
+ * It works by rendering the content into a hidden off-screen element to measure it.
+ */
 const breakPage = (
   content: string,
   size: { width: number; height: number },
@@ -80,7 +49,6 @@ const breakPage = (
   scopeClass?: string,
   styles?: ResumeStyles,
 ): PageInfo[] => {
-  // Create temporary container
   const container = document.createElement("div");
   container.innerHTML = content;
 
@@ -88,186 +56,166 @@ const breakPage = (
     container.classList.add(scopeClass);
   }
 
-  // Set up for measurements
+  // Set up the container for accurate measurement
   container.style.position = "absolute";
   container.style.left = "-9999px";
   container.style.visibility = "hidden";
-  container.style.width = `${size.width}mm`;
+  container.style.width = `${size.width - margins.left - margins.right}px`;
+  container.style.boxSizing = "border-box";
+
+  // Apply font styles to the container to ensure children are measured correctly
+  if (styles) {
+    container.style.fontFamily = `"${styles.fontFamily.replace(
+      /\+/g,
+      " ",
+    )}", sans-serif`;
+    container.style.fontSize = `${styles.fontSize}px`;
+    container.style.lineHeight = styles.lineHeight.toString();
+  }
 
   document.body.appendChild(container);
 
   try {
     const maxHeight = size.height - margins.top - margins.bottom;
     const pages: PageInfo[] = [];
-
-    let accHeight = 0;
+    let accumulatedHeight = 0;
     let pageNumber = 1;
-    let currentPage = createPage(
-      size,
-      margins,
-      pageNumber,
-      1,
-      scopeClass,
-      styles,
-    );
     let currentPageContent: HTMLElement[] = [];
+    const children = Array.from(container.children);
 
-    Array.from(container.children).forEach((child) => {
+    children.forEach((child) => {
       const childElement = child as HTMLElement;
       const childHeight = elementHeight(childElement);
       const isPageBreak = childElement.classList.contains(NEW_PAGE_CLASS);
 
-      if (accHeight + childHeight > maxHeight || isPageBreak) {
-        // Extract HTML content from current page
-        const pageContent = currentPageContent
-          .map((element) => element.outerHTML)
-          .join("");
-
-        // Add current page to results
+      if (
+        (accumulatedHeight > 0 &&
+          accumulatedHeight + childHeight > maxHeight) ||
+        isPageBreak
+      ) {
         pages.push({
           pageNumber,
-          content: pageContent,
+          content: currentPageContent.map((el) => el.outerHTML).join(""),
         });
 
-        // Create new page
         pageNumber++;
-        currentPage = createPage(
-          size,
-          margins,
-          pageNumber,
-          1,
-          scopeClass,
-          styles,
-        );
         currentPageContent = [];
-        accHeight = 0;
+        accumulatedHeight = 0;
 
-        // Skip page break elements
-        if (isPageBreak) {
-          return;
-        }
+        if (isPageBreak) return;
       }
 
-      // Add element to current page
-      const clone = childElement.cloneNode(true) as HTMLElement;
-      currentPage.appendChild(clone);
-      currentPageContent.push(clone);
-      accHeight += childHeight;
+      currentPageContent.push(childElement);
+      accumulatedHeight += childHeight;
     });
 
-    // Add the last page if it has content
     if (currentPageContent.length > 0) {
-      const pageContent = currentPageContent
-        .map((element) => element.outerHTML)
-        .join("");
-
       pages.push({
         pageNumber,
-        content: pageContent,
+        content: currentPageContent.map((el) => el.outerHTML).join(""),
       });
     }
 
-    return pages.map((page, index) => ({
-      ...page,
-      pageNumber: index + 1,
-    }));
+    return pages.map((page, index) => ({ ...page, pageNumber: index + 1 }));
   } finally {
-    // Clean up
     document.body.removeChild(container);
   }
 };
 
+/**
+ * A React hook to automatically paginate HTML content based on resume styles.
+ */
 export const useSmartPages = ({
   content,
   styles,
   scopeClass,
 }: UseSmartPagesProps): UseSmartPagesReturn => {
   const [pages, setPages] = useState<PageInfo[]>([]);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCalculating, setIsCalculating] = useState(true);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoize the styles object by stringifying it. This is the key to preventing
+  // infinite loops, as it provides a stable dependency for useCallback and useEffect.
+  const stylesString = useMemo(() => JSON.stringify(styles), [styles]);
 
   const getPageDimensions = useCallback(() => {
-    // Use the actual pixel dimensions that match your CSS
-    // 210mm at 96dpi ≈ 794px, 297mm ≈ 1123px
+    const parsedStyles: ResumeStyles = JSON.parse(stylesString);
+    const paperSize = parsedStyles.paperSize || "A4";
+    const dimensions = PAPER_SIZES[paperSize];
     return {
-      width: 794, // 210mm in pixels
-      height: 1123, // 297mm in pixels
+      width: Math.round(dimensions.w * MM_TO_PX),
+      height: Math.round(dimensions.h * MM_TO_PX),
     };
-  }, []);
-  // Get content area dimensions
+  }, [stylesString]);
+
   const getContentArea = useCallback(() => {
+    const parsedStyles: ResumeStyles = JSON.parse(stylesString);
     const pageDimensions = getPageDimensions();
     return {
-      width: pageDimensions.width,
-      height: pageDimensions.height - styles.marginV * 2,
+      width:
+        pageDimensions.width -
+        (parsedStyles.marginH || defaultStyles.marginH) * 2,
+      height:
+        pageDimensions.height -
+        (parsedStyles.marginV || defaultStyles.marginV) * 2,
     };
-  }, [styles.marginV, getPageDimensions]);
+  }, [stylesString, getPageDimensions]);
 
-  // Calculate pages
   const calculatePages = useCallback(() => {
-    if (!content.trim()) {
-      setPages([_createEmptyPage(0)]);
-      return;
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-
     setIsCalculating(true);
 
-    try {
-      const size = getPageDimensions();
-      const margins = {
-        top: styles.marginV,
-        bottom: styles.marginV,
-        left: styles.marginH,
-        right: styles.marginH,
-      };
+    debounceTimerRef.current = setTimeout(() => {
+      try {
+        const parsedStyles: ResumeStyles = JSON.parse(stylesString);
+        if (!content.trim()) {
+          setPages([{ pageNumber: 1, content: "" }]);
+          return;
+        }
 
-      const newPages = breakPage(content, size, margins, scopeClass, styles);
-      setPages(newPages);
-    } catch (error) {
-      console.error("Error calculating pages:", error);
-      setPages([{ pageNumber: 1, content }]);
-    } finally {
-      setIsCalculating(false);
-    }
-  }, [content, styles, scopeClass, getPageDimensions]);
+        const size = getPageDimensions();
+        const margins = {
+          top: parsedStyles.marginV,
+          bottom: parsedStyles.marginV,
+          left: parsedStyles.marginH,
+          right: parsedStyles.marginH,
+        };
 
-  // Throttled recalculation
-  const recalculatePages = useCallback(() => {
-    if (throttleTimerRef.current) {
-      clearTimeout(throttleTimerRef.current);
-    }
+        const newPages = breakPage(
+          content,
+          size,
+          margins,
+          scopeClass,
+          parsedStyles,
+        );
 
-    throttleTimerRef.current = setTimeout(() => {
-      calculatePages();
-      throttleTimerRef.current = null;
-    }, 200);
-  }, [calculatePages]);
+        setPages(newPages.length > 0 ? newPages : [{ pageNumber: 1, content }]);
+      } catch (error) {
+        console.error("Error calculating pages:", error);
+        setPages([{ pageNumber: 1, content }]);
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 250);
+  }, [content, stylesString, scopeClass, getPageDimensions]);
 
-  // Calculate pages when dependencies change
   useEffect(() => {
-    recalculatePages();
-
+    calculatePages();
     return () => {
-      if (throttleTimerRef.current) {
-        clearTimeout(throttleTimerRef.current);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [recalculatePages]);
+  }, [calculatePages]);
 
   return {
     pages,
     totalPages: pages.length,
     isCalculating,
-    recalculatePages,
+    recalculatePages: calculatePages,
     getPageDimensions,
     getContentArea,
   };
 };
-
-// Simple helper function for empty page - kept for potential future use
-function _createEmptyPage(_availableHeight: number): PageInfo {
-  return {
-    pageNumber: 1,
-    content: "",
-  };
-}

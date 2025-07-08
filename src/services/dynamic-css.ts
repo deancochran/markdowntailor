@@ -1,7 +1,8 @@
 import {
+  getDefaultCustomProperties,
+  PAPER_SIZES,
   ResumeStyles,
   SYSTEM_FONTS,
-  getDefaultCustomProperties,
 } from "@/lib/utils/styles";
 
 /**
@@ -44,7 +45,11 @@ export class DynamicCssService {
       return;
     }
 
-    if (document.getElementById(this.styleElementId)) {
+    const existingElement = document.getElementById(this.styleElementId);
+    if (existingElement) {
+      if (existingElement.innerHTML !== this.scopedCSS) {
+        existingElement.innerHTML = this.scopedCSS;
+      }
       return;
     }
 
@@ -85,8 +90,9 @@ export class DynamicCssService {
    */
   public getContentForPrint(content: string): string {
     const fontUrl = this.getFontUrl(this.styles.fontFamily);
+    const paperSize = this.styles.paperSize || "A4";
+    const paperDimensions = PAPER_SIZES[paperSize];
 
-    // Ensure content is wrapped in page elements for consistent printing
     const structuredContent = content.includes('data-part="page"')
       ? content
       : `<div data-part="page">${content}</div>`;
@@ -98,9 +104,8 @@ export class DynamicCssService {
   <title>Resume</title>
   ${fontUrl ? `<link href="${fontUrl}" rel="stylesheet">` : ""}
   <style>
-    /* Print page setup */
     @page {
-      size: A4 portrait;
+      size: ${paperSize} portrait;
       margin: 0;
     }
 
@@ -112,25 +117,22 @@ export class DynamicCssService {
       print-color-adjust: exact !important;
     }
 
-    /* Apply custom properties for printing */
     :root {
       ${Object.entries(this.customProperties)
         .map(([key, value]) => `${key}: ${value};`)
         .join("\n      ")}
     }
 
-    /* Use the same scoped CSS as the preview */
     ${this.scopedCSS}
 
-    /* Additional print-specific overrides */
     .${this.scopeClass} {
       box-shadow: none !important;
       margin: 0 !important;
     }
 
     .${this.scopeClass} [data-part="page"] {
-      width: 210mm !important;
-      min-height: 297mm !important;
+      width: ${paperDimensions.w}mm !important;
+      min-height: ${paperDimensions.h}mm !important;
       padding: ${this.styles.marginV}px ${this.styles.marginH}px !important;
       margin: 0 !important;
       page-break-after: always !important;
@@ -147,7 +149,6 @@ export class DynamicCssService {
       page-break-after: avoid !important;
     }
 
-    /* Hide elements that should not appear in print */
     .page-break, .page-indicator, .print\\:hidden {
       display: none !important;
     }
@@ -184,17 +185,18 @@ export class DynamicCssService {
       }
 
       ${scopeSelector} [data-part="page"] {
-        width: 210mm;
-        min-height: 297mm;
-        padding: ${this.styles.marginV}px ${this.styles.marginH}px;
+        width: var(--resume-paper-width);
+        min-height: var(--resume-paper-height);
+        padding: var(--resume-margin-v) var(--resume-margin-h);
         background-color: white;
         box-sizing: border-box;
       }
 
       ${scopeSelector} * {
-        font-family: "${this.styles.fontFamily.replace(/\+/g, " ")}", -apple-system, BlinkMacSystemFont, sans-serif;
-        font-size: ${this.styles.fontSize}px;
-        line-height: ${this.styles.lineHeight};
+        font-family: var(--resume-font-family);
+        font-size: var(--resume-font-size);
+        line-height: var(--resume-line-height);
+        box-sizing: inherit;
       }
 
       ${scopeSelector} .page-break {
@@ -234,11 +236,11 @@ export class DynamicCssService {
         if (selector.trim().startsWith("@")) {
           return match;
         }
-        const scopedSelector = selector
+        const scopedSelectorList = selector
           .split(",")
           .map((s: string) => `${scopeSelector} ${s.trim()}`)
           .join(", ");
-        return `${scopedSelector}{`;
+        return `${scopedSelectorList}{`;
       },
     );
     return `/* User's custom CSS */\n${scopedCustomCSS}`;
@@ -249,7 +251,10 @@ export class DynamicCssService {
    */
   private getFontUrl(fontFamily?: string): string {
     return fontFamily && !SYSTEM_FONTS.includes(fontFamily)
-      ? `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, "+")}:wght@300;400;500;600;700&display=swap`
+      ? `https://fonts.googleapis.com/css2?family=${fontFamily.replace(
+          / /g,
+          "+",
+        )}:wght@300;400;500;600;700&display=swap`
       : "";
   }
 }

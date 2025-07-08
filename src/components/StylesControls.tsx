@@ -7,7 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { defaultStyles, ResumeStyles, SYSTEM_FONTS } from "@/lib/utils/styles";
+import {
+  defaultStyles,
+  PAPER_SIZES,
+  PaperSize,
+  ResumeStyles,
+  SYSTEM_FONTS,
+} from "@/lib/utils/styles";
 
 interface StylesControlsProps {
   styles: ResumeStyles;
@@ -46,6 +52,28 @@ export default function StylesControls({
   return (
     <div className="p-4 space-y-4 bg-background border-b">
       <div className="flex flex-row items-end justify-start gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs" htmlFor="paperSize">
+            Paper Size
+          </Label>
+          <Select
+            value={styles.paperSize}
+            onValueChange={(value: PaperSize) =>
+              handleStyleChange("paperSize", value)
+            }
+          >
+            <SelectTrigger id="paperSize">
+              <SelectValue placeholder="Select paper size" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(PAPER_SIZES).map((size) => (
+                <SelectItem key={size} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-1">
           <Label className="text-xs" htmlFor="fontFamily">
             Font Family
