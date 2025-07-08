@@ -1,6 +1,6 @@
 import createMDX from "@next/mdx";
 import { recmaCodeHike, remarkCodeHike } from "codehike/mdx";
-import { dirname, resolve } from "path";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,25 +22,6 @@ const nextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   output: "standalone",
   reactStrictMode: true,
-  cacheHandler: resolve(__dirname, "./cache-handler.ts"),
-  cacheMaxMemorySize: 0, // disable default in-memory caching
-
-  // // Ensure proper module resolution for server-side code
-  // webpack: (config, { isServer }) => {
-  //   if (!isServer) {
-  //     config.resolve.fallback = {
-  //       ...config.resolve.fallback,
-  //       fs: false,
-  //       path: false,
-  //       stream: false,
-  //       crypto: false,
-  //       os: false,
-  //       net: false,
-  //       tls: false,
-  //     };
-  //   }
-  //   return config;
-  // },
 };
 
 const withMDX = createMDX({
