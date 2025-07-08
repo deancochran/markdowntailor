@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,16 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
-import { CommandGroup, CommandItem } from "cmdk";
-import {
-  Check,
-  Command,
-  Copy,
-  Eye,
-  Filter,
-  MoreHorizontal,
-  Search,
-} from "lucide-react";
+import { Check, Copy, Eye, Filter, MoreHorizontal, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -106,7 +98,7 @@ export default function TemplatesPage() {
       {/* Search and Filter Bar */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search templates..."
@@ -119,7 +111,7 @@ export default function TemplatesPage() {
           <div className="flex items-center gap-2">
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between">
+                <Button variant="outline">
                   <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
                   {selectedTags.length > 0
                     ? selectedTags.join(", ")
@@ -272,11 +264,7 @@ function TemplateCard({
               </p>
             )}
           </div>
-          <TemplateDropdownMenu
-            template={template}
-            onCopy={handleCopy}
-            onPreview={handlePreview}
-          />
+          <TemplateDropdownMenu onCopy={handleCopy} onPreview={handlePreview} />
         </div>
       </CardHeader>
 
@@ -328,7 +316,6 @@ function TemplateDropdownMenu({
   onCopy,
   onPreview,
 }: {
-  template: Template;
   onCopy: () => void;
   onPreview: () => void;
 }) {
