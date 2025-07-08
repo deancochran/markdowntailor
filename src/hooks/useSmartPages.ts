@@ -117,9 +117,7 @@ const breakPage = (
       const childHeight = elementHeight(childElement);
       const isPageBreak = childElement.classList.contains(NEW_PAGE_CLASS);
 
-      // With this
-      const TOLERANCE = 20; // Adjust as needed
-      if (accHeight + childHeight > maxHeight + TOLERANCE || isPageBreak) {
+      if (accHeight + childHeight > maxHeight || isPageBreak) {
         // Extract HTML content from current page
         const pageContent = currentPageContent
           .map((element) => element.outerHTML)
@@ -217,8 +215,8 @@ export const useSmartPages = ({
     try {
       const size = getPageDimensions();
       const margins = {
-        top: styles.marginV / 2,
-        bottom: styles.marginV / 2,
+        top: styles.marginV,
+        bottom: styles.marginV,
         left: styles.marginH,
         right: styles.marginH,
       };

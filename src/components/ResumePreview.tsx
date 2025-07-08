@@ -336,11 +336,9 @@ function PageRenderer({
         style={{
           boxSizing: "border-box",
           width: `${PAPER_WIDTH}mm`,
-          height: `${PAPER_HEIGHT}mm`,
           minWidth: `${PAPER_WIDTH}mm`,
           minHeight: `${PAPER_HEIGHT}mm`,
           maxWidth: `${PAPER_WIDTH}mm`,
-          maxHeight: `${PAPER_HEIGHT}mm`,
           padding: `${styles.marginV}px ${styles.marginH}px`,
           border: "1px solid #e5e7eb",
           borderRadius: "4px",
