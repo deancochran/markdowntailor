@@ -12,6 +12,7 @@ const createResumeSchema = z.object({
   title: z.string().min(1, "Title is required"),
   markdown: z.string().optional(),
   css: z.string().optional(),
+  styles: z.string().optional(),
 });
 
 export const createResume = async (
