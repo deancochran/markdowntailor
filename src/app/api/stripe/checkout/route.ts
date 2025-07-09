@@ -35,8 +35,8 @@ export async function GET() {
       metadata: {
         user_id: session.user.id,
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?payment=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://markdowntailor.com"}/settings?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://markdowntailor.com"}/settings?payment=cancelled`,
       ...(!!session.user.stripeCustomerId
         ? { customer: session.user.stripeCustomerId }
         : {
