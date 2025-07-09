@@ -19,11 +19,13 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "markdowntailor",
-  description: "A markdown-based resume editor",
+  metadataBase: new URL("https://markdowntailor.com"),
+  title: "ATS-Optimized Resume Builder to Get You Hired | markdowntailor",
+  description:
+    "Build, Create, and Tailor ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
   alternates: {
     types: {
-      "application/rss+xml": "https://markdowntailor.com/api/rss",
+      "application/rss+xml": "/api/rss",
     },
   },
 };
@@ -142,6 +144,25 @@ export default async function RootLayout({
               "@type": "ContactPoint",
               email: "info@markdowntailor.com",
               contactType: "customer service",
+            },
+          }),
+        }}
+      />
+      {/* WebSite Schema for SEO */}
+      <Script
+        id="website-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            url: "https://markdowntailor.com",
+            name: "markdowntailor",
+            potentialAction: {
+              "@type": "SearchAction",
+              target:
+                "https://markdowntailor.com/search?q={search_term_string}",
+              "query-input": "required name=search_term_string",
             },
           }),
         }}

@@ -12,37 +12,37 @@ export async function generateMetadata(): Promise<Metadata> {
   // Define page-specific metadata
   const pageMetadata: Record<string, { title: string; description: string }> = {
     "/": {
-      title: "markdowntailor - ATS-Optimized Resume Builder",
+      title: "ATS-Optimized Resume Builder to Get You Hired | markdowntailor",
       description:
-        "Create ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
+        "Build, Create, and Tailor ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
     },
     "/about": {
-      title: "About markdowntailor - Our Mission and Story",
+      title: "Our Mission to Help You Get Hired | markdowntailor",
       description:
-        "Learn about our mission to help job seekers get their resumes seen by optimizing for ATS systems.",
+        "Learn about our mission to help job seekers get their resumes seen by building resumes; optimizing and tailoring them for ATS systems.",
     },
     "/features": {
-      title: "Features - markdowntailor Resume Builder",
+      title: "Features of Our ATS-Friendly Resume Builder | markdowntailor",
       description:
         "Discover the powerful features that make markdowntailor the best tool for creating ATS-optimized resumes.",
     },
     "/pricing": {
-      title: "Pricing Plans - markdowntailor",
+      title: "Affordable Resume Builder Pricing | markdowntailor",
       description:
         "Affordable plans for creating professional, ATS-optimized resumes with markdowntailor.",
     },
     "/blog": {
-      title: "Blog - Resume Tips & Career Advice | markdowntailor",
+      title: "Resume Tips & Career Advice Blog | markdowntailor",
       description:
         "Expert advice on resume building, job hunting strategies, and ATS optimization techniques.",
     },
     "/privacy-policy": {
-      title: "Privacy Policy - markdowntailor",
+      title: "Privacy Policy | markdowntailor",
       description:
         "Our privacy policy explains how we collect, use, and protect your personal information.",
     },
     "/terms-of-service": {
-      title: "Terms of Service - markdowntailor",
+      title: "Terms of Service | markdowntailor",
       description:
         "Read our terms of service to understand the rules and guidelines for using markdowntailor.",
     },
@@ -52,18 +52,22 @@ export async function generateMetadata(): Promise<Metadata> {
     pathname in pageMetadata
       ? pageMetadata[pathname]
       : {
-          title: "markdowntailor - ATS-Optimized Resume Builder",
+          title: "ATS-Optimized Resume Builder | markdowntailor",
           description:
-            "Create powerful, ATS-friendly resumes with our markdown-based resume builder.",
+            "Create powerful, ATS-friendly resumes with our markdown and css resume builder.",
         };
 
   // Construct canonical URL
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${pathname}`;
+  const canonicalUrl = pathname;
 
   return {
     title: currentPage.title,
     description: currentPage.description,
     keywords: [
+      "resume maker",
+      "cv maker",
+      "curriculum vitae maker",
+      "markdown resume",
       "resume builder",
       "ATS optimization",
       "markdown resume",
@@ -90,7 +94,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "markdowntailor",
       images: [
         {
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+          url: "/logo.png",
           width: 1200,
           height: 630,
           alt: currentPage.title,
@@ -102,7 +106,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: currentPage.title,
       description: currentPage.description,
       creator: "@markdowntailor",
-      images: [`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`],
+      images: ["/logo.png"],
     },
     verification: {
       // Add your verification codes when ready

@@ -9,54 +9,24 @@ export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
 
-  // Define page-specific metadata
-  const pageMetadata: Record<string, { title: string; description: string }> = {
-    "/": {
-      title: "markdowntailor - ATS-Optimized Resume Builder",
-      description:
-        "Create ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
-    },
-    "/about": {
-      title: "About markdowntailor - Our Mission and Story",
-      description:
-        "Learn about our mission to help job seekers get their resumes seen by optimizing for ATS systems.",
-    },
-    "/features": {
-      title: "Features - markdowntailor Resume Builder",
-      description:
-        "Discover the powerful features that make markdowntailor the best tool for creating ATS-optimized resumes.",
-    },
-    "/pricing": {
-      title: "Pricing Plans - markdowntailor",
-      description:
-        "Affordable plans for creating professional, ATS-optimized resumes with markdowntailor.",
-    },
-    "/blog": {
-      title: "Blog - Resume Tips & Career Advice | markdowntailor",
-      description:
-        "Expert advice on resume building, job hunting strategies, and ATS optimization techniques.",
-    },
-    "/privacy-policy": {
-      title: "Privacy Policy - markdowntailor",
-      description:
-        "Our privacy policy explains how we collect, use, and protect your personal information.",
-    },
-  };
-
   const currentPage = {
-    title: "Resume Templates",
+    title: "Professionally Designed Resume Templates | markdowntailor",
     description:
-      "Explore our collection of professionally designed resume templates to help you stand out in the job market.",
+      "Choose from a collection of professionally designed, ATS-friendly resume templates to help you stand out and get hired.",
     pathname: "/templates",
   };
 
   // Construct canonical URL
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${pathname}`;
+  const canonicalUrl = pathname;
 
   return {
     title: currentPage.title,
     description: currentPage.description,
     keywords: [
+      "resume maker",
+      "cv maker",
+      "curriculum vitae maker",
+      "markdown resume",
       "resume builder",
       "ATS optimization",
       "markdown resume",
@@ -83,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "markdowntailor",
       images: [
         {
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+          url: "/logo.png",
           width: 1200,
           height: 630,
           alt: currentPage.title,
@@ -95,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: currentPage.title,
       description: currentPage.description,
       creator: "@markdowntailor",
-      images: [`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`],
+      images: ["/logo.png"],
     },
     verification: {
       // Add your verification codes when ready
