@@ -23,6 +23,11 @@ CMD ["pnpm", "run", "test"]
 # Production
 FROM node:20-bookworm-slim AS production
 WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --gid 1001 nodejs
+RUN adduser --uid 1001 --ingroup nodejs --system --no-create-home nodeuser
+
 RUN corepack enable pnpm
 
 # Copy built app
@@ -38,7 +43,6 @@ COPY --from=builder /app/migrations ./migrations
 
 USER nextjs
 
-ENV NODE_ENV=production
 ENV PORT=80
 ENV HOST=0.0.0.0
 EXPOSE 80
