@@ -52,6 +52,10 @@ export async function generateMetadata(): Promise<Metadata> {
     title: currentPage.title,
     description: currentPage.description,
     keywords: [
+      "resume maker",
+      "cv maker",
+      "curriculum vitae maker",
+      "markdown resume",
       "resume builder",
       "ATS optimization",
       "markdown resume",
@@ -88,7 +92,19 @@ export async function generateMetadata(): Promise<Metadata> {
         ? {
             publishedTime: blogPost.publishedOn,
             authors: ["markdowntailor Team"],
-            tags: ["resume", "job search", "ats optimization", "career advice"],
+            tags: [
+              "resume maker",
+              "cv maker",
+              "curriculum vitae maker",
+              "markdown resume",
+              "resume builder",
+              "ATS optimization",
+              "markdown resume",
+              "job application",
+              "career tools",
+              "resume parser",
+              "job search",
+            ],
           }
         : {}),
     },

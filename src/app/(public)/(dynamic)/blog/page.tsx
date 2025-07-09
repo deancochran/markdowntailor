@@ -5,7 +5,7 @@ import Link from "next/link";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Blog - Resume Tips & Career Advice | markdowntailor",
+  title: "Blog - Resume Tips & Career Advice",
   description:
     "Expert advice on resume building, job hunting strategies, and ATS optimization techniques.",
   openGraph: {
@@ -29,7 +29,7 @@ export default async function BlogIndex() {
   const blogListSchema = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "markdowntailor Blog",
+    name: "Blog",
     description:
       "Expert advice on resume building, job hunting strategies, and ATS optimization",
     url: "https://markdowntailor.com/blog",

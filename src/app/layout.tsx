@@ -19,8 +19,8 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "markdowntailor",
-  description: "A markdown-based resume editor",
+  title: "Markdown + CSS Resume Build | markdowntailor",
+  description: "A markdown and css resume maker",
   alternates: {
     types: {
       "application/rss+xml": "https://markdowntailor.com/api/rss",
