@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "test:ui": "pnpm exec playwright test --ui",
     "test:failed": "npx playwright test --last-failed",
