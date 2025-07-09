@@ -199,7 +199,7 @@ function PreviewControls({
   const { zoomIn, zoomOut, resetZoom } = zoomControls;
 
   return (
-    <div className="fixed top-40 right-4 z-10 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg print:hidden">
+    <div className="fixed right-8 mt-4 z-10 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg print:hidden">
       <Button
         onClick={zoomIn}
         className="px-4 text-sm border rounded hover:bg-gray-50"
@@ -246,7 +246,7 @@ function PreviewContainer({
         scale={scale}
         totalPages={totalPages}
       />
-      <div className="flex-1 overflow-auto bg-gray-100 p-4 print:p-0 print:bg-white">
+      <div className="absolute w-full h-full flex-1 overflow-auto bg-gray-100 print:p-0 print:bg-white">
         <div className="flex justify-center min-h-full pt-8">
           <div className="w-full">
             {isLoading || isCalculating ? (
@@ -418,7 +418,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
     }, [containerRef, recalculatePages]);
 
     return (
-      <div className="flex flex-col h-full" ref={containerRef}>
+      <div className="relative flex flex-col h-full" ref={containerRef}>
         <PreviewContainer
           isLoading={isLoading}
           isCalculating={isCalculating}

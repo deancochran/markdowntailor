@@ -133,7 +133,8 @@ margin-top: 8px;
     styles: {
       ...defaultStyles,
       fontFamily: "Inter",
-      paperSize: "Letter",
+      paperSize: "A4",
+      lineHeight: 1.2,
     },
   },
   {
