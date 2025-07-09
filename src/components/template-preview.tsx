@@ -55,12 +55,12 @@ export function TemplatePreview() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-7xl !max-h-[80vh] w-[90vw] h-full flex flex-col p-2">
-        <DialogHeader className="pt-8">
+      <DialogContent className="!max-w-7xl !max-h-[80vh] w-[90vw] h-full flex flex-col p-4">
+        <DialogHeader className="">
           <DialogTitle>Template Preview: {previewTemplate.name}</DialogTitle>
           <DialogDescription>{previewTemplate.description}</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-row flex-wrap gap-2">
           {previewTemplate.tags?.map((tag) => (
             <Badge key={tag} variant="secondary">
               {tag}
