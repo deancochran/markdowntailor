@@ -5,6 +5,30 @@
  * to improve maintainability and consistency across the application.
  */
 
+export enum FONT_FAMILY {
+  Inter = "Inter",
+  Roboto = "Roboto",
+  OpenSans = "Open+Sans",
+  Lato = "Lato",
+  Montserrat = "Montserrat",
+  Georgia = "Georgia",
+  TimesNewRoman = "Times+New+Roman",
+  Arial = "Arial",
+  Poppins = "Poppins",
+  PlayfairDisplay = "Playfair+Display",
+  SourceSansPro = "Source+Sans+Pro",
+  Merriweather = "Merriweather",
+}
+export const FONT_OPTIONS = Object.values(FONT_FAMILY);
+export const FONT_SIZE_OPTIONS = Array.from(
+  { length: 17 },
+  (_, i) => 8 + i * 0.5,
+);
+export const LINE_HEIGHT_OPTIONS = Array.from({ length: 11 }, (_, i) =>
+  (1 + i * 0.1).toFixed(1),
+);
+export const MARGIN_OPTIONS = Array.from({ length: 9 }, (_, i) => 10 + i * 5);
+
 // Constants for paper sizes in millimeters
 export const PAPER_SIZES = {
   A4: { w: 210, h: 297 },
@@ -26,7 +50,7 @@ export interface ResumeStyles {
   lineHeight: number; // Line height multiplier
 
   // Appearance
-  fontFamily: string; // Main font family (English only)
+  fontFamily: FONT_FAMILY; // Main font family (English only)
 }
 
 // Default resume style settings
@@ -35,7 +59,7 @@ export const defaultStyles: ResumeStyles = {
   marginH: 40,
   fontSize: 12,
   lineHeight: 1.5,
-  fontFamily: "Inter",
+  fontFamily: FONT_FAMILY.Inter,
   paperSize: "A4",
 };
 

@@ -55,28 +55,24 @@ export function TemplatePreview() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="!max-w-7xl w-[90vw] h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="!max-w-7xl !max-h-[80vh] w-[90vw] h-full flex flex-col p-4">
+        <DialogHeader className="">
           <DialogTitle>Template Preview: {previewTemplate.name}</DialogTitle>
           <DialogDescription>{previewTemplate.description}</DialogDescription>
         </DialogHeader>
-        <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-          <div className="flex flex-wrap gap-2">
-            {previewTemplate.tags?.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-          <div className="flex-1 relative">
-            <ResumePreview
-              ref={resumeRef}
-              markdown={previewTemplate.markdown}
-              styles={previewTemplate.styles}
-              customCss={previewTemplate.css}
-            />
-          </div>
+        <div className="flex flex-row flex-wrap gap-2">
+          {previewTemplate.tags?.map((tag) => (
+            <Badge key={tag} variant="secondary">
+              {tag}
+            </Badge>
+          ))}
         </div>
+        <ResumePreview
+          ref={resumeRef}
+          markdown={previewTemplate.markdown}
+          styles={previewTemplate.styles}
+          customCss={previewTemplate.css}
+        />
         <DialogFooter className="pt-4 border-t">
           <Button
             onClick={() => handleUseTemplate(previewTemplate)}

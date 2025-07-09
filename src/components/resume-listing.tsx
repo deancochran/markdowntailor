@@ -37,7 +37,7 @@ import {
   deleteResume,
 } from "@/lib/actions/resume";
 import { defaultStyles } from "@/lib/utils/styles";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -103,8 +103,14 @@ export default function ResumeListing({
   );
 
   return (
-    <div className="container mx-auto">
-      <div className="flex justify-end mb-6">
+    <div className="container mx-auto flex flex-col gap-4">
+      <div className="flex justify-between gap-2">
+        <Button asChild>
+          <Link className="whitespace-nowrap" href="/templates">
+            Browse Templates
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </Button>
         <CreateResume />
       </div>
       {optimisticResumes.length === 0 ? (
@@ -366,8 +372,8 @@ function CreateResume() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
+        <Button className="whitespace-nowrap">
+          <Plus className="w-4 h-4" />
           Create New Resume
         </Button>
       </DialogTrigger>

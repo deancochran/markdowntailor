@@ -1,8 +1,8 @@
 import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { DynamicCssService } from "@/services/dynamic-css";
-import { GoogleFontsService } from "@/services/google-fonts";
-import { MarkdownService } from "@/services/markdown";
+import { googleFontsService } from "@/services/google-fonts";
+import { markdownService } from "@/services/markdown";
 import {
   forwardRef,
   useCallback,
@@ -53,6 +53,11 @@ interface PreviewContainerProps {
   totalPages: number;
   scopeClass: string;
   styles: ResumeStyles;
+  zoomControls: {
+    zoomIn: () => void;
+    zoomOut: () => void;
+    resetZoom: () => void;
+  };
 }
 
 interface LoadingSpinnerProps {
@@ -82,10 +87,6 @@ const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
 const CONTAINER_MIN_WIDTH = 900;
-
-// Services
-const googleFontsService = new GoogleFontsService();
-const markdownService = new MarkdownService();
 
 // Custom hooks
 function useZoomControls(
@@ -198,32 +199,32 @@ function PreviewControls({
   const { zoomIn, zoomOut, resetZoom } = zoomControls;
 
   return (
-    <div className="flex items-center gap-2 p-2 border-b bg-white print:hidden">
+    <div className="fixed right-8 mt-4 z-10 flex items-center gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg print:hidden">
       <Button
         onClick={zoomIn}
-        className="px-2 py-1 text-sm border rounded"
+        className="px-4 text-sm border rounded hover:bg-gray-50"
         title="Zoom In"
       >
         +
       </Button>
       <Button
         onClick={zoomOut}
-        className="px-2 py-1 text-sm border rounded"
+        className="px-4 text-sm border rounded hover:bg-gray-50"
         title="Zoom Out"
       >
         -
       </Button>
       <Button
         onClick={resetZoom}
-        className="px-2 py-1 text-sm border rounded"
+        className="p-2 text-sm border rounded hover:bg-gray-50"
         title="Reset Zoom"
       >
         Reset
       </Button>
-      <span className="text-sm text-black">
+      {/* <div className="text-sm text-gray-700 font-medium">
         {Math.round(scale * 100)}% | {totalPages} page
         {totalPages !== 1 ? "s" : ""}
-      </span>
+      </div> */}
     </div>
   );
 }
@@ -236,25 +237,33 @@ function PreviewContainer({
   totalPages,
   scopeClass,
   styles,
+  zoomControls,
 }: PreviewContainerProps) {
   return (
-    <div className="flex-1 overflow-auto bg-gray-100 p-4 print:p-0 print:bg-white">
-      <div className="flex justify-center min-h-full">
-        <div className="w-full">
-          {isLoading || isCalculating ? (
-            <LoadingSpinner isLoading={isLoading || isCalculating} />
-          ) : (
-            <PagesContainer
-              scale={scale}
-              pages={pages}
-              totalPages={totalPages}
-              scopeClass={scopeClass}
-              styles={styles}
-            />
-          )}
+    <>
+      <PreviewControls
+        zoomControls={zoomControls}
+        scale={scale}
+        totalPages={totalPages}
+      />
+      <div className="absolute w-full h-full flex-1 overflow-auto bg-gray-100 print:p-0 print:bg-white">
+        <div className="flex justify-center min-h-full pt-8">
+          <div className="w-full">
+            {isLoading || isCalculating ? (
+              <LoadingSpinner isLoading={isLoading || isCalculating} />
+            ) : (
+              <PagesContainer
+                scale={scale}
+                pages={pages}
+                totalPages={totalPages}
+                scopeClass={scopeClass}
+                styles={styles}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -318,7 +327,7 @@ function PageRenderer({
         marginBottom: isLastPage ? 0 : "20px",
       }}
     >
-      <div className="absolute -top-6 left-0 text-xs text-gray-500 print:hidden page-indicator">
+      <div className="absolute -top-8 left-0 text-xs text-gray-600 bg-white/80 backdrop-blur-sm px-2 py-1 rounded shadow-sm print:hidden page-indicator">
         Page {page.pageNumber} of {totalPages}
       </div>
       <div
@@ -409,12 +418,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
     }, [containerRef, recalculatePages]);
 
     return (
-      <div className="flex flex-col h-full" ref={containerRef}>
-        <PreviewControls
-          zoomControls={zoomControls}
-          scale={scale}
-          totalPages={totalPages}
-        />
+      <div className="relative flex flex-col h-full" ref={containerRef}>
         <PreviewContainer
           isLoading={isLoading}
           isCalculating={isCalculating}
@@ -423,6 +427,7 @@ const ResumePreview = forwardRef<ResumePreviewRef, ResumePreviewProps>(
           totalPages={totalPages}
           scopeClass={cssService.scopeClass}
           styles={styles}
+          zoomControls={zoomControls}
         />
       </div>
     );

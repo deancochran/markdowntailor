@@ -46,6 +46,14 @@ export default function AppFooter() {
                     Pricing
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/templates"
+                    className="text-xs md:text-sm text-muted-foreground hover:text-primary"
+                  >
+                    Templates
+                  </Link>
+                </li>
               </ul>
             </div>
 
