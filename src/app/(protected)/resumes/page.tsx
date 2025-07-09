@@ -3,8 +3,6 @@ import ResumeListing from "@/components/resume-listing";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getResumes } from "@/lib/actions/resume";
-import { FileText } from "lucide-react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -29,26 +27,6 @@ export default async function ResumesPage() {
             </div>
           </div>
         </header>
-
-        <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
-              <FileText className="h-4 w-4" />
-            </div>
-            <div className="flex-1 ">
-              <p className="text-sm ">
-                Want to save time?{" "}
-                <Link
-                  href="/templates"
-                  className="font-bold text-primary hover:underline"
-                >
-                  Browse our templates
-                </Link>{" "}
-                to get a head start on your resume.
-              </p>
-            </div>
-          </div>
-        </div>
 
         <ResumeListing initialResumes={resumes} />
       </div>

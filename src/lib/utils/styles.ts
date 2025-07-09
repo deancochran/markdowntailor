@@ -194,3 +194,27 @@ export const PRINT_HTML_TEMPLATE = `<!DOCTYPE html>
   </div>
 </body>
 </html>`;
+
+export const FONT_OPTIONS = [
+  "Inter",
+  "Roboto",
+  "Open+Sans",
+  "Lato",
+  "Montserrat",
+  "Georgia",
+  "Times+New+Roman",
+  "Arial",
+  "Poppins",
+  "Playfair+Display",
+  "Source+Sans+Pro",
+  "Merriweather",
+];
+
+export const FONT_SIZE_OPTIONS = Array.from(
+  { length: 17 },
+  (_, i) => 8 + i * 0.5,
+);
+export const LINE_HEIGHT_OPTIONS = Array.from({ length: 11 }, (_, i) =>
+  (1 + i * 0.1).toFixed(1),
+);
+export const MARGIN_OPTIONS = Array.from({ length: 9 }, (_, i) => 10 + i * 5);

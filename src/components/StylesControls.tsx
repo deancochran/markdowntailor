@@ -9,31 +9,29 @@ import {
 } from "@/components/ui/select";
 import {
   defaultStyles,
+  FONT_OPTIONS,
+  FONT_SIZE_OPTIONS,
+  LINE_HEIGHT_OPTIONS,
+  MARGIN_OPTIONS,
   PAPER_SIZES,
   PaperSize,
   ResumeStyles,
   SYSTEM_FONTS,
 } from "@/lib/utils/styles";
+import {
+  ArrowLeftRight,
+  ArrowUpDown,
+  CaseUpperIcon,
+  FileText,
+  LetterText,
+  RotateCcw,
+  Type,
+} from "lucide-react";
 
 interface StylesControlsProps {
   styles: ResumeStyles;
   onStylesChange: (styles: ResumeStyles) => void;
 }
-
-const FONT_OPTIONS = [
-  "Inter",
-  "Roboto",
-  "Open+Sans",
-  "Lato",
-  "Montserrat",
-  "Georgia",
-  "Times+New+Roman",
-  "Arial",
-  "Poppins",
-  "Playfair+Display",
-  "Source+Sans+Pro",
-  "Merriweather",
-];
 
 export default function StylesControls({
   styles,
@@ -50,10 +48,11 @@ export default function StylesControls({
   };
 
   return (
-    <div className="p-4 space-y-4 bg-background border-b">
-      <div className="flex flex-row items-end justify-start gap-2">
+    <div className="p-4 bg-background border-b">
+      <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="paperSize">
+          <Label className="text-xs flex items-center" htmlFor="paperSize">
+            <FileText className="w-4 h-4 mr-1" />
             Paper Size
           </Label>
           <Select
@@ -75,7 +74,8 @@ export default function StylesControls({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="fontFamily">
+          <Label className="text-xs flex items-center" htmlFor="fontFamily">
+            <Type className="w-4 h-4 mr-1" />
             Font Family
           </Label>
           <Select
@@ -103,7 +103,8 @@ export default function StylesControls({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="fontSize">
+          <Label className="text-xs flex items-center" htmlFor="fontSize">
+            <CaseUpperIcon className="w-4 h-4 mr-1" />
             Font Size
           </Label>
           <Select
@@ -116,7 +117,7 @@ export default function StylesControls({
               <SelectValue placeholder="Select font size" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 17 }, (_, i) => 8 + i * 0.5).map((size) => (
+              {FONT_SIZE_OPTIONS.map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}px
                 </SelectItem>
@@ -125,7 +126,8 @@ export default function StylesControls({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="lineHeight">
+          <Label className="text-xs flex items-center" htmlFor="lineHeight">
+            <LetterText className="w-4 h-4 mr-1" />
             Line Height
           </Label>
           <Select
@@ -138,9 +140,7 @@ export default function StylesControls({
               <SelectValue placeholder="Select line height" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 11 }, (_, i) =>
-                (1 + i * 0.1).toFixed(1),
-              ).map((height) => (
+              {LINE_HEIGHT_OPTIONS.map((height) => (
                 <SelectItem key={height} value={height}>
                   {height}
                 </SelectItem>
@@ -149,7 +149,8 @@ export default function StylesControls({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="marginH">
+          <Label className="text-xs flex items-center" htmlFor="marginH">
+            <ArrowLeftRight className="w-4 h-4 mr-1" />
             Horizontal Margin
           </Label>
           <Select
@@ -162,7 +163,7 @@ export default function StylesControls({
               <SelectValue placeholder="Select margin" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 9 }, (_, i) => 10 + i * 5).map((margin) => (
+              {MARGIN_OPTIONS.map((margin) => (
                 <SelectItem key={margin} value={margin.toString()}>
                   {margin}px
                 </SelectItem>
@@ -172,7 +173,8 @@ export default function StylesControls({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs" htmlFor="marginV">
+          <Label className="text-xs flex items-center" htmlFor="marginV">
+            <ArrowUpDown className="w-4 h-4 mr-1" />
             Vertical Margin
           </Label>
           <Select
@@ -185,7 +187,7 @@ export default function StylesControls({
               <SelectValue placeholder="Select margin" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 9 }, (_, i) => 10 + i * 5).map((margin) => (
+              {MARGIN_OPTIONS.map((margin) => (
                 <SelectItem key={margin} value={margin.toString()}>
                   {margin}px
                 </SelectItem>
@@ -198,6 +200,7 @@ export default function StylesControls({
           size="sm"
           onClick={() => onStylesChange(defaultStyles)}
         >
+          <RotateCcw className="w-4 h-4 mr-2" />
           Reset
         </Button>
       </div>
