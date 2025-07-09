@@ -2,6 +2,7 @@ import AppFooter from "@/components/AppFooter";
 import { getPosts } from "@/lib/blog";
 import { Metadata } from "next";
 import { headers } from "next/headers";
+import Script from "next/script";
 
 // Default metadata for public pages
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,13 +41,13 @@ export async function generateMetadata(): Promise<Metadata> {
           blogPost.description || `Read our post about ${blogPost.title}`,
       }
     : {
-        title: "markdowntailor - ATS-Optimized Resume Builder",
+        title: "Blog - Resume Tips & Career Advice | markdowntailor",
         description:
-          "Create powerful, ATS-friendly resumes with our markdown-based resume builder.",
+          "Expert advice on resume building, job hunting strategies, and ATS optimization techniques.",
       };
 
   // Construct canonical URL
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${pathname}`;
+  const canonicalUrl = pathname;
 
   return {
     title: currentPage.title,
@@ -82,7 +83,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "markdowntailor",
       images: [
         {
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+          url: `/logo.png`,
           width: 1200,
           height: 630,
           alt: currentPage.title,
@@ -113,14 +114,14 @@ export async function generateMetadata(): Promise<Metadata> {
       title: currentPage.title,
       description: currentPage.description,
       creator: "@markdowntailor",
-      images: [`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`],
+      images: [`/logo.png`],
     },
     ...(isBlogPost && blogPost
       ? {
           alternates: {
             canonical: canonicalUrl,
             types: {
-              "application/rss+xml": `${process.env.NEXT_PUBLIC_BASE_URL}/api/rss`,
+              "application/rss+xml": `/api/rss`,
             },
           },
         }
@@ -142,11 +143,92 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = headers();
+  const pathname = headersList.get("x-pathname") || "";
+  const posts = await getPosts();
+
+  const isBlogPost = pathname.startsWith("/blog/") && pathname !== "/blog/";
+  const blogSlug = isBlogPost ? pathname.replace("/blog/", "") : "";
+  const blogPost = isBlogPost
+    ? posts.find((post) => post.slug === blogSlug)
+    : null;
+
+  const breadcrumbItems = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://markdowntailor.com",
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: `https://markdowntailor.com/blog`,
+    },
+  ];
+
+  if (isBlogPost && blogPost) {
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: 3,
+      name: blogPost.title,
+      item: `https://markdowntailor.com/blog/${blogPost.slug}`,
+    });
+  }
+
   return (
     <div className="flex flex-col h-full w-full items-center justify-between">
       <div className="max-w-2xl w-full p-4">{children}</div>
 
       <AppFooter />
+
+      <Script
+        id="breadcrumb-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: breadcrumbItems,
+          }),
+        }}
+      />
+
+      {isBlogPost && blogPost && (
+        <Script
+          id="blog-post-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              mainEntityOfPage: {
+                "@type": "WebPage",
+                "@id": `https://markdowntailor.com/blog/${blogPost.slug}`,
+              },
+              headline: blogPost.seoTitle || blogPost.title,
+              description:
+                blogPost.description || `Read our post about ${blogPost.title}`,
+              image: `https://markdowntailor.com/logo.png`,
+              author: {
+                "@type": "Organization",
+                name: "markdowntailor",
+                url: "https://markdowntailor.com",
+              },
+              publisher: {
+                "@type": "Organization",
+                name: "markdowntailor",
+                logo: {
+                  "@type": "ImageObject",
+                  url: `https://markdowntailor.com/logo.png`,
+                },
+              },
+              datePublished: blogPost.publishedOn,
+            }),
+          }}
+        />
+      )}
     </div>
   );
 }

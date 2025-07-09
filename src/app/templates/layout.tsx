@@ -10,14 +10,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const pathname = headersList.get("x-pathname") || "";
 
   const currentPage = {
-    title: "Resume Builder Templates",
+    title: "Professionally Designed Resume Templates | markdowntailor",
     description:
-      "Explore our collection of professionally designed resume templates to help you stand out in the job market.",
+      "Choose from a collection of professionally designed, ATS-friendly resume templates to help you stand out and get hired.",
     pathname: "/templates",
   };
 
   // Construct canonical URL
-  const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}${pathname}`;
+  const canonicalUrl = pathname;
 
   return {
     title: currentPage.title,
@@ -53,7 +53,7 @@ export async function generateMetadata(): Promise<Metadata> {
       siteName: "markdowntailor",
       images: [
         {
-          url: `${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`,
+          url: "/logo.png",
           width: 1200,
           height: 630,
           alt: currentPage.title,
@@ -65,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: currentPage.title,
       description: currentPage.description,
       creator: "@markdowntailor",
-      images: [`${process.env.NEXT_PUBLIC_BASE_URL}/logo.png`],
+      images: ["/logo.png"],
     },
     verification: {
       // Add your verification codes when ready
