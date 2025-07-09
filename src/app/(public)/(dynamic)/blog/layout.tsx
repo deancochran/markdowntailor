@@ -143,7 +143,7 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const headersList = headers();
+  const headersList = await headers();
   const pathname = headersList.get("x-pathname") || "";
   const posts = await getPosts();
 
