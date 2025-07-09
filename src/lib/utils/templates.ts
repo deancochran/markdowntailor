@@ -22,10 +22,10 @@ export const TEMPLATES: Template[] = [
     name: "Agile Archer",
     description: "A professional resume template for tech engineers.",
     tags: [TemplateTag.Creative],
-    markdown: `# Agile Archer
+    markdown: `
+# Agile Archer
 
-📧 agile.archer@email.com | 📱 +1 (234) 567-890 | 📍 Seattle, WA
-🔗 [linkedin.com/in/agilearcher](https://linkedin.com/in/agilearcher) | 💻 [github.com/agilearcher](https://github.com/agilearcher)
+Seattle, WA | agile.archer@email.com | +1 (234) 567-890 | [linkedin.com/in/agilearcher](https://linkedin.com/in/agilearcher) | [github.com/agilearcher](https://github.com/agilearcher)
 
 ## Professional Summary
 Senior Software Engineer with 10+ years of experience architecting and deploying scalable web applications. Proven track record of leading cross-functional teams, optimizing system performance, and delivering high-quality software solutions. Expertise in full-stack development with modern JavaScript frameworks, microservices architecture, and cloud technologies.
@@ -40,25 +40,24 @@ Senior Software Engineer with 10+ years of experience architecting and deploying
 
 ## Professional Experience
 
-### Senior Software Engineer | Tech Solutions Inc. | Seattle, WA
-**January 2018 - Present**
-- **Team Leadership**: Led cross-functional team of 5 engineers in full-stack development of enterprise e-commerce platform serving 100K+ daily users
-- **Architecture**: Designed and implemented microservices architecture using Node.js, Docker, and Kubernetes, improving system scalability by 200%
-- **Performance Optimization**: Enhanced application performance by 30% through strategic code refactoring, database query optimization, and implementation of Redis caching
+**Senior Software Engineer** | Tech Solutions Inc. | Seattle, WA <span class="right"> Seattle, WA | 2018 - Presetn</span>
+
+- **Team Leadership**: Led development team of 5 engineers enterprise application serving 100K+ daily users
+- **Architecture**: Designed and implemented microservices architecture improving system scalability by 200%
+- **Performance Optimization**: Enhanced application performance by 30% through strategic code refactoring
 - **Technical Mentorship**: Mentored junior developers and established coding standards and best practices across the engineering team
 - **Key Technologies**: React, Node.js, PostgreSQL, AWS, Docker, Kubernetes
 
-### Software Engineer | Web Innovations LLC | Bellevue, WA
-**June 2014 - December 2017**
+**Software Engineer** | Web Innovations LLC <span class="right"> Bellevue, WA | 2014 - 2017</span>
 - **Feature Development**: Built and maintained core features for high-traffic social media application with 1M+ monthly active users
-- **Quality Assurance**: Implemented comprehensive testing strategy including unit, integration, and end-to-end tests, reducing production bugs by 40%
-- **Cross-functional Collaboration**: Partnered with product managers, designers, and QA teams to deliver features on schedule and within scope
+- **Quality Assurance**: Implemented comprehensive testing strategy including end-to-end tests, reducing production bugs by 40%
+- **Cross-functional Collaboration**: Partnered with product managers,  and QA teams to deliver features on schedule and within scope
 - **Code Quality**: Participated in code reviews and maintained 90%+ test coverage across all delivered features
 - **Key Technologies**: JavaScript, React, Express.js, MongoDB, Jest
 
 ## Education
-**Bachelor of Science in Computer Science**
-University of Washington | Seattle, WA | 2010 - 2014
+**Bachelor of Science in Computer Science** | University of Washington<span class="right"> Seattle, WA | 2010 - 2014</span>
+
 *Relevant Coursework: Data Structures, Algorithms, Software Engineering, Database Systems*
 
 ## Notable Achievements
@@ -76,129 +75,78 @@ University of Washington | Seattle, WA | 2010 - 2014
 **Social Media Analytics Dashboard** | *Full-Stack Developer*
 - Built real-time analytics dashboard using React and D3.js
 - Processed 10M+ data points daily with optimized database queries
-- Delivered actionable insights leading to 25% increase in user engagement`,
-    css: `/* Creative Professional Resume Styling */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  max-width: 8.5in;
-  margin: 0 auto;
-  padding: 0.75in;
-  background-color: #ffffff;
-}
+- Delivered actionable insights leading to 25% increase in user engagement
+    `,
+    css: `h1,h2,h3,h4{
+      font-weight: 600;
+    }
 
-h1 {
-  font-size: 2.2em;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-  padding: 0;
-  border-bottom: 3px solid #3498db;
-  padding-bottom: 8px;
-  letter-spacing: -0.5px;
-}
+    h1 {
+      font-size: 2.2em;
+      color: #2c3e50;
+      margin: 0;
+      padding: 0;
+      border-bottom: 2px solid #2c3e50;
+      line-height: 1.2;
+    }
 
-h2 {
-  font-size: 1.3em;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 24px 0 12px 0;
-  padding: 0;
-  border-bottom: 2px solid #ecf0f1;
-  padding-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+    h2 {
+      font-size: 1.3em;
 
-h3 {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: #34495e;
-  margin: 16px 0 8px 0;
-  padding: 0;
-}
+      color: #2c3e50;
+      padding: 0;
+      border-bottom: 2px solid #ecf0f1;
 
-h4 {
-  font-size: 1em;
-  font-weight: 500;
-  color: #7f8c8d;
-  margin: 4px 0;
-  padding: 0;
-  font-style: italic;
-}
 
-hr {
-  border: none;
-  border-top: 1px solid #bdc3c7;
-  margin: 20px 0;
-  padding: 0;
-}
+    }
 
-a {
-  color: #3498db;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-}
+    h3 {
+      font-size: 1.1em;
 
-p {
-  margin: 8px 0;
-  text-align: justify;
-}
+      color: #2c3e50;
+      margin-top: 16px;
+      padding: 0;
+    }
 
-ul {
-  list-style: none;
-  padding-left: 0;
-  margin: 12px 0;
-}
 
-ul li {
-  position: relative;
-  padding-left: 20px;
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
+    hr {
+      border: none;
+      border-top: 1px solid #2c3e50;
+      margin-bottom: 8px;
+      padding: 0;
+      color: #2c3e50;
+    }
 
-ul li::before {
-  content: "▪";
-  color: #3498db;
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-weight: bold;
-}
+    a {
+      color: #3498db;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
 
-ul li strong {
-  color: #2c3e50;
-  font-weight: 600;
-}
+    p {
+      color: #2c3e50;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      text-align: justify;
+    }
 
-h1 + p {
-  font-size: 0.95em;
-  color: #7f8c8d;
-  margin-top: 8px;
-  text-align: center;
-}
+    ul {
+      list-style: disc;
+      padding-left: 0;
+      list-style-position: inside;
 
-h2:first-of-type + p {
-  font-size: 1.05em;
-  color: #34495e;
-  font-weight: 400;
-  margin-bottom: 16px;
-  background-color: #f8f9fa;
-  padding: 16px;
-  border-radius: 4px;
-  border-left: 4px solid #3498db;
-}
+    }
 
-h3 + h4 {
-  margin-top: -4px;
-  margin-bottom: 12px;
-}
+    li {
+      color: #2c3e50;
+      position: relative;
 
-strong {
-  color: #2c3e50;
-}`,
+
+
+    }
+    .right{
+      float: right;
+    }`,
     styles: {
       ...defaultStyles,
       fontFamily: FONT_FAMILY.Inter,
@@ -279,51 +227,59 @@ Software Engineer with 7+ years of experience and expertise in cloud deployment,
 
 **TechByte Blog** | A personal blog (github)
 * **Tech Stack**: SvelteKit, SkeletonUI, AWS, Terraform, GitHub`,
-    css: `/* Modern Professional Resume Styling */
+    css: `
 
-    h1 {
-      font-size: x-large;
-      margin: 0;
-      padding: 0;
-      line-height: .75;
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+}
 
-    }
+h1 {
+  font-size: x-large;
+  margin: 0;
+  padding: 0;
+  line-height: .75;
+}
 
-    h2,
-    h3,
-    h4 {
-      font-size: medium;
-      margin: 0;
-      padding: 0;
-      margin-top: 8px;
+h2,
+h3,
+h4 {
+  font-size: medium;
+  margin: 0;
+  padding: 0;
+  margin-top: 8px;
 
-    }
+}
 
-    hr {
-      padding: 0;
-      margin-bottom: 8px;
-    }
+hr {
+  padding: 0;
+  border-top: 1px solid black;
+  margin-bottom: 8px;
+}
 
-    a {
-      color: blue;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
+a {
+  color: blue;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-    p {
-      margin-top: 8px;
-      margin-bottom: 8px;
-    }
+p {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
 
-    ul {
-      list-style: disc;
-      padding-left: 16px;
-      margin-top: 8px;
-    }
+ul {
+  list-style: disc;
+  padding-left: 16px;
+  margin-top: 8px;
+}
 
-    .right {
-      float: right;
-    }`,
+.right {
+  float: right;
+}
+    `,
     styles: {
       ...defaultStyles,
       fontFamily: FONT_FAMILY.Inter,
@@ -339,56 +295,67 @@ Software Engineer with 7+ years of experience and expertise in cloud deployment,
     name: "Stark Sterling",
     description: "A clean, minimalist template for executives.",
     tags: [TemplateTag.Minimalist],
-    markdown: `# Stark Sterling
-### Chief Technology Officer
+    markdown: `
+# Stark Sterling
+Product Manager and Tech Savant
 
-**Contact:** s.sterling@email.com | 555-0202 | linkedin.com/in/ssterling
+<div class="contact">
+    <ul style="list-style:none;">
+        <li>linkedin.com/in/starksterling</li>
+        <li>stark.sterling@email.com</li>
+        <li>(555) 555-0202</li>
+    </ul>
+</div>
 
----
+
 
 ### Executive Summary
+---
 Visionary and strategic technology executive with over 15 years of experience leading global engineering teams and driving technological innovation. Proven track record of scaling infrastructure, building high-performing teams, and aligning technology with business goals to deliver exceptional results.
 
----
+
 
 ### Career History
-
-**Chief Technology Officer**, QuantumLeap Inc. | 2017 - Present
+---
+**Chief Technology Officer**, QuantumLeap Inc. <span class="right">2017 - Present</span>
 - Oversee a 150+ person engineering organization across three continents
 - Lead the company's digital transformation initiative, migrating legacy systems to cloud-native architecture
 - Drive a 50% improvement in product delivery cycles through implementation of DevOps practices
 - Establish technology roadmap and strategic vision aligned with business objectives
 
-**VP of Engineering**, Stellar Solutions | 2012 - 2017
-- Grew the engineering team from 20 to 80 members while maintaining culture and quality standards
+**VP of Engineering**, Stellar Solutions  <span class="right">2012 - 2017</span>
+- Grew the engineering team from 20 to 80 members while maintaining quality standards
 - Directed the architecture and development of a market-leading B2B SaaS product
 - Implemented agile methodologies and modern development practices across all teams
 - Led successful product launches resulting in 300% revenue growth
 
-**Senior Engineering Manager**, TechCorp | 2008 - 2012
+**Senior Engineering Manager**, TechCorp <span class="right">2008 - 2012</span>
 - Managed multiple engineering teams totaling 25+ developers
 - Architected scalable systems handling millions of daily transactions
+
+
+**Software Engineer**, TechCorp <span class="right">2005 - 2008</span>
+- Exposed to engineering methodologies and best practices
 - Championed adoption of cloud technologies and microservices architecture
 
----
 
 ### Education
-**M.S. in Computer Science**, Stanford University
-**B.S. in Electrical Engineering**, MIT
-
 ---
+- **M.S. in Computer Science**, Stanford University <span class="right">2005 - 2008</span>
+- **B.S. in Electrical Engineering**, MIT <span class="right">2000 - 2004</span>
+
+
 
 ### Key Achievements
+---
 - Successfully led three major digital transformation initiatives
 - Built and scaled engineering organizations from startup to enterprise level
 - Recognized as "CTO of the Year" by TechLeaders Magazine (2022)
-- Speaker at major technology conferences including AWS re:Invent and DockerCon`,
-    css: `/* Minimalist Executive Resume Styling */
-body {
-  font-family: 'Merriweather', Georgia, serif;
-  line-height: 1.6;
-  color: #2c3e50;
-  background-color: #ffffff;
+- Speaker at major technology conferences including AWS re:Invent and DockerCon
+    `,
+    css: `
+h1, h2, h3, h4 {
+  font-weight: 600;
 }
 
 h1 {
@@ -396,95 +363,57 @@ h1 {
   font-weight: 700;
   margin: 0;
   padding: 0;
-  color: #1a1a1a;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.contact {
+  position: absolute;
+  width: 50%;
+  top: 0;
+  right: 0;
+  padding: 40px;
+  text-align: right;
 }
 
 h2,
 h3,
 h4 {
   font-size: 1.1em;
-  font-weight: 600;
-  margin: 0;
-  padding: 0;
-  margin-top: 24px;
-  color: #34495e;
-}
+  margin-top: 8px;
 
-h3 {
-  font-size: 1.0em;
-  color: #7f8c8d;
-  font-weight: 400;
-  margin-top: 4px;
-}
-
-hr {
-  border: 0;
-  border-top: 1px solid #ecf0f1;
-  padding: 0;
-  margin: 24px 0;
-}
-
-a {
-  color: #2c3e50;
-  text-decoration: none;
-  border-bottom: 1px solid #bdc3c7;
-  padding-bottom: 1px;
 }
 
 p {
-  margin-top: 12px;
-  margin-bottom: 12px;
-  color: #2c3e50;
-  text-align: justify;
+  padding-top: 8px;
+  padding-bottom: 2px;
 }
+
+
+
+hr {
+
+  border-top: 1px solid black;
+  padding: 0;
+  margin-bottom: 4px;
+}
+
 
 ul {
-  list-style: none;
+  list-style:inside;
   padding-left: 0;
-  margin-top: 12px;
 }
 
-ul li {
-  position: relative;
-  padding-left: 20px;
-  margin-bottom: 8px;
-  line-height: 1.6;
-}
-
-ul li::before {
-  content: "—";
-  position: absolute;
-  left: 0;
-  color: #95a5a6;
-  font-weight: 400;
-}
-
-strong {
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-h1 + h3 {
-  margin-top: 8px;
-  font-size: 1.2em;
-  color: #7f8c8d;
-}
-
-h1 + h3 + p {
-  text-align: center;
-  color: #95a5a6;
-  margin-top: 12px;
-  font-size: 0.95em;
+.right {
+  float: right;
 }`,
     styles: {
       ...defaultStyles,
       fontFamily: FONT_FAMILY.Merriweather,
-      fontSize: 10,
+      fontSize: 13,
       lineHeight: 1.6,
       paperSize: "Letter",
-      marginV: 60,
-      marginH: 60,
+      marginV: 40,
+      marginH: 40,
     },
   },
   {

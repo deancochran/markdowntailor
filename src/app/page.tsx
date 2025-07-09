@@ -435,7 +435,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2  gap-6">
             {TEMPLATES.slice(0, 6).map((template, index) => (
               <Link key={index} href={`/templates?slug=${template.slug}`}>
                 <Card className="bg-card max-h-full h-full  group hover:shadow-lg transition-shadow">
