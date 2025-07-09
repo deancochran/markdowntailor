@@ -64,10 +64,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "docker-compose -f test.docker-compose.yml up -d",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
-    stdout: "pipe",
-    timeout: 60000,
+    command: "node .next/standalone/server.js",
+    url: process.env.CI_ENVIRONMENT_URL || "http://localhost:3000/",
+    reuseExistingServer: !process.env.CI,
   },
 });
