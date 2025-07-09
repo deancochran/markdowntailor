@@ -44,7 +44,7 @@ export class MarkdownService {
       gfm: true, // Enable GitHub Flavored Markdown
       breaks: false, // Don't add <br> on single line breaks
     }) as string;
-
+    console.log("MARKDOWN", htmlContent);
     return {
       frontMatter,
       content: htmlContent,

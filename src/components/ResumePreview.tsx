@@ -1,8 +1,8 @@
 import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { DynamicCssService } from "@/services/dynamic-css";
-import { GoogleFontsService } from "@/services/google-fonts";
-import { MarkdownService } from "@/services/markdown";
+import { googleFontsService } from "@/services/google-fonts";
+import { markdownService } from "@/services/markdown";
 import {
   forwardRef,
   useCallback,
@@ -87,10 +87,6 @@ const INITIAL_SCALE = 0.8;
 const SCALE_LIMITS = { min: 0.3, max: 1.5 };
 const SCALE_FACTOR = 1.1;
 const CONTAINER_MIN_WIDTH = 900;
-
-// Services
-const googleFontsService = new GoogleFontsService();
-const markdownService = new MarkdownService();
 
 // Custom hooks
 function useZoomControls(

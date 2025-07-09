@@ -35,44 +35,99 @@ export const TEMPLATES: Template[] = [
     tags: [TemplateTag.Professional, TemplateTag.Technical],
     markdown: `
 # John Doe
-<div class="header-icons">
-<a href="mailto:john.doe@email.com" target="_blank">john.doe@email.com</a> | <a href="tel:+1234567890" target="_blank">+1 (234) 567-890</a> | Seattle, WA | <a href="https://linkedin.com/in/johndoe" target="_blank">linkedin.com/in/johndoe</a> | <a href="https://github.com/johndoe" target="_blank">github.com/johndoe</a>
-</div>
 
-## Summary
-Experienced Software Engineer with a decade of experience in developing and deploying web applications. Proficient in JavaScript, React, and Node.js. Passionate about building scalable and maintainable software.
+📧 john.doe@email.com | 📱 +1 (234) 567-890 | 📍 Seattle, WA
+🔗 [linkedin.com/in/johndoe](https://linkedin.com/in/johndoe) | 💻 [github.com/johndoe](https://github.com/johndoe)
 
-## Experience
-**Senior Software Engineer**, Tech Solutions Inc. | Seattle, WA | 2018 - Present
-- Led a team of 5 engineers in developing a new e-commerce platform.
-- Architected and implemented a microservices-based backend using Node.js and Docker.
-- Improved application performance by 30% through code optimization and database tuning.
+## Professional Summary
+Senior Software Engineer with 10+ years of experience architecting and deploying scalable web applications. Proven track record of leading cross-functional teams, optimizing system performance, and delivering high-quality software solutions. Expertise in full-stack development with modern JavaScript frameworks, microservices architecture, and cloud technologies.
 
-**Software Engineer**, Web Innovations LLC | Bellevue, WA | 2014 - 2018
-- Developed and maintained features for a high-traffic social media application.
-- Collaborated with cross-functional teams to deliver high-quality software.
-- Wrote and maintained extensive unit and integration tests.
+## Technical Skills
+- **Languages**: JavaScript, TypeScript, Python, Java
+- **Frontend**: React, Next.js, HTML5, CSS3, Responsive Design
+- **Backend**: Node.js, Express.js, RESTful APIs, GraphQL
+- **Databases**: PostgreSQL, MongoDB, Redis, Database Design & Optimization
+- **Cloud & DevOps**: AWS (EC2, S3, Lambda), Docker, Kubernetes, CI/CD
+- **Tools**: Git, Jenkins, Jest, Webpack, Agile/Scrum
+
+## Professional Experience
+
+### Senior Software Engineer | Tech Solutions Inc. | Seattle, WA
+**January 2018 - Present**
+- **Team Leadership**: Led cross-functional team of 5 engineers in full-stack development of enterprise e-commerce platform serving 100K+ daily users
+- **Architecture**: Designed and implemented microservices architecture using Node.js, Docker, and Kubernetes, improving system scalability by 200%
+- **Performance Optimization**: Enhanced application performance by 30% through strategic code refactoring, database query optimization, and implementation of Redis caching
+- **Technical Mentorship**: Mentored junior developers and established coding standards and best practices across the engineering team
+- **Key Technologies**: React, Node.js, PostgreSQL, AWS, Docker, Kubernetes
+
+### Software Engineer | Web Innovations LLC | Bellevue, WA
+**June 2014 - December 2017**
+- **Feature Development**: Built and maintained core features for high-traffic social media application with 1M+ monthly active users
+- **Quality Assurance**: Implemented comprehensive testing strategy including unit, integration, and end-to-end tests, reducing production bugs by 40%
+- **Cross-functional Collaboration**: Partnered with product managers, designers, and QA teams to deliver features on schedule and within scope
+- **Code Quality**: Participated in code reviews and maintained 90%+ test coverage across all delivered features
+- **Key Technologies**: JavaScript, React, Express.js, MongoDB, Jest
 
 ## Education
 **Bachelor of Science in Computer Science**
-University of Washington, Seattle, WA | 2010 - 2014
+University of Washington | Seattle, WA | 2010 - 2014
+*Relevant Coursework: Data Structures, Algorithms, Software Engineering, Database Systems*
 
-## Skills
-- **Programming Languages**: JavaScript, TypeScript, Python, Java
-- **Frameworks & Libraries**: React, Node.js, Express, Next.js
-- **Databases**: PostgreSQL, MongoDB, Redis
-- **Tools**: Git, Docker, Kubernetes, AWS
+## Notable Achievements
+- Reduced system deployment time from 2 hours to 15 minutes through CI/CD pipeline implementation
+- Architected fault-tolerant system handling 50% traffic increase during peak seasons
+- Contributed to 3 open-source projects with 500+ GitHub stars combined
+- AWS Certified Solutions Architect (if applicable - add certification date)
+
+## Projects
+**E-commerce Platform Modernization** | *Lead Developer*
+- Migrated legacy monolithic application to microservices architecture
+- Implemented real-time inventory management system using WebSockets
+- Achieved 99.9% uptime and 40% reduction in infrastructure costs
+
+**Social Media Analytics Dashboard** | *Full-Stack Developer*
+- Built real-time analytics dashboard using React and D3.js
+- Processed 10M+ data points daily with optimized database queries
+- Delivered actionable insights leading to 25% increase in user engagement
 `,
     css: `
 h1 {
-  text-align: center;
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-.header-icons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.9em;
-  margin-bottom: 16px;
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
+}
+
+hr {
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -113,12 +168,43 @@ A creative and detail-oriented product designer with 5 years of experience in us
 School of Visual Arts, New York, NY | 2014 - 2018
 `,
     css: `
-h1, h2 {
-  text-align: center;
+h1 {
+  font-size: x-large;
+  margin: 0;
+  padding: 0;
+
 }
-h2 {
-    margin-top: -10px;
-    font-weight: 400;
+
+h2,
+h3,
+h4 {
+  font-size: medium;
+  margin: 0;
+  padding: 0;
+  margin-top: 8px;
+
+}
+
+hr {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+p {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+ul {
+  list-style: disc;
+  padding-left: 16px;
+  margin-top: 8px;
 }
 `,
     styles: {
@@ -168,28 +254,43 @@ Columbia Business School, New York, NY | 2014 - 2016
 - Cross-functional Leadership
 `,
     css: `
-body {
-  background: #f9f9f9;
-}
 h1 {
-  color: #333;
-  text-align: center;
-  font-size: 2em;
-  border-bottom: 2px solid #333;
-  padding-bottom: 10px;
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-.header-icons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  font-size: 0.85em;
-  margin-bottom: 20px;
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
 }
-h2 {
-    color: #444;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-    margin-top: 20px;
+
+hr {
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -234,22 +335,42 @@ Visionary and strategic technology executive with over 15 years of experience le
 `,
     css: `
 h1 {
-  font-size: 2.2em;
-  font-weight: 300;
-  text-align: center;
-  margin-bottom: 0;
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-h3 {
-  text-align: center;
-  font-weight: 300;
-  margin-top: 5px;
-  color: #555;
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
 }
+
 hr {
-  border: 0;
-  height: 1px;
-  background: #ddd;
-  margin: 30px 0;
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -294,26 +415,43 @@ I am a passionate designer who loves to create visually compelling stories. I th
 - Branding
 `,
     css: `
-body {
-  color: #333;
+h1 {
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-.name-box {
-  background: #f06;
-  color: white;
-  padding: 20px;
-  text-align: center;
-  margin: -50px -50px 20px -50px; /* Assuming margins are 50px */
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
 }
-.name-box h1 {
-  margin: 0;
-  font-size: 3em;
+
+hr {
+padding: 0;
+margin-bottom: 8px;
 }
-.name-box h2 {
-    margin: 0;
-    font-weight: 300;
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
 }
-h3 {
-  color: #f06;
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -360,12 +498,43 @@ A highly organized and detail-oriented professional with over 10 years of experi
 - Microsoft Excel (Advanced), QuickBooks, SAP
 `,
     css: `
-h2 {
-    font-size: 1.1em;
-    font-weight: bold;
-    border-bottom: 2px solid #000;
-    padding-bottom: 2px;
-    margin-top: 15px;
+h1 {
+font-size: x-large;
+margin: 0;
+padding: 0;
+
+}
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
+}
+
+hr {
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -410,15 +579,42 @@ evance@email.edu | scholar.google.com/citations?user=12345
 `,
     css: `
 h1 {
-  font-size: 1.5em;
-  font-family: serif;
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-h2 {
-  font-size: 1.2em;
-  font-family: serif;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 3px;
-  margin-top: 1.5em;
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
+}
+
+hr {
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
@@ -477,19 +673,42 @@ A certified IT professional with 5+ years of experience in system administration
 `,
     css: `
 h1 {
-  text-align: center;
-  margin-bottom: 0;
+font-size: x-large;
+margin: 0;
+padding: 0;
+
 }
-h3 {
-  text-align: center;
-  font-weight: 400;
-  margin-top: 0;
-  color: #444;
+
+h2,
+h3,
+h4 {
+font-size: medium;
+margin: 0;
+padding: 0;
+margin-top: 8px;
+
 }
+
 hr {
-  border: none;
-  border-top: 1px solid #ddd;
-  margin: 20px 0;
+padding: 0;
+margin-bottom: 8px;
+}
+
+a {
+color: blue;
+text-decoration: underline;
+text-underline-offset: 2px;
+}
+
+p {
+margin-top: 8px;
+margin-bottom: 8px;
+}
+
+ul {
+list-style: disc;
+padding-left: 16px;
+margin-top: 8px;
 }
 `,
     styles: {
