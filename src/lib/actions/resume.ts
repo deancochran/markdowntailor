@@ -1,30 +1,38 @@
 "use server";
 import { auth } from "@/auth";
 import { db } from "@/db/drizzle";
-import {
-  insertResumeSchema,
-  type InsertResumeSchema,
-  resume,
-  resumeVersions,
-  UpdateResumeSchema,
-} from "@/db/schema";
+import { resume, resumeVersions, UpdateResumeSchema } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { sanitizeResumeInput } from "../utils/sanitization";
+import { Template } from "../utils/templates";
 
-export type addResumeType = Omit<z.infer<InsertResumeSchema>, "userId">;
+// Define a schema for creating a resume
+const createResumeSchema = z.object({
+  userId: z.string().uuid().optional(),
+  title: z.string().min(1, "Title is required"),
+  markdown: z.string().optional(),
+  css: z.string().optional(),
+  styles: z
+    .string()
+    .optional()
+    .default(
+      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
+    ),
+});
 
-export const addResume = async (values: addResumeType) => {
+export const createResume = async (
+  values: z.infer<typeof createResumeSchema>,
+) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     throw new Error("You must be logged in to create a resume");
   }
 
-  const validatedFields = insertResumeSchema
-    .omit({ userId: true })
-    .safeParse(values);
+  const validatedFields = createResumeSchema.safeParse(values);
 
   if (!validatedFields.success) {
     throw new Error("Failed to create Resume");
@@ -37,7 +45,9 @@ export const addResume = async (values: addResumeType) => {
       userId: session.user.id,
     })
     .returning();
-  return newResume.id;
+
+  revalidatePath("/resumes");
+  return newResume;
 };
 
 export const getResume = async (resumeId: string) => {
@@ -75,6 +85,12 @@ const resumeUpdateSchema = z.object({
   title: z.string().min(1).max(100),
   markdown: z.string().max(10000).default(""),
   css: z.string().max(10000).default(""),
+  styles: z
+    .string()
+    .max(1000)
+    .default(
+      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
+    ),
 });
 
 // Update the saveResume function (around line 75)
@@ -94,7 +110,9 @@ export const saveResume = async (
   const validatedFields = resumeUpdateSchema.safeParse(sanitizedInput);
 
   if (!validatedFields.success) {
-    throw new Error("Must provide valid input for title, css, and markdown");
+    throw new Error(
+      "Must provide valid input for title, css, markdown, and styles",
+    );
   }
 
   const [existingResume] = await db
@@ -123,6 +141,7 @@ export const saveResume = async (
       title: validatedFields.data.title,
       markdown: validatedFields.data.markdown,
       css: validatedFields.data.css,
+      styles: validatedFields.data.styles,
     })
     .where(eq(resume.id, resumeId))
     .returning();
@@ -155,6 +174,7 @@ export const deleteResume = async (resumeId: string) => {
   }
 
   await db.delete(resume).where(eq(resume.id, resumeId));
+  revalidatePath("/resumes");
 };
 
 export const getResumeVersions = async (resumeId: string) => {
@@ -283,6 +303,7 @@ export const createResumeFromVersion = async (resumeId: string) => {
     })
     .returning();
 
+  revalidatePath("/resumes");
   return { success: true, resumeId: newResume.id };
 };
 
@@ -314,3 +335,25 @@ export const getResumeVersion = async (versionId: string, resumeId: string) => {
 
   return version;
 };
+
+export async function createResumeFromTemplate(template: Template) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const [newResume] = await db
+    .insert(resume)
+    .values({
+      userId: session.user.id,
+      title: `${template.name} (Copy)`,
+      markdown: template.markdown,
+      css: template.css,
+      styles: JSON.stringify(template.styles),
+    })
+    .returning();
+
+  revalidatePath("/resumes");
+  return newResume;
+}

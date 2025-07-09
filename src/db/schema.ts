@@ -1,7 +1,4 @@
-import {
-  DEFAULT_RESUME_CSS,
-  DEFAULT_RESUME_MARKDOWN,
-} from "@/lib/utils/defaults";
+import { defaultStyles } from "@/lib/utils/styles";
 import {
   boolean,
   decimal,
@@ -148,8 +145,9 @@ export const resume = pgTable("resume", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
-  markdown: text("markdown").notNull().default(DEFAULT_RESUME_MARKDOWN),
-  css: text("css").notNull().default(DEFAULT_RESUME_CSS),
+  markdown: text("markdown").notNull().default(""),
+  css: text("css").notNull().default(""),
+  styles: text("styles").notNull().default(JSON.stringify(defaultStyles)),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -166,8 +164,9 @@ export const resumeVersions = pgTable("resume_versions", {
     .references(() => resume.id, { onDelete: "cascade" }),
   version: integer("version").notNull(),
   title: text("title").notNull(),
-  markdown: text("markdown").notNull().default(DEFAULT_RESUME_MARKDOWN),
-  css: text("css").notNull().default(DEFAULT_RESUME_CSS),
+  markdown: text("markdown").notNull().default(""),
+  css: text("css").notNull().default(""),
+  styles: text("styles").notNull().default(JSON.stringify(defaultStyles)),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

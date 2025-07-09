@@ -21,7 +21,7 @@ test.describe("Templates Page Search and Filter", () => {
     await searchInput.fill("software engineer");
     await page.waitForTimeout(500); // allow debounce or filter delay
     const filteredCount = await templates.count();
-    expect(filteredCount).toEqual(1);
+    expect(filteredCount).toEqual(1); // Assuming only one template matches
 
     // Enter a search term that matches no templates
     await searchInput.fill("xyznotemplate");
@@ -35,6 +35,27 @@ test.describe("Templates Page Search and Filter", () => {
     // There should be some templates matching the tag
     const initCount = await templates.count();
     expect(initCount).toBeGreaterThan(0);
-    await page.getByRole("button", { name: "Filter by tags" }).click();
+    await page.getByRole("button", { name: "Filter by tag" }).click();
+
+    // Assuming there is a tag to select, e.g., "Design"
+    const firstTag = page.getByText("Design");
+    await firstTag.click();
+
+    // Verify count after selecting a tag, should match expected count
+    await page.waitForTimeout(500); // allow debounce or filter delay
+    const filteredCount = await templates.count();
+    expect(filteredCount).toBeGreaterThan(0); // Expect some templates to match the selected tag
+  });
+
+  test("should show empty state when no templates match search or filter", async ({
+    page,
+  }) => {
+    const searchInput = page.getByTestId("template-search");
+    await searchInput.fill("nonexistenttemplate");
+    await page.waitForTimeout(500);
+
+    // Check for empty state message
+    const emptyState = page.getByText("No templates found");
+    await expect(emptyState).toBeVisible();
   });
 });

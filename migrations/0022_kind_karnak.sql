@@ -1,0 +1,2 @@
+ALTER TABLE "resume" ALTER COLUMN "styles" SET DEFAULT '{"marginV":40,"marginH":40,"fontSize":12,"lineHeight":1.5,"fontFamily":"Inter","paperSize":"A4"}';--> statement-breakpoint
+ALTER TABLE "resume_versions" ALTER COLUMN "styles" SET DEFAULT '{"marginV":40,"marginH":40,"fontSize":12,"lineHeight":1.5,"fontFamily":"Inter","paperSize":"A4"}';

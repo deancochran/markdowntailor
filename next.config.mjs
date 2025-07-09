@@ -17,13 +17,6 @@ const nextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   output: "standalone",
   reactStrictMode: true,
-  serverExternalPackages: ["pg", "drizzle-orm"],
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
 };
 
 const withMDX = createMDX({

@@ -6,8 +6,7 @@ RUN corepack enable pnpm
 # Dependencies
 FROM base AS deps
 COPY package.json pnpm-lock.yaml* ./
-RUN --mount=type=cache,target=/root/.cache/ms-playwright \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Build
 FROM base AS builder
@@ -27,16 +26,19 @@ WORKDIR /app
 RUN corepack enable pnpm
 
 # Copy built app
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Essential Files
 COPY --from=builder /app/posts ./posts
 COPY --from=builder /app/migrations ./migrations
 
-# Install production Playwright deps
-RUN npx playwright install chromium --with-deps
+USER nextjs
 
+ENV NODE_ENV=production
 ENV PORT=80
 ENV HOST=0.0.0.0
 EXPOSE 80

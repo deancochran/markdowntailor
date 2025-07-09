@@ -47,7 +47,7 @@ export default async function RootLayout({
       <body className="min-h-screen overflow-hidden">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="app-container flex flex-col">
-            <header className="sticky top-0 z-50 border-b shadow-xl flex-shrink-0">
+            <header className="sticky top-0 z-50 border-b shadow-md flex-shrink-0">
               <div className="flex w-full px-4 h-14 items-center justify-between">
                 <div className="flex items-center">
                   <Link href="/" className="flex items-center">

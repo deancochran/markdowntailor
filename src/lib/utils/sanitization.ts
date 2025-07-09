@@ -53,14 +53,19 @@ export function sanitizeResumeInput(input: {
   title?: string;
   markdown?: string;
   css?: string;
+  styles?: string;
 }): {
   title: string;
   markdown: string;
   css: string;
+  styles: string;
 } {
   return {
     title: input.title ? input.title : "",
     markdown: input.markdown ? sanitizeMarkdown(input.markdown) : "",
     css: input.css ? sanitizeCSS(input.css) : "",
+    styles:
+      input.styles ??
+      '{"fontFamily":"Inter","fontSize":11,"lineHeight":1.4,"marginH":20,"marginV":20}',
   };
 }

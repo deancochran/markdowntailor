@@ -1,9 +1,6 @@
 import { db } from "@/db/drizzle";
 import { accounts, resume, user } from "@/db/schema";
-import {
-  DEFAULT_RESUME_CSS,
-  DEFAULT_RESUME_MARKDOWN,
-} from "@/lib/utils/defaults";
+
 import { eq } from "drizzle-orm";
 import { User } from "next-auth";
 import { v4 as uuidv4 } from "uuid";
@@ -52,8 +49,8 @@ export class DataFactory {
     return {
       userId: user.id,
       title: `Default Test Resume ${uuidv4()}`,
-      markdown: DEFAULT_RESUME_MARKDOWN,
-      css: DEFAULT_RESUME_CSS,
+      markdown: "",
+      css: "",
       ...overrides,
     };
   }
