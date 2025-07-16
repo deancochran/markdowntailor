@@ -1,4 +1,16 @@
 "use client";
+
+import {
+  ArrowLeft,
+  Clock,
+  Copy,
+  Dot,
+  FileText,
+  Info,
+  RotateCcw,
+} from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,68 +21,54 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  resume as Resume,
-  resumeVersions as ResumeVersions,
-} from "@/db/schema";
-import { createResumeFromVersion, restoreVersion } from "@/lib/actions/resume";
-import { versionDiffEditorOptions } from "@/lib/utils/monacoOptions";
+import { db, ResumeVersion } from "@/localforage";
 import { DiffEditor, DiffOnMount } from "@monaco-editor/react";
 import { cx } from "class-variance-authority";
 import { diffLines } from "diff";
-import { InferSelectModel } from "drizzle-orm";
-import {
-  ArrowLeft,
-  Clock,
-  Copy,
-  Dot,
-  FileText,
-  Info,
-  RotateCcw,
-} from "lucide-react";
 import type { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
-type ResumeVersion = InferSelectModel<typeof ResumeVersions>;
-
-interface ResumeVersionsProps {
-  resume: InferSelectModel<typeof Resume>;
-  versions: ResumeVersion[];
-}
+const versionDiffEditorOptions: editor.IStandaloneDiffEditorConstructionOptions =
+  {
+    readOnly: true,
+    renderSideBySide: true,
+    scrollBeyondLastLine: false,
+    minimap: { enabled: false },
+  };
 
 export default function ResumeVersionsComponent({
-  resume,
   versions,
-}: ResumeVersionsProps) {
+}: {
+  versions: ResumeVersion[];
+}) {
   const router = useRouter();
   const { theme } = useTheme();
 
   const [selectedOriginal, setSelectedOriginal] =
-    useState<ResumeVersion | null>(versions[0]);
+    useState<ResumeVersion | null>(versions[0] ?? null);
   const [selectedModified, setSelectedModified] =
-    useState<ResumeVersion | null>(versions[0]);
+    useState<ResumeVersion | null>(versions[0] ?? null);
   const [selectedOriginalCss, setSelectedOriginalCss] = useState<string>(
-    versions[0].css,
+    versions[0]?.css ?? "",
   );
   const [selectedModifiedCss, setSelectedModifiedCss] = useState<string>(
-    versions[0].css,
+    versions[0]?.css ?? "",
   );
   const [selectedOriginalMarkdown, setSelectedOriginalMarkdown] =
-    useState<string>(versions[0].markdown);
+    useState<string>(versions[0]?.markdown ?? "");
   const [selectedModifiedMarkdown, setSelectedModifiedMarkdown] =
-    useState<string>(versions[0].markdown);
+    useState<string>(versions[0]?.markdown ?? "");
   const [editorsTab, setEditorsTab] = useState("markdown");
   const [mobileTab, setMobileTab] = useState("versions");
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
 
   // Refs for editor instances
-  const markdownEditorRef = useRef<editor.IStandaloneDiffEditor>(null);
-  const cssEditorRef = useRef<editor.IStandaloneDiffEditor>(null);
+  const markdownEditorRef = useRef<editor.IStandaloneDiffEditor | null>(null);
+  const cssEditorRef = useRef<editor.IStandaloneDiffEditor | null>(null);
 
   // Handle editor mount
   const handleMarkdownEditorMount: DiffOnMount = useCallback((editor) => {
@@ -106,13 +104,13 @@ export default function ResumeVersionsComponent({
 
     setIsRestoring(versionId);
     try {
-      const formData = new FormData();
-      formData.append("resumeId", resume.id);
-      formData.append("versionId", versionId);
-
-      await restoreVersion(formData);
-      toast.success("Version restored successfully");
-      router.push(`/resumes/${resume.id}`);
+      const restoredResume = await db.resumes.restoreFromVersion(versionId);
+      if (restoredResume) {
+        toast.success("Version restored successfully");
+        router.push(`/resumes/${restoredResume.id}`);
+      } else {
+        throw new Error("Failed to restore version");
+      }
     } catch (error) {
       console.error("Restore error:", error);
       toast.error("Failed to restore version");
@@ -125,9 +123,13 @@ export default function ResumeVersionsComponent({
   const handleDuplicateFromVersion = async (version: ResumeVersion) => {
     setIsDuplicating(version.id);
     try {
-      const response = await createResumeFromVersion(resume.id);
-      toast.success("Resume duplicated successfully from version");
-      router.push(`/resumes/${response.resumeId}`);
+      const duplicatedResume = await db.resumes.duplicate(version.resumeId);
+      if (duplicatedResume) {
+        toast.success("Resume duplicated successfully from version");
+        router.push(`/resumes/${duplicatedResume.id}`);
+      } else {
+        toast.error("Failed to duplicate resume: Original resume not found.");
+      }
     } catch (error) {
       console.error("Duplicate error:", error);
       toast.error("Failed to duplicate resume from version");
@@ -142,11 +144,13 @@ export default function ResumeVersionsComponent({
     let removed = 0;
 
     for (const part of diff) {
-      if (part.added) added += part.count || part.value.split("\n").length - 1;
-      if (part.removed)
-        removed += part.count || part.value.split("\n").length - 1;
+      if (part.added) {
+        added += part.count ?? 0;
+      }
+      if (part.removed) {
+        removed += part.count ?? 0;
+      }
     }
-
     return { added, removed };
   }
 
@@ -155,7 +159,7 @@ export default function ResumeVersionsComponent({
       {/* Header */}
       <header className="w-full flex flex-col sm:flex-row sm:h-14 items-start sm:items-center justify-between p-3 sm:p-4 gap-3 sm:gap-4 border-b bg-background">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <Link href={`/resumes/${resume.id}`}>
+          <Link href={`/resumes/${versions[0].resumeId}`}>
             <Button variant="ghost" size="icon" className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
               <span className="sr-only">Back to Editor</span>
@@ -164,7 +168,7 @@ export default function ResumeVersionsComponent({
           <div className="flex-1 min-w-0">
             <h1 className="text-lg sm:text-xl font-semibold flex items-center gap-2 truncate">
               <FileText className="h-5 w-5 shrink-0" />
-              <span className="truncate">{resume.title} - Versions</span>
+              <span className="truncate">Resume Versions</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Compare and manage resume versions

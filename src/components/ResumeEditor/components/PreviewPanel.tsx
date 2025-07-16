@@ -1,3 +1,4 @@
+"use client";
 import ResumePreview from "@/components/ResumePreview";
 import { cx } from "class-variance-authority";
 import { PreviewPanelProps } from "../types";

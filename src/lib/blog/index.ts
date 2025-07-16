@@ -26,17 +26,12 @@ export const getPosts = cache(async () => {
   const posts = await fs.readdir(postsDirectory);
 
   return Promise.all(
-    posts
-
-      .map(async (file) => {
-        const filePath = `posts/${file}`;
-        const postContent = await fs.readFile(filePath, "utf8");
-        const { data, content } = matter(postContent);
-        return { ...data, content } as Post;
-      })
-      .filter((post) => {
-        return post !== null;
-      }),
+    posts.map(async (file) => {
+      const filePath = `posts/${file}`;
+      const postContent = await fs.readFile(filePath, "utf8");
+      const { data, content } = matter(postContent);
+      return { ...data, content } as Post;
+    }),
   );
 });
 

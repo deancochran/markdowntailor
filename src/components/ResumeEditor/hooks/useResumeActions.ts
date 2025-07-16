@@ -1,25 +1,16 @@
+"use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
-import { resume as Resume } from "@/db/schema";
 import { useSaveResume } from "@/hooks/useSaveResume";
-import {
-  createResumeFromVersion,
-  deleteResume,
-  saveResume,
-} from "@/lib/actions/resume";
-import { InferSelectModel } from "drizzle-orm";
+
+import { db, Resume } from "@/localforage";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { UseResumeActionsReturn } from "../types";
 export function useResumeActions(
-  resumeId: string,
-  resumeTitle: string,
-  title: string,
-  markdown: string,
-  css: string,
-  styles: string,
+  resume: Resume,
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>,
-  onSaveSuccess: (updatedResume: InferSelectModel<typeof Resume>) => void,
+  onSaveSuccess: (updatedResume: Resume) => void,
 ): UseResumeActionsReturn {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -27,12 +18,7 @@ export function useResumeActions(
 
   // Manual save functionality
   const { isSaving, isDirty, save } = useSaveResume({
-    resumeId,
-    title,
-    markdown,
-    css,
-    styles,
-    saveFunction: saveResume,
+    resume,
     onSaveSuccess,
   });
 
@@ -40,7 +26,7 @@ export function useResumeActions(
     if (window.confirm("Are you sure you want to delete this resume?")) {
       setIsDeleting(true);
       try {
-        await deleteResume(resumeId);
+        await db.resumes.delete(resume.id);
         toast.success("Resume deleted successfully");
         redirect("/resumes");
       } catch {
@@ -49,7 +35,7 @@ export function useResumeActions(
         setIsDeleting(false);
       }
     }
-  }, [resumeId]);
+  }, [resume]);
   const handlePrint = useCallback(() => {
     setIsPrinting(true);
 
@@ -70,19 +56,23 @@ export function useResumeActions(
   }, [resumePreviewRef]);
   const handleDuplicate = useCallback(async () => {
     setIsDuplicating(true);
-    let response;
+    let newResume;
     try {
-      response = await createResumeFromVersion(resumeId);
+      newResume = await db.resumes.createFromResume({
+        markdown: resume.markdown,
+        css: resume.css,
+        styles: resume.styles,
+      });
       toast.success("Resume duplicated successfully");
     } catch {
       toast.error("Failed to duplicate resume");
     } finally {
       setIsDuplicating(false);
     }
-    if (response) {
-      redirect(`/resumes/${response.resumeId}`);
+    if (newResume) {
+      redirect(`/resumes/${newResume.id}`);
     }
-  }, [resumeId]);
+  }, [resume]);
 
   const handleSave = useCallback(async () => {
     try {

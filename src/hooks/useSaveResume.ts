@@ -1,66 +1,48 @@
+import { db, Resume } from "@/localforage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface SaveResumeOptions {
-  resumeId: string;
-  title: string;
-  markdown: string;
-  css: string;
-  styles: string;
-  saveFunction: (
-    id: string,
-    data: { title: string; markdown: string; css: string; styles: string },
-  ) => Promise<{
-    id: string;
-    userId: string;
-    title: string;
-    markdown: string;
-    css: string;
-    styles: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
+  resume: Resume;
   // Callback for when save is successful
-  onSaveSuccess: (updatedResume: {
-    id: string;
-    userId: string;
-    title: string;
-    markdown: string;
-    css: string;
-    styles: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }) => void;
+  onSaveSuccess: (updatedResume: Resume) => void;
 }
 
-export function useSaveResume({
-  resumeId,
-  title,
-  markdown,
-  css,
-  styles,
-  saveFunction,
-  onSaveSuccess,
-}: SaveResumeOptions) {
+export function useSaveResume({ resume, onSaveSuccess }: SaveResumeOptions) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Store the baseline values to compare against
-  const baselineRef = useRef({ title, markdown, css, styles });
+  const baselineRef = useRef({
+    title: resume.title,
+    markdown: resume.markdown,
+    css: resume.css,
+    styles: resume.styles,
+  });
   const isInitializedRef = useRef(false);
 
   // Update baseline when component first mounts
   useEffect(() => {
     if (!isInitializedRef.current) {
-      baselineRef.current = { title, markdown, css, styles };
+      baselineRef.current = {
+        title: resume.title,
+        markdown: resume.markdown,
+        css: resume.css,
+        styles: resume.styles,
+      };
       isInitializedRef.current = true;
     }
-  }, [title, css, markdown, styles]);
+  }, [resume]);
 
   // Check if current values differ from baseline
   const checkIfDirty = useCallback(() => {
-    const currentValues = { title, markdown, css, styles };
+    const currentValues = {
+      title: resume.title,
+      markdown: resume.markdown,
+      css: resume.css,
+      styles: resume.styles,
+    };
     const baseline = baselineRef.current;
 
     const hasChanges =
@@ -72,28 +54,31 @@ export function useSaveResume({
     setIsDirty(hasChanges);
 
     return hasChanges;
-  }, [title, markdown, css, styles]);
+  }, [resume]);
 
   // Save function
   const save = useCallback(async () => {
-    if (isSaving || !resumeId) return;
+    if (isSaving || !resume.id) return;
 
     try {
       setIsSaving(true);
 
-      const result = await saveFunction(resumeId, {
-        title,
-        markdown,
-        css,
-        styles,
+      const result = await db.resumes.update(resume.id, {
+        title: resume.title,
+        markdown: resume.markdown,
+        css: resume.css,
+        styles: resume.styles,
       });
+      if (!result) {
+        throw new Error("Failed to save resume");
+      }
 
       // Update baseline with values from the server
       baselineRef.current = {
-        title: result.title,
-        markdown: result.markdown,
-        css: result.css,
-        styles: result.styles,
+        title: result.title ?? "",
+        markdown: result.markdown ?? "",
+        css: result.css ?? "",
+        styles: result.styles ?? "",
       };
 
       setIsDirty(false);
@@ -112,16 +97,7 @@ export function useSaveResume({
     } finally {
       setIsSaving(false);
     }
-  }, [
-    resumeId,
-    title,
-    markdown,
-    css,
-    styles,
-    saveFunction,
-    isSaving,
-    onSaveSuccess,
-  ]);
+  }, [resume, isSaving, onSaveSuccess]);
 
   // Check dirty state whenever content changes
   useEffect(() => {

@@ -23,14 +23,12 @@ const PurePreviewMessage = ({
   setMessages,
   reload,
   requiresScrollPadding,
-  featureDisabled,
 }: {
   message: UIMessage;
   isLoading: boolean;
   setMessages: UseChatHelpers["setMessages"];
   reload: UseChatHelpers["reload"];
   requiresScrollPadding: boolean;
-  featureDisabled: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [_, _copyToClipboard] = useCopyToClipboard();
@@ -165,7 +163,6 @@ const PurePreviewMessage = ({
                         </div>
                       ) : (
                         <MessageEditor
-                          featureDisabled={featureDisabled}
                           key={message.id}
                           message={message}
                           setMode={setMode}

@@ -1,1 +1,0 @@
-ALTER TABLE "resume_versions" DROP COLUMN "content";

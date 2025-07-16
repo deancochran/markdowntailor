@@ -19,7 +19,6 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { AttachmentListing } from "./AttachmentListing";
 import { AttachmentUploader } from "./AttachmentUploader";
 function PureMultimodalInput({
-  featureDisabled,
   input,
   setInput,
   status,
@@ -28,7 +27,6 @@ function PureMultimodalInput({
   setAttachments,
   handleSubmit,
 }: {
-  featureDisabled: boolean;
   input: UseChatHelpers["input"];
   setInput: UseChatHelpers["setInput"];
   status: UseChatHelpers["status"];
@@ -43,20 +41,12 @@ function PureMultimodalInput({
   const [_localInput, setLocalInput] = useLocalStorage("input", "");
 
   const submitForm = useCallback(() => {
-    if (featureDisabled) {
-      toast.error("You don't have enough credits to use this feature", {
-        description: "Please add more credits to continue using AI features.",
-      });
-      return;
-    }
-
     handleSubmit(undefined, { experimental_attachments: attachments });
     setAttachments([]);
     setLocalInput("");
     if (width! > 768) scrollToBottom();
   }, [
     attachments,
-    featureDisabled,
     handleSubmit,
     setAttachments,
     setLocalInput,
@@ -90,24 +80,17 @@ function PureMultimodalInput({
       <AttachmentListing
         attachments={attachments}
         setAttachments={setAttachments}
-        featureDisabled={featureDisabled}
       />
       <Textarea
         data-testid="multimodal-input"
-        placeholder={
-          featureDisabled
-            ? "Insufficient credits to use AI chat"
-            : "Send a message..."
-        }
+        placeholder={"Send a message..."}
         className={cx(
           "!bg-transparent !outline-none overflow-hidden resize-none !text-base rounded-xl w-full border-none focus-visible:ring-0 shadow-none",
-          featureDisabled && "opacity-60 cursor-not-allowed",
         )}
         rows={2}
         autoFocus
         value={input}
         ref={textareaRef}
-        disabled={featureDisabled}
         onChange={handleInput}
         onKeyDown={(event) => {
           if (
@@ -117,12 +100,7 @@ function PureMultimodalInput({
           ) {
             event.preventDefault();
 
-            if (featureDisabled) {
-              toast.error("You don't have enough credits to use this feature", {
-                description:
-                  "Please add more credits to continue using AI features.",
-              });
-            } else if (status !== "ready") {
+            if (status !== "ready") {
               toast.error("Please wait for the model to finish its response!");
             } else {
               submitForm();
@@ -133,10 +111,7 @@ function PureMultimodalInput({
 
       {/* Input area with attachment uploader and chat controls */}
       <div className="flex flex-row gap-2 justify-end">
-        <AttachmentUploader
-          featureDisabled={featureDisabled}
-          setAttachments={setAttachments}
-        />
+        <AttachmentUploader setAttachments={setAttachments} />
         {status === "submitted" ? (
           <TooltipProvider>
             <Tooltip>
@@ -148,20 +123,11 @@ function PureMultimodalInput({
                       e.preventDefault();
                       stop();
                     }}
-                    disabled={featureDisabled}
-                    className={
-                      featureDisabled ? "opacity-50 cursor-not-allowed" : ""
-                    }
                   >
                     <Square />
                   </Button>
                 </span>
               </TooltipTrigger>
-              {featureDisabled && (
-                <TooltipContent>
-                  <p>Insufficient credits to use AI features</p>
-                </TooltipContent>
-              )}
             </Tooltip>
           </TooltipProvider>
         ) : (
@@ -174,13 +140,9 @@ function PureMultimodalInput({
                       e.preventDefault();
                       submitForm();
                     }}
-                    disabled={input.length === 0 || featureDisabled}
+                    disabled={input.length === 0}
                     className={
-                      featureDisabled
-                        ? "opacity-50 cursor-not-allowed"
-                        : input.length === 0
-                          ? "opacity-70 cursor-not-allowed"
-                          : ""
+                      input.length === 0 ? "opacity-70 cursor-not-allowed" : ""
                     }
                   >
                     <SendHorizontal />
@@ -188,9 +150,7 @@ function PureMultimodalInput({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {featureDisabled ? (
-                  <p>Please add more credits to use AI features</p>
-                ) : input.length === 0 ? (
+                {input.length === 0 ? (
                   <p>Type a message to send</p>
                 ) : (
                   <p>Send message</p>

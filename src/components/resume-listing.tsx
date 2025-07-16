@@ -31,27 +31,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  createResume,
-  createResumeFromVersion,
-  deleteResume,
-} from "@/lib/actions/resume";
+
 import { defaultStyles } from "@/lib/utils/styles";
+import { db, Resume } from "@/localforage";
 import { ArrowRight, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 // Resume type with added optimistic state flags
-export type Resume = {
-  id: string;
-  userId: string;
-  title: string;
-  markdown: string;
-  css: string;
-  styles: string;
-  createdAt: Date;
-  updatedAt: Date;
+export type OptimisticResume = Resume & {
   _isOptimistic?: boolean;
   _isDeleting?: boolean;
 };
@@ -60,16 +49,16 @@ export type Resume = {
 export default function ResumeListing({
   initialResumes = [],
 }: {
-  initialResumes: Resume[];
+  initialResumes: OptimisticResume[];
 }) {
   const [_isPending, startTransition] = useTransition();
   const [optimisticResumes, updateOptimisticResumes] = useOptimistic(
     initialResumes,
     (
-      state: Resume[],
+      state: OptimisticResume[],
       action: {
         type: string;
-        resume?: Resume;
+        resume?: OptimisticResume;
         id?: string;
         title?: string;
         isDeleting?: boolean;
@@ -142,10 +131,10 @@ function ResumeCard({
   updateOptimisticResumes,
   startTransition,
 }: {
-  resume: Resume;
+  resume: OptimisticResume;
   updateOptimisticResumes: (action: {
     type: string;
-    resume?: Resume;
+    resume?: OptimisticResume;
     id?: string;
   }) => void;
   startTransition: (callback: () => Promise<void> | void) => void;
@@ -211,7 +200,7 @@ function ResumeDropdownMenu({
   const handleCopy = async () => {
     startTransition(async () => {
       // Create a temporary resume for the optimistic update
-      const optimisticResume: Resume = {
+      const optimisticResume: OptimisticResume = {
         ...resume,
         id: crypto.randomUUID(), // Temporary ID
         title: `${resume.title} (Copy)`,
@@ -223,7 +212,7 @@ function ResumeDropdownMenu({
       updateOptimisticResumes({ type: "ADD", resume: optimisticResume });
 
       try {
-        await createResumeFromVersion(resume.id);
+        await db.resumes.createFromResume(resume);
         toast.success("Resume copied successfully");
       } catch (_error) {
         toast.error("Failed to copy resume. Reverting changes.");
@@ -246,7 +235,7 @@ function ResumeDropdownMenu({
       });
 
       try {
-        await deleteResume(resumeId);
+        await db.resumes.delete(resumeId);
         toast.success("Resume deleted successfully");
         // No need to remove from state here, revalidation will do it.
       } catch (_error) {
@@ -347,10 +336,10 @@ function CreateResume() {
 
     startTransition(async () => {
       try {
-        await createResume({
+        await db.resumes.create({
           title,
-          markdown,
-          css,
+          markdown: markdown ?? "",
+          css: css ?? "",
           styles: JSON.stringify(defaultStyles),
         });
         toast.success("Resume created successfully!");

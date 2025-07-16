@@ -1,9 +1,7 @@
+"use client";
 import { Messages } from "@/components/ai/messages";
 import { MultimodalInput } from "@/components/ai/multimodal-input";
-import { Separator } from "@/components/ui/separator";
 import { cx } from "class-variance-authority";
-import Decimal from "decimal.js";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ChatPanelProps } from "../types";
 
@@ -18,14 +16,10 @@ export function ChatPanel({
   reload,
   attachments,
   setAttachments,
-  featureDisabled,
-  userCredits,
   isVisible,
 }: ChatPanelProps) {
   const handleDisabledSubmit = () => {
-    toast.error(
-      "Insufficient credits. Please add more credits to continue.",
-    );
+    toast.error("Insufficient credits. Please add more credits to continue.");
     return false;
   };
 
@@ -39,7 +33,6 @@ export function ChatPanel({
       <div className="flex-1 w-full overflow-y-auto">
         <div className="w-full md:max-w-3xl mx-auto p-2">
           <Messages
-            featureDisabled={featureDisabled}
             status={status}
             messages={messages}
             setMessages={setMessages}
@@ -49,31 +42,10 @@ export function ChatPanel({
       </div>
 
       <form className="flex flex-col mx-auto gap-2 w-full md:max-w-3xl p-2">
-        <div className="w-full h-fit flex items-center justify-end">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
-            {featureDisabled ? (
-              "Feature Disabled: Insufficient Credits"
-            ) : (
-              <>
-                Your Credit Amount: ${" "}
-                {userCredits !== null ? (
-                  new Decimal(userCredits)
-                    .div(100)
-                    .toDecimalPlaces(2, Decimal.ROUND_DOWN)
-                    .toFixed(2)
-                ) : (
-                  <Loader2 className="animate-spin inline" />
-                )}
-              </>
-            )}
-          </span>
-        </div>
-        <Separator />
         <MultimodalInput
-          featureDisabled={featureDisabled}
           input={input}
           setInput={setInput}
-          handleSubmit={featureDisabled ? handleDisabledSubmit : handleSubmit}
+          handleSubmit={handleSubmit}
           status={status}
           stop={stop}
           attachments={attachments}

@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import type { Attachment } from "ai";
 import { Paperclip } from "lucide-react";
@@ -5,12 +6,10 @@ import React, { ChangeEvent, useRef } from "react";
 
 interface AttachmentUploaderProps {
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-  featureDisabled: boolean;
 }
 
 export function AttachmentUploader({
   setAttachments,
-  featureDisabled,
 }: AttachmentUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,14 +48,12 @@ export function AttachmentUploader({
         multiple
         ref={fileInputRef}
         onChange={onFileChange}
-        disabled={featureDisabled}
         className="hidden"
         accept=".pdf,.doc,.docx,.txt,image/*"
       />
       <Button
         type="button" // Explicitly set type to button
         variant="ghost"
-        disabled={featureDisabled}
         onClick={(e) => {
           e.preventDefault(); // Prevent default behavior
           fileInputRef.current?.click();

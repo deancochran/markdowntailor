@@ -14,128 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
-// Alpha Program Banner Component
-function AlphaProgramBanner() {
-  const [_timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-  const [programStatus, setProgramStatus] = useState<
-    "before" | "active" | "ended"
-  >("before");
-  const [mounted, setMounted] = useState(false);
-
-  // Set your alpha program dates here - memoized to prevent unnecessary re-renders
-  const ALPHA_START_DATE = useMemo(() => new Date("2025-06-01T00:00:00Z"), []);
-  const ALPHA_END_DATE = useMemo(
-    () =>
-      new Date(process.env.ALPHA_ACCESS_CUTOFF_DATE ?? "2025-08-01T00:00:00Z"),
-    [],
-  );
-
-  useEffect(() => {
-    setMounted(true);
-
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const startTime = ALPHA_START_DATE.getTime();
-      const endTime = ALPHA_END_DATE.getTime();
-
-      if (now < startTime) {
-        // Before alpha starts - countdown to start
-        const difference = startTime - now;
-        setProgramStatus("before");
-        return {
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-          ),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        };
-      } else if (now >= startTime && now <= endTime) {
-        // During alpha - countdown to end
-        const difference = endTime - now;
-        setProgramStatus("active");
-        return {
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-          ),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        };
-      } else {
-        // After alpha ends
-        setProgramStatus("ended");
-        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-      }
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [ALPHA_START_DATE, ALPHA_END_DATE]);
-
-  if (!mounted) {
-    return null; // Prevent hydration mismatch
-  }
-
-  const getBannerContent = () => {
-    switch (programStatus) {
-      case "before":
-        return {
-          title: "🚀 Alpha Program Starting Soon!",
-          badgeText: "COMING SOON",
-          badgeVariant: "secondary" as const,
-          showCountdown: true,
-          countdownLabel: "Starts in:",
-        };
-      case "active":
-        return {
-          title: "🔥 Alpha Program Live Now!",
-          badgeText: "LIVE NOW",
-          badgeVariant: "destructive" as const,
-          showCountdown: true,
-          countdownLabel: "Ends in:",
-        };
-      case "ended":
-        return {
-          title: "Alpha Program Has Ended",
-          badgeText: "PROGRAM ENDED",
-          badgeVariant: "outline" as const,
-          showCountdown: false,
-          countdownLabel: "",
-        };
-    }
-  };
-
-  const content = getBannerContent();
-
-  return (
-    <div className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-b border-primary/20 p-1">
-      <div className="w-full h-full p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <div className="w-full flex flex-col items-start gap-1">
-          <Badge
-            variant={content.badgeVariant}
-            className="font-semibold text-sm"
-          >
-            {content.badgeText}
-          </Badge>
-          <h3 className="text-sm font-bold text-foreground">{content.title}</h3>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(true); // Start as true to match server render
@@ -243,9 +122,6 @@ export default function Home() {
 
   return (
     <div className="w-full bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
-      {/* Alpha Program Banner */}
-      <AlphaProgramBanner />
-
       <div className="flex flex-col gap-24 py-12 md:py-32 px-4 max-w-full">
         {/* Hero Section */}
         <div className="relative ">

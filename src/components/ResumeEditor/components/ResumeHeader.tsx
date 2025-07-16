@@ -1,14 +1,15 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    CheckCircle,
-    Clock,
-    Copy,
-    Download,
-    History,
-    Loader2,
-    Save,
-    Trash2,
+  CheckCircle,
+  Clock,
+  Copy,
+  Download,
+  History,
+  Loader2,
+  Save,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { ResumeHeaderProps } from "../types";

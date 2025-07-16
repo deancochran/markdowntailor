@@ -1,3 +1,4 @@
+"use client";
 import { useMessages } from "@/hooks/use-messages";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
@@ -10,7 +11,6 @@ interface MessagesProps {
   messages: Array<UIMessage>;
   setMessages: UseChatHelpers["setMessages"];
   reload: UseChatHelpers["reload"];
-  featureDisabled: boolean;
 }
 
 function PureMessages({
@@ -18,7 +18,6 @@ function PureMessages({
   messages,
   setMessages,
   reload,
-  featureDisabled,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -63,7 +62,6 @@ function PureMessages({
 
       {messages.map((message, index) => (
         <PreviewMessage
-          featureDisabled={featureDisabled}
           key={message.id}
           message={message}
           isLoading={

@@ -1,1 +1,0 @@
-ALTER TABLE "ai_request_log" ALTER COLUMN "credits" SET DEFAULT '0.0000';

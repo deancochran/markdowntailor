@@ -1,7 +1,6 @@
-import { auth } from "@/auth";
-import { resume } from "@/db/schema";
-import { deductCreditsFromUser, getPreferredModelObject } from "@/lib/ai";
-import { apiRateLimiter } from "@/lib/upstash";
+// TODO UPDATE AI INTEGRATION FOR SESSION BASED user
+// User provides ai key, User Selects AI Model
+import { getPreferredModelObject } from "@/lib/ai";
 import {
   InvalidToolArgumentsError,
   Message,
@@ -10,7 +9,6 @@ import {
   tool,
   ToolExecutionError,
 } from "ai";
-import Decimal from "decimal.js";
 import { z } from "zod";
 
 // Streamlined modification schema for batch operations
@@ -204,24 +202,6 @@ export async function POST(req: Request) {
     }: { messages: Message[]; resume: typeof resume.$inferSelect } =
       await req.json();
 
-    // Authentication and rate limiting
-    const session = await auth();
-    if (!session) {
-      return new Response("Unauthorized", { status: 401 });
-    }
-
-    if (Decimal(session.user.credits).lt(0)) {
-      return new Response("Insufficient credits", { status: 402 });
-    }
-    if (!session.user.stripeCustomerId) {
-      return new Response("No Stripe Id", { status: 402 });
-    }
-
-    const rateLimit = await apiRateLimiter.limit(session.user.id);
-    if (!rateLimit.success) {
-      return new Response("Too Many Requests", { status: 429 });
-    }
-
     // Prepare dynamic system prompt
     const systemPrompt = SYSTEM_PROMPT.replace(
       "{RESUME_MARKDOWN}",
@@ -239,13 +219,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       maxSteps: 8,
       experimental_continueSteps: true,
-      temperature: 0.3,
       abortSignal: req.signal,
-      maxTokens: 33_000,
-      onFinish: async (data) => {
-        // Update user credits after successful completion
-        await deductCreditsFromUser(session.user, modelSelection, data.usage);
-      },
     });
 
     return result.toDataStreamResponse({

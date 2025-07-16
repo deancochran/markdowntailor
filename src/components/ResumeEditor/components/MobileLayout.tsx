@@ -1,3 +1,4 @@
+"use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { useTheme } from "next-themes";
 import { EditorState, UseAIChatReturn, UseResumeEditorsReturn } from "../types";
@@ -13,7 +14,6 @@ type MobileLayoutProps = {
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
-  userCredits: string | null;
 };
 
 export function MobileLayout({
@@ -23,7 +23,6 @@ export function MobileLayout({
   editorHooks,
   chatHooks,
   resumePreviewRef,
-  userCredits,
 }: MobileLayoutProps) {
   const { theme } = useTheme();
 
@@ -73,8 +72,6 @@ export function MobileLayout({
           reload={chatHooks.reload}
           attachments={chatHooks.attachments}
           setAttachments={chatHooks.setAttachments}
-          featureDisabled={chatHooks.featureDisabled}
-          userCredits={userCredits}
           isVisible={mobileTab === "chat"}
         />
       </div>

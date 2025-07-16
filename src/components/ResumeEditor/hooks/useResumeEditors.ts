@@ -1,3 +1,4 @@
+"use client";
 import type { editor } from "monaco-editor";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,33 +12,38 @@ export function useResumeEditors(
   const [modifiedCss, modifyCss] = useState(initialCss);
 
   // Refs to store editor instances for proper cleanup
-  const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const modifiedMarkdownEditorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const modifiedCssEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
+    null,
+  );
+  const modifiedMarkdownEditorRef = useRef<editor.IStandaloneCodeEditor | null>(
+    null,
+  );
 
   // Consolidated editor mount creator with better formatting preservation
   const createEditorMount = useCallback(
     (
       ref: React.MutableRefObject<editor.IStandaloneCodeEditor | null>,
       setter: (value: string) => void,
-    ) => (diffEditor: editor.IStandaloneDiffEditor) => {
-      const modified = diffEditor.getModifiedEditor();
-      ref.current = modified;
+    ) =>
+      (diffEditor: editor.IStandaloneDiffEditor) => {
+        const modified = diffEditor.getModifiedEditor();
+        ref.current = modified;
 
-      // Preserve formatting when content changes
-      modified.onDidChangeModelContent(() => {
-        const newValue = modified.getValue() || "";
-        setter(newValue);
-      });
+        // Preserve formatting when content changes
+        modified.onDidChangeModelContent(() => {
+          const newValue = modified.getValue() || "";
+          setter(newValue);
+        });
 
-      // Set up better formatting options
-      modified.updateOptions({
-        formatOnPaste: true,
-        formatOnType: true,
-        autoIndent: "full",
-        insertSpaces: true,
-        tabSize: 2,
-      });
-    },
+        // Set up better formatting options
+        modified.updateOptions({
+          formatOnPaste: true,
+          formatOnType: true,
+          autoIndent: "full",
+          insertSpaces: true,
+          tabSize: 2,
+        });
+      },
     [],
   );
 

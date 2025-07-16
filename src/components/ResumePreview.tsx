@@ -1,3 +1,4 @@
+"use client";
 import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { DynamicCssService } from "@/services/dynamic-css";

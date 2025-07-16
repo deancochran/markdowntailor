@@ -1,3 +1,4 @@
+"use client";
 import type { Attachment } from "ai";
 import { FileText, Image, X } from "lucide-react";
 import React from "react";
@@ -6,13 +7,11 @@ import { Button } from "../ui/button";
 interface AttachmentListingProps {
   attachments: Attachment[];
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-  featureDisabled: boolean;
 }
 
 export function AttachmentListing({
   attachments,
   setAttachments,
-  featureDisabled,
 }: AttachmentListingProps) {
   if (attachments.length === 0) return null;
 
@@ -37,7 +36,6 @@ export function AttachmentListing({
         >
           <Button
             variant="ghost"
-            disabled={featureDisabled}
             onClick={() => removeAttachment(att.url)}
             className="w-fit absolute top-1 right-0.5 size-4 hover:bg-transparent"
           >

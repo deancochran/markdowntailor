@@ -1,8 +1,7 @@
-import { useUser } from "@/hooks/use-user";
+"use client";
 import { useChat } from "@ai-sdk/react";
 import { Attachment, Message } from "ai";
-import Decimal from "decimal.js";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Modification, UseAIChatReturn } from "../types";
 
@@ -12,23 +11,7 @@ export function useAIChat(
   sanitizedTitle: string,
   applyModification: (modification: Modification) => void,
 ): UseAIChatReturn {
-  const { user, mutate } = useUser();
-  const [featureDisabled, setFeatureDisabled] = useState(true);
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-
-  // Check user credits and set feature disabled status
-  useEffect(() => {
-    if (!user) return;
-    const insufficientCredits = new Decimal(user.credits).lt(0);
-    setFeatureDisabled(insufficientCredits);
-
-    // Show a toast when credit balance is too low
-    if (insufficientCredits) {
-      toast.warning(
-        "You have insufficient credits. Please add more credits to use the AI features.",
-      );
-    }
-  }, [user]);
 
   // Process tool invocations from AI responses
   const processToolInvocations = useCallback(
@@ -94,14 +77,6 @@ export function useAIChat(
         if (e.message.includes("Unauthorized") || e.message.includes("401")) {
           toast.error("Authentication error. Please sign in again.");
         } else if (
-          e.message.includes("Insufficient credits") ||
-          e.message.includes("402")
-        ) {
-          toast.error(
-            "You don't have enough credits to use this feature. Please add more credits.",
-          );
-          setFeatureDisabled(true);
-        } else if (
           e.message.includes("Too Many Requests") ||
           e.message.includes("429")
         ) {
@@ -116,7 +91,6 @@ export function useAIChat(
     onFinish: (message) => {
       processToolInvocations(message);
       toast.success("AI response complete!");
-      mutate();
     },
     onResponse(response) {
       if (response.status === 401) {
@@ -125,7 +99,6 @@ export function useAIChat(
         toast.error(
           "You don't have enough credits to use this feature. Please add more credits.",
         );
-        setFeatureDisabled(true);
       } else if (response.status === 429) {
         toast.error("You've reached the rate limit. Please try again later.");
       } else if (!response.ok) {
@@ -145,6 +118,5 @@ export function useAIChat(
     reload,
     attachments,
     setAttachments,
-    featureDisabled,
   };
 }

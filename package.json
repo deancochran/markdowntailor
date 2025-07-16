@@ -71,6 +71,7 @@
     "framer-motion": "^12.23.0",
     "gray-matter": "^4.0.3",
     "import-in-the-middle": "^1.14.2",
+    "localforage": "^1.10.0",
     "lucide-react": "^0.509.0",
     "marked": "^15.0.12",
     "monaco-editor": "^0.52.2",

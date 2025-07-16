@@ -1,3 +1,4 @@
+"use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { useTheme } from "next-themes";
 import { EditorState, UseAIChatReturn, UseResumeEditorsReturn } from "../types";
@@ -16,7 +17,6 @@ type DesktopLayoutProps = {
   editorHooks: UseResumeEditorsReturn;
   chatHooks: UseAIChatReturn;
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
-  userCredits: string | null;
 };
 
 export function DesktopLayout({
@@ -28,7 +28,6 @@ export function DesktopLayout({
   editorHooks,
   chatHooks,
   resumePreviewRef,
-  userCredits,
 }: DesktopLayoutProps) {
   const { theme } = useTheme();
 
@@ -89,8 +88,6 @@ export function DesktopLayout({
             reload={chatHooks.reload}
             attachments={chatHooks.attachments}
             setAttachments={chatHooks.setAttachments}
-            featureDisabled={chatHooks.featureDisabled}
-            userCredits={userCredits}
             isVisible={previewTab === "chat"}
           />
         </div>
