@@ -108,7 +108,7 @@ function ResumeVersionsLoadingSkeleton() {
 
 export default function ResumeVersionsPage() {
   const { uuid } = useParams<{ uuid: string }>(); // dynamic segment
-
+  console.log(uuid);
   const [versions, setVersions] = useState<ResumeVersion[]>([]);
   const [loading, setLoading] = useState(true);
 

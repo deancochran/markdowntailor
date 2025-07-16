@@ -1,18 +1,16 @@
 "use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { useTheme } from "next-themes";
-import { EditorState, UseAIChatReturn, UseResumeEditorsReturn } from "../types";
+import { EditorState, UseResumeEditorsReturn } from "../types";
 import { CSSEditor } from "./CSSEditor";
-import { ChatPanel } from "./ChatPanel";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { PreviewPanel } from "./PreviewPanel";
 
 type MobileLayoutProps = {
-  mobileTab: "markdown" | "css" | "preview" | "chat";
-  onMobileTabChange: (tab: "markdown" | "css" | "preview" | "chat") => void;
+  mobileTab: "markdown" | "css" | "preview";
+  onMobileTabChange: (tab: "markdown" | "css" | "preview") => void;
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
-  chatHooks: UseAIChatReturn;
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
 };
 
@@ -21,7 +19,6 @@ export function MobileLayout({
   onMobileTabChange: _onMobileTabChange,
   editorState,
   editorHooks,
-  chatHooks,
   resumePreviewRef,
 }: MobileLayoutProps) {
   const { theme } = useTheme();
@@ -59,20 +56,6 @@ export function MobileLayout({
           styles={editorState.styles}
           resumePreviewRef={resumePreviewRef}
           isVisible={mobileTab === "preview"}
-        />
-
-        <ChatPanel
-          messages={chatHooks.messages}
-          setMessages={chatHooks.setMessages}
-          input={chatHooks.input}
-          setInput={chatHooks.setInput}
-          handleSubmit={chatHooks.handleSubmit}
-          status={chatHooks.status}
-          stop={chatHooks.stop}
-          reload={chatHooks.reload}
-          attachments={chatHooks.attachments}
-          setAttachments={chatHooks.setAttachments}
-          isVisible={mobileTab === "chat"}
         />
       </div>
     </div>

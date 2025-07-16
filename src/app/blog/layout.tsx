@@ -1,5 +1,3 @@
-"use client";
-
 import AppFooter from "@/components/AppFooter";
 import { getPosts } from "@/lib/blog";
 import { Metadata } from "next";

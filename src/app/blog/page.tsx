@@ -1,4 +1,3 @@
-"use client";
 import { getPosts } from "@/lib/blog";
 import { generateOrganizationSchema } from "@/lib/utils/seo";
 import { Metadata } from "next";

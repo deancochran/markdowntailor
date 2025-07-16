@@ -1,21 +1,19 @@
 "use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { useTheme } from "next-themes";
-import { EditorState, UseAIChatReturn, UseResumeEditorsReturn } from "../types";
+import { EditorState, UseResumeEditorsReturn } from "../types";
 import { CSSEditor } from "./CSSEditor";
-import { ChatPanel } from "./ChatPanel";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { PreviewPanel } from "./PreviewPanel";
 import { EditorTabs, PreviewTabs } from "./TabComponents";
 
 type DesktopLayoutProps = {
   editorsTab: "markdown" | "css";
-  previewTab: "preview" | "chat";
+  previewTab: "preview";
   onEditorsTabChange: (tab: "markdown" | "css") => void;
-  onPreviewTabChange: (tab: "preview" | "chat") => void;
+  onPreviewTabChange: (tab: "preview") => void;
   editorState: EditorState;
   editorHooks: UseResumeEditorsReturn;
-  chatHooks: UseAIChatReturn;
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>;
 };
 
@@ -26,7 +24,6 @@ export function DesktopLayout({
   onPreviewTabChange,
   editorState,
   editorHooks,
-  chatHooks,
   resumePreviewRef,
 }: DesktopLayoutProps) {
   const { theme } = useTheme();
@@ -75,20 +72,6 @@ export function DesktopLayout({
             styles={editorState.styles}
             resumePreviewRef={resumePreviewRef}
             isVisible={previewTab === "preview"}
-          />
-
-          <ChatPanel
-            messages={chatHooks.messages}
-            setMessages={chatHooks.setMessages}
-            input={chatHooks.input}
-            setInput={chatHooks.setInput}
-            handleSubmit={chatHooks.handleSubmit}
-            status={chatHooks.status}
-            stop={chatHooks.stop}
-            reload={chatHooks.reload}
-            attachments={chatHooks.attachments}
-            setAttachments={chatHooks.setAttachments}
-            isVisible={previewTab === "chat"}
           />
         </div>
       </div>

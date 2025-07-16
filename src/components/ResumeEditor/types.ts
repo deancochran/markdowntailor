@@ -52,8 +52,8 @@ export type Modification = {
 
 // Tab types
 export type EditorTab = "markdown" | "css";
-export type PreviewTab = "preview" | "chat";
-export type MobileTab = "markdown" | "css" | "preview" | "chat";
+export type PreviewTab = "preview";
+export type MobileTab = "markdown" | "css" | "preview";
 
 // Component prop types
 export type ResumeEditorProps = {

@@ -1,9 +1,8 @@
 "use client";
-import ResumeEditorLoadingSkeleton from "@/components/loading/ResumeEditorLoadingSkeleton";
 import ResumeEditor from "@/components/ResumeEditor";
 import { db, Resume } from "@/localforage";
 import { useParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ResumeVersionsPage() {
   const { uuid } = useParams<{ uuid: string }>(); // dynamic segment
@@ -26,6 +25,15 @@ export default function ResumeVersionsPage() {
     };
   }, [uuid]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">loading...</h2>
+        </div>
+      </div>
+    );
+  }
   if (!resume) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -40,9 +48,5 @@ export default function ResumeVersionsPage() {
     );
   }
 
-  return (
-    <Suspense fallback={<ResumeEditorLoadingSkeleton />}>
-      <ResumeEditor resume={resume} />
-    </Suspense>
-  );
+  return <ResumeEditor resume={resume} />;
 }

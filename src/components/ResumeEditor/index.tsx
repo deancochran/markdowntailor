@@ -11,7 +11,6 @@ import { DesktopLayout } from "./components/DesktopLayout";
 import { MobileLayout } from "./components/MobileLayout";
 import { ResumeHeader } from "./components/ResumeHeader";
 import { MobileTabs } from "./components/TabComponents";
-import { useAIChat } from "./hooks/useAIChat";
 import { useResumeActions } from "./hooks/useResumeActions";
 import { useResumeEditors } from "./hooks/useResumeEditors";
 import { useTabManager } from "./hooks/useTabManager";
@@ -84,14 +83,6 @@ export default function ResumeEditor({ resume }: { resume: Resume }) {
         setStyles(defaultStyles);
       }
     },
-  );
-
-  // AI Chat hook
-  const chatHooks = useAIChat(
-    sanitizedMarkdown,
-    sanitizedCSS,
-    sanitizedTitle,
-    editorHooks.applyModification,
   );
 
   // Effect to warn user before closing tab with unsaved changes
@@ -169,7 +160,6 @@ export default function ResumeEditor({ resume }: { resume: Resume }) {
           onPreviewTabChange={tabManager.setPreviewTab}
           editorState={editorState}
           editorHooks={editorHooks}
-          chatHooks={chatHooks}
           resumePreviewRef={resumePreviewRef}
         />
 
@@ -178,7 +168,6 @@ export default function ResumeEditor({ resume }: { resume: Resume }) {
           onMobileTabChange={tabManager.setMobileTab}
           editorState={editorState}
           editorHooks={editorHooks}
-          chatHooks={chatHooks}
           resumePreviewRef={resumePreviewRef}
         />
       </div>

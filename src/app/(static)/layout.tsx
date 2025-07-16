@@ -1,4 +1,3 @@
-"use client";
 import AppFooter from "@/components/AppFooter";
 import { Metadata } from "next";
 

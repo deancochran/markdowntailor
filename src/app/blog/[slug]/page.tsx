@@ -1,7 +1,6 @@
-"use client";
+import { Separator } from "@/components/ui/separator";
 import { getPost } from "@/lib/blog";
 import { components } from "@/mdx-components";
-import { Separator } from "@radix-ui/react-dropdown-menu";
 import { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import Link from "next/link";

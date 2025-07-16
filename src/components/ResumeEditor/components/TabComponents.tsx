@@ -33,13 +33,6 @@ export function PreviewTabs({ activeTab, onTabChange }: PreviewTabsProps) {
       >
         Preview
       </Button>
-      <Button
-        className="flex grow"
-        variant={activeTab === "chat" ? "outline" : "ghost"}
-        onClick={() => onTabChange("chat")}
-      >
-        AI Chat
-      </Button>
     </div>
   );
 }
@@ -67,13 +60,6 @@ export function MobileTabs({ activeTab, onTabChange }: MobileTabsProps) {
         onClick={() => onTabChange("preview")}
       >
         Preview
-      </Button>
-      <Button
-        className="flex grow text-xs"
-        variant={activeTab === "chat" ? "outline" : "ghost"}
-        onClick={() => onTabChange("chat")}
-      >
-        AI Chat
       </Button>
     </div>
   );
