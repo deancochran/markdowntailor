@@ -60,9 +60,19 @@ export default function ResumeEditor({ resume }: { resume: Resume }) {
     "css",
     (error) => toast.error(`CSS sanitization: ${error}`),
   );
+  // Create current resume object from form values and editor state
+  const currentResume: Resume = {
+    id,
+    title: sanitizedTitle,
+    markdown: sanitizedMarkdown,
+    css: sanitizedCSS,
+    styles: JSON.stringify(styles),
+    createdAt: resume.createdAt,
+    updatedAt,
+  };
 
   const resumeActions = useResumeActions(
-    resume,
+    currentResume, // Pass the current resume object instead of the original
     resumePreviewRef,
     (updatedResume) => {
       // Update form values

@@ -1,9 +1,7 @@
 import { expect, test } from "tests/utils";
-import { programmaticLogin } from "tests/utils/auth";
 
 test.describe("Templates Page Search and Filter", () => {
-  test.beforeEach(async ({ page, user }) => {
-    await programmaticLogin(page, user);
+  test.beforeEach(async ({ page }) => {
     await page.goto("/templates");
   });
 

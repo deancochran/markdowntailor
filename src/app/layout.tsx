@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { ModeToggle } from "@/components/ModeToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Button } from "@/components/ui/button";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import Script from "next/script";
@@ -49,6 +50,9 @@ export default async function RootLayout({
                   <nav className="flex items-center gap-2">
                     {/* DARK MODE SWITCH */}
                     <ModeToggle />
+                    <Button variant={"secondary"} asChild>
+                      <Link href="/resumes">Resumes</Link>
+                    </Button>
                   </nav>
                 </div>
               </div>

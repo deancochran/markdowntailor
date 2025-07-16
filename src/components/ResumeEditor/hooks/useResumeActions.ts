@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { UseResumeActionsReturn } from "../types";
+
 export function useResumeActions(
   resume: Resume,
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>,
@@ -28,14 +29,15 @@ export function useResumeActions(
       try {
         await db.resumes.delete(resume.id);
         toast.success("Resume deleted successfully");
-        redirect("/resumes");
       } catch {
         toast.error("Failed to delete resume");
       } finally {
         setIsDeleting(false);
       }
+      redirect("/resumes");
     }
-  }, [resume]);
+  }, [resume.id]);
+
   const handlePrint = useCallback(() => {
     setIsPrinting(true);
 
@@ -54,33 +56,42 @@ export function useResumeActions(
       setIsPrinting(false);
     }
   }, [resumePreviewRef]);
+
   const handleDuplicate = useCallback(async () => {
     setIsDuplicating(true);
-    let newResume;
     try {
-      newResume = await db.resumes.createFromResume({
+      const newResume = await db.resumes.createFromResume({
         markdown: resume.markdown,
         css: resume.css,
         styles: resume.styles,
       });
+
       toast.success("Resume duplicated successfully");
+      redirect(`/resumes/${newResume.id}`);
     } catch {
       toast.error("Failed to duplicate resume");
     } finally {
       setIsDuplicating(false);
     }
-    if (newResume) {
-      redirect(`/resumes/${newResume.id}`);
-    }
-  }, [resume]);
+  }, [resume.markdown, resume.css, resume.styles]);
 
   const handleSave = useCallback(async () => {
+    console.log("handleSave called, isDirty:", isDirty);
+    console.log("Current resume:", resume);
+
+    if (!isDirty) {
+      toast.info("No changes to save");
+      return;
+    }
+
     try {
-      await save();
+      const result = await save();
+      console.log("Save result:", result);
     } catch (error) {
       console.error("Save failed:", error);
+      // Error handling is already done in the save function
     }
-  }, [save]);
+  }, [save, isDirty, resume]);
 
   return {
     isDeleting,

@@ -96,7 +96,7 @@ export function ResumeHeader({
           {/* Save Button */}
           <Button
             onClick={onSave}
-            disabled={isSaving || !isDirty}
+            disabled={isSaving}
             variant="outline"
             size="sm"
           >

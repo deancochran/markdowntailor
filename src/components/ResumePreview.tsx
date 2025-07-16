@@ -194,8 +194,8 @@ function createCombinedPageContent(
 // Component functions
 function PreviewControls({
   zoomControls,
-  scale,
-  totalPages,
+  scale: _scale,
+  totalPages: _totalPages,
 }: PreviewControlsProps) {
   const { zoomIn, zoomOut, resetZoom } = zoomControls;
 

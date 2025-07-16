@@ -7,10 +7,7 @@ import { User } from "next-auth";
  * @param user - The user object to log in with.
  */
 export async function programmaticLogin(page: Page, user: User): Promise<void> {
-  await page.goto("http://localhost:3000/api/auth/signin");
-  await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Password").fill("test");
-  await page.getByRole("button", { name: "Sign In With Password" }).click();
+  await page.goto("http://localhost:3000/");
   await page.waitForLoadState("networkidle");
 }
 
@@ -19,6 +16,6 @@ export async function programmaticLogin(page: Page, user: User): Promise<void> {
  * @param page - The Playwright Page object.
  */
 export async function programmaticLogout(page: Page): Promise<void> {
-  await page.goto("http://localhost:3000/api/auth/signout");
+  await page.goto("http://localhost:3000/");
   await page.waitForLoadState("networkidle");
 }

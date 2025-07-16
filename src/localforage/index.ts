@@ -1,3 +1,4 @@
+import { defaultStyles } from "@/lib/utils/styles";
 import { Template } from "@/lib/utils/templates";
 import localForage from "localforage";
 
@@ -208,7 +209,7 @@ export const db = {
         title: `${resume.title} (Copy)`,
         markdown: resume.markdown || "",
         css: resume.css || "",
-        styles: JSON.stringify(resume.styles || {}),
+        styles: resume.styles ?? JSON.stringify(defaultStyles),
       };
       return this.create(newResumeData);
     },
@@ -333,6 +334,3 @@ export const db = {
 
 // Export table instances for direct access if needed
 export { resumesTable, resumeVersionsTable, sessionTable };
-function uuidv4() {
-  throw new Error("Function not implemented.");
-}

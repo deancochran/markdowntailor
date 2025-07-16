@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db, ResumeVersion } from "@/localforage";
 import { useParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 // Loading skeleton component
 function ResumeVersionsLoadingSkeleton() {
@@ -117,6 +117,7 @@ export default function ResumeVersionsPage() {
     (async () => {
       try {
         const data = (await db.resumeVersions.findAllByResumeId(uuid)) ?? [];
+        console.log(data);
         if (!cancelled) setVersions(data);
       } finally {
         if (!cancelled) setLoading(false);
@@ -126,6 +127,8 @@ export default function ResumeVersionsPage() {
       cancelled = true;
     };
   }, [uuid]);
+
+  if (loading) return <ResumeVersionsLoadingSkeleton />;
 
   if (versions?.length === 0) {
     return (
@@ -146,9 +149,5 @@ export default function ResumeVersionsPage() {
     );
   }
 
-  return (
-    <Suspense fallback={<ResumeVersionsLoadingSkeleton />}>
-      <ResumeVersionsComponent versions={versions} />
-    </Suspense>
-  );
+  return <ResumeVersionsComponent versions={versions} />;
 }

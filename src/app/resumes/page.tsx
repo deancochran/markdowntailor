@@ -2,12 +2,11 @@
 import ResumeListing from "@/components/resume-listing";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { db } from "@/localforage";
-import { useEffect, useState } from "react";
-import { Suspense } from "react";
+import { db, Resume } from "@/localforage";
+import { Suspense, useEffect, useState } from "react";
 
 export default function ResumesPage() {
-  const [resumes, setResumes] = useState([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
 
   useEffect(() => {
     async function fetchData() {
