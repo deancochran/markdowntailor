@@ -13,11 +13,6 @@ export const metadata: Metadata = {
   title: "ATS-Optimized Resume Builder to Get You Hired | markdowntailor",
   description:
     "Build, Create, and Tailor ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
-  alternates: {
-    types: {
-      "application/rss+xml": "/api/rss",
-    },
-  },
 };
 
 export const viewport: Viewport = {
@@ -36,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen overflow-hidden">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <div className="app-container flex flex-col">
             <header className="sticky top-0 z-50 border-b shadow-md flex-shrink-0">
               <div className="flex w-full px-4 h-14 items-center justify-between">
@@ -81,11 +76,6 @@ export default async function RootLayout({
               "https://github.com/markdowntailor",
               "https://linkedin.com/company/markdowntailor",
             ],
-            contactPoint: {
-              "@type": "ContactPoint",
-              email: "info@markdowntailor.com",
-              contactType: "customer service",
-            },
           }),
         }}
       />
