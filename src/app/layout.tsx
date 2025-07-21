@@ -31,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen overflow-hidden">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <div className="app-container flex flex-col">
             <header className="sticky top-0 z-50 border-b shadow-md flex-shrink-0">
               <div className="flex w-full px-4 h-14 items-center justify-between">
