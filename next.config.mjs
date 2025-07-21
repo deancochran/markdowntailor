@@ -13,9 +13,15 @@ const chConfig = {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  basePath: process.env.NODE_ENV == "production" ? "/markdowntailor": "",
   // Configure `pageExtensions` to include markdown and MDX files
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   output: "export",
+  distDir: ".dist",
+  images: {
+    unoptimized: true, // Disable image optimization for static export
+  },
+  // Enable React strict modes
   reactStrictMode: true,
 };
 
