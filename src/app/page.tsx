@@ -2,106 +2,26 @@
 import AppFooter from "@/components/AppFooter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TEMPLATES } from "@/lib/utils/templates";
 import {
   ArrowRight,
-  Brain,
   FileDown,
   FileEdit,
   GitFork,
   Palette,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(true); // Start as true to match server render
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [_mounted, setMounted] = useState(false);
-
-  // Updated testimonials that avoid making promises about job outcomes
-  const testimonials = [
-    {
-      text: "The Markdown format makes it so easy to organize my experience. I appreciate how clean and professional the templates look.",
-      author: "John Doe",
-      position: "Software Engineer",
-      company: "ABC Corp",
-    },
-    {
-      text: "I love how I can quickly create different versions of my resume for different industries. The ATS-friendly format gives me confidence when applying.",
-      author: "Jane Smith",
-      position: "Marketing Manager",
-      company: "XYZ Inc",
-    },
-    {
-      text: "The AI suggestions helped me highlight my achievements with stronger action verbs. Very intuitive interface!",
-      author: "Alice Johnson",
-      position: "Product Manager",
-      company: "DEF Ltd",
-    },
-    {
-      text: "Being able to use Markdown for my resume is perfect for a developer like me. The templates are clean and modern.",
-      author: "Bob Brown",
-      position: "Full Stack Developer",
-      company: "GHI Tech",
-    },
-    {
-      text: "The keyword suggestions helped me tailor my resume to match the job descriptions much more effectively.",
-      author: "Charlie Davis",
-      position: "UX Designer",
-      company: "LMN Design",
-    },
-    {
-      text: "The version control feature is invaluable for keeping track of different resume versions for different positions.",
-      author: "David Miller",
-      position: "Project Manager",
-      company: "OPQ Corp",
-    },
-    {
-      text: "As someone who cares about design, I'm impressed with how professional and well-designed the templates are.",
-      author: "Emily Wilson",
-      position: "UI Designer",
-      company: "PQR Studio",
-    },
-    {
-      text: "The AI suggestions helped me translate my industry-specific experience into more universally understood achievements.",
-      author: "Frank Garcia",
-      position: "Marketing Manager",
-      company: "STU Inc.",
-    },
-    {
-      text: "The structured format helps me organize my publications and research experience in a clean, readable way.",
-      author: "Grace Kim",
-      position: "Research Scientist",
-      company: "XYZ Labs",
-    },
-    {
-      text: "I appreciate how easy it is to highlight my metrics and achievements with the formatting options.",
-      author: "Hannah Lee",
-      position: "Data Analyst",
-      company: "ABC Corp",
-    },
-    {
-      text: "The technical skills section formatting is perfect for showcasing my certifications and expertise.",
-      author: "Ian Chen",
-      position: "Software Engineer",
-      company: "DEF Tech",
-    },
-    {
-      text: "As someone new to the job market, the AI suggestions helped me present my limited experience in the most effective way.",
-      author: "John Doe",
-      position: "Entry-Level Developer",
-      company: "GHI Corp",
-    },
-    {
-      text: "The templates helped me create a professional resume that highlights my leadership experience and community impact.",
-      author: "Jane Smith",
-      position: "Community Manager",
-      company: "JKL Inc.",
-    },
-  ];
 
   useEffect(() => {
     setMounted(true);
@@ -110,15 +30,10 @@ export default function Home() {
       setIsVisible(true);
     }, 100);
 
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-
     return () => {
       clearTimeout(timer);
-      clearInterval(interval);
     };
-  }, [testimonials.length]);
+  }, []);
 
   return (
     <div className="w-full bg-gradient-to-br from-accent via-muted to-accent dark:from-muted dark:via-card dark:to-muted">
@@ -137,23 +52,9 @@ export default function Home() {
                 Pixel. Perfect. Resumes.
               </h1>
               <p className="text-lg max-w-sm md:max-w-full md:text-2xl text-muted-foreground leading-relaxed">
-                Trusted by Job Seekers Worldwide
+                Create beautiful, professional resumes with ease.
               </p>
             </div>
-            <Card className="max-w-3xl p-8">
-              <CardContent className="flex flex-col gap-4 justify-between">
-                <blockquote className="text-xl text-muted-foreground italic">
-                  &quot;{testimonials[currentTestimonial].text}&quot;
-                </blockquote>
-                {/* <span className="w-full text-right text-xl text-muted-foreground italic">
-                  - {testimonials[currentTestimonial].author}
-                  {" | "}
-                  {testimonials[currentTestimonial].position}
-                  {" @ "}
-                  {testimonials[currentTestimonial].company}{" "}
-                </span> */}
-              </CardContent>
-            </Card>
           </div>
         </div>
 
@@ -183,7 +84,7 @@ export default function Home() {
                 step: "02",
                 title: "Write with Markdown",
                 description:
-                  "Use simple formatting while our AI suggests improvements and catches errors",
+                  "Use simple formatting to create your resume.",
               },
               {
                 step: "03",
@@ -211,32 +112,6 @@ export default function Home() {
             </Link>
           </Button>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-3">
-                <Brain className="h-8 w-8 text-primary" />
-                <CardTitle>Intelligent Tailoring</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Our AI analyzes job descriptions to help you customize your
-                  resume with relevant keywords and skills.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-3">
-                <Sparkles className="h-8 w-8 text-primary" />
-                <CardTitle>AI Content Optimization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Receive AI-driven suggestions for impactful phrasing, action
-                  verbs, and keyword optimization.
-                </p>
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader className="flex flex-row items-center gap-3">
                 <Palette className="h-8 w-8 text-primary" />

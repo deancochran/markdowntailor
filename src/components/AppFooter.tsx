@@ -41,14 +41,6 @@ export default function AppFooter() {
                 </li>
                 <li>
                   <Link
-                    href="/pricing"
-                    className="text-xs md:text-sm text-muted-foreground hover:text-primary"
-                  >
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link
                     href="/templates"
                     className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                   >
@@ -77,30 +69,6 @@ export default function AppFooter() {
                     className="text-xs md:text-sm text-muted-foreground hover:text-primary"
                   >
                     About
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            {/* Legal links - most important for visibility on mobile */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-2 text-sm">
-                Legal
-              </h4>
-              <ul className="space-y-1.5">
-                <li>
-                  <Link
-                    href="/privacy-policy"
-                    className="text-xs md:text-sm text-muted-foreground hover:text-primary"
-                  >
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms-of-service"
-                    className="text-xs md:text-sm text-muted-foreground hover:text-primary"
-                  >
-                    Terms of Service
                   </Link>
                 </li>
               </ul>

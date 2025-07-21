@@ -13,11 +13,6 @@ export const metadata: Metadata = {
   title: "ATS-Optimized Resume Builder to Get You Hired | markdowntailor",
   description:
     "Build, Create, and Tailor ATS-friendly resumes that get past screening systems and into the hands of hiring managers.",
-  alternates: {
-    types: {
-      "application/rss+xml": "/api/rss",
-    },
-  },
 };
 
 export const viewport: Viewport = {
@@ -81,11 +76,6 @@ export default async function RootLayout({
               "https://github.com/markdowntailor",
               "https://linkedin.com/company/markdowntailor",
             ],
-            contactPoint: {
-              "@type": "ContactPoint",
-              email: "info@markdowntailor.com",
-              contactType: "customer service",
-            },
           }),
         }}
       />
