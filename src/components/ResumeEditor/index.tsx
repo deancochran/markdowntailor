@@ -16,9 +16,13 @@ import { useResumeEditors } from "./hooks/useResumeEditors";
 import { useTabManager } from "./hooks/useTabManager";
 
 export default function ResumeEditor({ resume }: { resume: Resume }) {
-  const { watch, setValue } = useForm({
+  const { watch, setValue, reset } = useForm({
     defaultValues: resume,
   });
+
+  useEffect(() => {
+    reset(resume);
+  }, [resume, reset]);
 
   // Form field watches
   const id = watch("id");

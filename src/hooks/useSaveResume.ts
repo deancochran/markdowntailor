@@ -23,7 +23,7 @@ export function useSaveResume({ resume, onSaveSuccess }: SaveResumeOptions) {
       setIsDirty(false);
       setLastSaved(null);
     }
-  }, [resume.id]);
+  }, [resume]);
 
   // Check for changes against specific fields
   useEffect(() => {

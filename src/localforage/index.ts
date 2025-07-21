@@ -2,36 +2,50 @@ import { defaultStyles } from "@/lib/utils/styles";
 import { Template } from "@/lib/utils/templates";
 import localForage from "localforage";
 
-// Configure main localForage instance
-localForage.config({
-  driver: [localForage.INDEXEDDB, localForage.WEBSQL, localForage.LOCALSTORAGE],
-  name: "markdowntailor",
-  storeName: "keyvaluepairs",
-  description: "Markdown CSS Resume Tailor Database",
-});
+const isBrowser = typeof window !== "undefined";
+
+if (isBrowser) {
+  // Configure main localForage instance
+  localForage.config({
+    driver: [
+      localForage.INDEXEDDB,
+      localForage.WEBSQL,
+      localForage.LOCALSTORAGE,
+    ],
+    name: "markdowntailor",
+    storeName: "keyvaluepairs",
+    description: "Markdown CSS Resume Tailor Database",
+  });
+}
 
 const dbName = "markdowntailor_database";
 
 // Create resumes table
-const resumesTable = localForage.createInstance({
-  name: dbName,
-  storeName: "resumes",
-  description: "Stores resume documents with markdown, CSS, and styles",
-});
+const resumesTable = isBrowser
+  ? localForage.createInstance({
+      name: dbName,
+      storeName: "resumes",
+      description: "Stores resume documents with markdown, CSS, and styles",
+    })
+  : {} as LocalForage;
 
 // Create resume versions table
-const resumeVersionsTable = localForage.createInstance({
-  name: dbName,
-  storeName: "resumeVersions",
-  description: "Stores different versions of resumes for version control",
-});
+const resumeVersionsTable = isBrowser
+  ? localForage.createInstance({
+      name: dbName,
+      storeName: "resumeVersions",
+      description: "Stores different versions of resumes for version control",
+    })
+  : {} as LocalForage;
 
 // Create AI credit logs table
-const sessionTable = localForage.createInstance({
-  name: dbName,
-  storeName: "session",
-  description: "Stores all session data for web user",
-});
+const sessionTable = isBrowser
+  ? localForage.createInstance({
+      name: dbName,
+      storeName: "session",
+      description: "Stores all session data for web user",
+    })
+  : {} as LocalForage;
 
 // Type definitions based on your schema
 export interface Resume {

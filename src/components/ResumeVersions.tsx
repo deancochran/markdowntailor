@@ -107,7 +107,7 @@ export default function ResumeVersionsComponent({
       const restoredResume = await db.resumes.restoreFromVersion(versionId);
       if (restoredResume) {
         toast.success("Version restored successfully");
-        router.push(`/resumes/${restoredResume.id}`);
+        router.push(`/resumes?uuid=${restoredResume.id}`);
       } else {
         throw new Error("Failed to restore version");
       }
@@ -126,7 +126,7 @@ export default function ResumeVersionsComponent({
       const duplicatedResume = await db.resumes.duplicate(version.resumeId);
       if (duplicatedResume) {
         toast.success("Resume duplicated successfully from version");
-        router.push(`/resumes/${duplicatedResume.id}`);
+        router.push(`/resumes?uuid=${duplicatedResume.id}`);
       } else {
         toast.error("Failed to duplicate resume: Original resume not found.");
       }
@@ -159,7 +159,7 @@ export default function ResumeVersionsComponent({
       {/* Header */}
       <header className="w-full flex flex-col sm:flex-row sm:h-14 items-start sm:items-center justify-between p-3 sm:p-4 gap-3 sm:gap-4 border-b bg-background">
         <div className="flex items-center gap-4 w-full sm:w-auto">
-          <Link href={`/resumes/${versions[0].resumeId}`}>
+          <Link href={`/resumes?uuid=${versions[0].resumeId}`}>
             <Button variant="ghost" size="icon" className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
               <span className="sr-only">Back to Editor</span>
