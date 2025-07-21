@@ -1,5 +1,11 @@
+"use client";
 import { useState } from "react";
-import { EditorTab, MobileTab, PreviewTab, UseTabManagerReturn } from "../types";
+import {
+  EditorTab,
+  MobileTab,
+  PreviewTab,
+  UseTabManagerReturn,
+} from "../types";
 
 export function useTabManager(): UseTabManagerReturn {
   const [editorsTab, setEditorsTab] = useState<EditorTab>("markdown");

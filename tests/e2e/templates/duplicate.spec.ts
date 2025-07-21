@@ -1,9 +1,7 @@
-import { programmaticLogin } from "@/tests/utils/auth";
 import { expect, test } from "tests/utils";
 
 test.describe("Template Duplicate Resume Creation", () => {
-  test.beforeEach(async ({ page, user }) => {
-    await programmaticLogin(page, user);
+  test.beforeEach(async ({ page }) => {
     // Go to templates page
     await page.goto("/templates");
 

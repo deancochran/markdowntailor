@@ -1,3 +1,4 @@
+"use client";
 import StylesControls from "@/components/StylesControls";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { DiffEditor } from "@monaco-editor/react";

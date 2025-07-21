@@ -31,30 +31,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  createResume,
-  createResumeFromVersion,
-  deleteResume,
-} from "@/lib/actions/resume";
+
 import { defaultStyles } from "@/lib/utils/styles";
+import { db, Resume } from "@/localforage";
 import { ArrowRight, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
-import { useOptimistic, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-
-// Resume type with added optimistic state flags
-export type Resume = {
-  id: string;
-  userId: string;
-  title: string;
-  markdown: string;
-  css: string;
-  styles: string;
-  createdAt: Date;
-  updatedAt: Date;
-  _isOptimistic?: boolean;
-  _isDeleting?: boolean;
-};
 
 // Main component to list resumes
 export default function ResumeListing({
@@ -62,45 +46,7 @@ export default function ResumeListing({
 }: {
   initialResumes: Resume[];
 }) {
-  const [_isPending, startTransition] = useTransition();
-  const [optimisticResumes, updateOptimisticResumes] = useOptimistic(
-    initialResumes,
-    (
-      state: Resume[],
-      action: {
-        type: string;
-        resume?: Resume;
-        id?: string;
-        title?: string;
-        isDeleting?: boolean;
-      },
-    ) => {
-      switch (action.type) {
-        case "ADD":
-          return action.resume
-            ? [...state, { ...action.resume, _isOptimistic: true }]
-            : state;
-        case "DELETE":
-          // Mark as deleting
-          return state.map((r) =>
-            r.id === action.id ? { ...r, _isDeleting: action.isDeleting } : r,
-          );
-        case "REMOVE":
-          // This case might be used if we want to immediately remove from UI
-          // but revalidation handles this better.
-          return state.filter((r) => r.id !== action.id);
-        case "RENAME":
-          // Example for renaming if that feature is added
-          return state.map((r) =>
-            r.id === action.id && action.title
-              ? { ...r, title: action.title }
-              : r,
-          );
-        default:
-          return state;
-      }
-    },
-  );
+  const router = useRouter();
 
   return (
     <div className="container mx-auto flex flex-col gap-4">
@@ -111,9 +57,9 @@ export default function ResumeListing({
             <ArrowRight className="w-4 h-4" />
           </Link>
         </Button>
-        <CreateResume />
+        <CreateResume router={router} />
       </div>
-      {optimisticResumes.length === 0 ? (
+      {initialResumes.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
           <p className="text-lg text-muted-foreground">No resumes found.</p>
           <p className="text-sm text-muted-foreground">
@@ -122,13 +68,8 @@ export default function ResumeListing({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {optimisticResumes.map((resume) => (
-            <ResumeCard
-              key={resume.id}
-              resume={resume}
-              updateOptimisticResumes={updateOptimisticResumes}
-              startTransition={startTransition}
-            />
+          {initialResumes.map((resume) => (
+            <ResumeCard key={resume.id} resume={resume} router={router} />
           ))}
         </div>
       )}
@@ -139,34 +80,19 @@ export default function ResumeListing({
 // Card component for a single resume
 function ResumeCard({
   resume,
-  updateOptimisticResumes,
-  startTransition,
+  router,
 }: {
   resume: Resume;
-  updateOptimisticResumes: (action: {
-    type: string;
-    resume?: Resume;
-    id?: string;
-  }) => void;
-  startTransition: (callback: () => Promise<void> | void) => void;
+  router: ReturnType<typeof useRouter>;
 }) {
-  const isLoading = resume._isOptimistic || resume._isDeleting;
-
   return (
-    <Card className={`transition-opacity ${isLoading ? "opacity-50" : ""}`}>
+    <Card>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-medium truncate">
             {resume.title}
           </CardTitle>
-          <ResumeDropdownMenu
-            resume={resume}
-            resumeId={resume.id}
-            updateOptimisticResumes={updateOptimisticResumes}
-            startTransition={startTransition}
-            isOptimistic={resume._isOptimistic}
-            isDeleting={resume._isDeleting}
-          />
+          <ResumeDropdownMenu resume={resume} router={router} />
         </div>
         <p className="text-sm text-muted-foreground">
           Updated {new Date(resume.updatedAt).toLocaleDateString()}
@@ -187,105 +113,66 @@ function ResumeCard({
 // Dropdown menu with actions for a resume
 function ResumeDropdownMenu({
   resume,
-  resumeId,
-  updateOptimisticResumes,
-  startTransition,
-  isOptimistic,
-  isDeleting,
+  router,
 }: {
   resume: Resume;
-  resumeId: string;
-  updateOptimisticResumes: (action: {
-    type: string;
-    resume?: Resume;
-    id?: string;
-    title?: string;
-    isDeleting?: boolean;
-  }) => void;
-  startTransition: (callback: () => Promise<void> | void) => void;
-  isOptimistic?: boolean;
-  isDeleting?: boolean;
+  router: ReturnType<typeof useRouter>;
 }) {
   const [isDeletingOpen, setIsDeletingOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
   const handleCopy = async () => {
-    startTransition(async () => {
-      // Create a temporary resume for the optimistic update
-      const optimisticResume: Resume = {
-        ...resume,
-        id: crypto.randomUUID(), // Temporary ID
-        title: `${resume.title} (Copy)`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        _isOptimistic: true,
-      };
-
-      updateOptimisticResumes({ type: "ADD", resume: optimisticResume });
-
-      try {
-        await createResumeFromVersion(resume.id);
-        toast.success("Resume copied successfully");
-      } catch (_error) {
-        toast.error("Failed to copy resume. Reverting changes.");
-        // This is tricky because revalidation might happen anyway.
-        // A full solution might involve passing the temporary ID back from the server
-        // to replace it, but for now, letting revalidation handle it is simplest.
-      }
-    });
+    setIsCopying(true);
+    try {
+      const newResume = await db.resumes.createFromResume(resume);
+      toast.success("Resume copied successfully");
+      router.push(`/resumes/${newResume.id}`);
+    } catch (_error) {
+      toast.error("Failed to copy resume");
+    } finally {
+      setIsCopying(false);
+    }
   };
 
   const handleDelete = async () => {
-    // Close the dialog first
     setIsDeletingOpen(false);
-    startTransition(async () => {
-      // Optimistically mark the resume as deleting
-      updateOptimisticResumes({
-        type: "DELETE",
-        id: resumeId,
-        isDeleting: true,
-      });
-
-      try {
-        await deleteResume(resumeId);
-        toast.success("Resume deleted successfully");
-        // No need to remove from state here, revalidation will do it.
-      } catch (_error) {
-        toast.error("Failed to delete resume");
-        // Revert the optimistic update on failure
-        updateOptimisticResumes({
-          type: "DELETE",
-          id: resumeId,
-          isDeleting: false,
-        });
-      }
-    });
+    setIsDeleting(true);
+    try {
+      await db.resumes.delete(resume.id);
+      toast.success("Resume deleted successfully");
+      router.refresh();
+    } catch (_error) {
+      toast.error("Failed to delete resume");
+    } finally {
+      setIsDeleting(false);
+    }
   };
-
-  if (isOptimistic || isDeleting) {
-    return (
-      <Button variant="ghost" size="icon" disabled>
-        <MoreHorizontal className="h-4 w-4 animate-pulse" />
-      </Button>
-    );
-  }
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={isDeleting || isCopying}
+          >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={handleCopy}>Copy Resume</DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleCopy} disabled={isCopying}>
+            {isCopying ? "Copying..." : "Copy Resume"}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onSelect={() => setIsDeletingOpen(true)}
+            disabled={isDeleting}
           >
-            Delete Resume
+            {isDeleting ? "Deleting..." : "Delete Resume"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -314,7 +201,7 @@ function ResumeDropdownMenu({
   );
 }
 
-function CreateResume() {
+function CreateResume({ router }: { router: ReturnType<typeof useRouter> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState<string | undefined>();
@@ -341,28 +228,33 @@ function CreateResume() {
     }
   };
 
+  const resetForm = () => {
+    setTitle("");
+    setMarkdown(undefined);
+    setCss(undefined);
+    setMarkdownFileName("");
+    setCssFileName("");
+    if (markdownFileRef.current) markdownFileRef.current.value = "";
+    if (cssFileRef.current) cssFileRef.current.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || isPending) return;
 
     startTransition(async () => {
       try {
-        await createResume({
-          title,
-          markdown,
-          css,
+        const newResume = await db.resumes.create({
+          title: title.trim(),
+          markdown: markdown ?? "",
+          css: css ?? "",
           styles: JSON.stringify(defaultStyles),
         });
+
         toast.success("Resume created successfully!");
         setIsOpen(false);
-        // Reset form
-        setTitle("");
-        setMarkdown(undefined);
-        setCss(undefined);
-        setMarkdownFileName("");
-        setCssFileName("");
-        if (markdownFileRef.current) markdownFileRef.current.value = "";
-        if (cssFileRef.current) cssFileRef.current.value = "";
+        resetForm();
+        router.push(`/resumes/${newResume.id}`);
       } catch (_error) {
         toast.error("Failed to create resume.");
       }

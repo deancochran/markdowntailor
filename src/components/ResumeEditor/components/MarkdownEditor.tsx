@@ -1,3 +1,4 @@
+"use client";
 import { diffEditorOptions } from "@/lib/utils/monacoOptions";
 import { DiffEditor } from "@monaco-editor/react";
 import { cx } from "class-variance-authority";
@@ -11,12 +12,7 @@ export function MarkdownEditor({
   isVisible,
 }: MarkdownEditorProps) {
   return (
-    <div
-      className={cx(
-        "absolute inset-0",
-        isVisible ? "block" : "hidden",
-      )}
-    >
+    <div className={cx("absolute inset-0", isVisible ? "block" : "hidden")}>
       <DiffEditor
         key="markdown-editor"
         language="markdown"

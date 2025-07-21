@@ -1,3 +1,4 @@
+"use client";
 import ResumePreview, { ResumePreviewRef } from "@/components/ResumePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { createResumeFromTemplate } from "@/lib/actions/resume";
 import { Template, TEMPLATES } from "@/lib/utils/templates";
+import { db } from "@/localforage";
 import { Loader2, Sparkles } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -43,7 +44,7 @@ export function TemplatePreview() {
   };
 
   const handleUseTemplate = async (template: Template) => {
-    const newResume = await createResumeFromTemplate(template);
+    const newResume = await db.resumes.createFromTemplate(template);
     if (newResume) {
       router.push(`/resumes/${newResume.id}`);
     }

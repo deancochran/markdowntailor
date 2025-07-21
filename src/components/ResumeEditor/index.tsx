@@ -1,11 +1,9 @@
 "use client";
 
 import { ResumePreviewRef } from "@/components/ResumePreview";
-import { resume as Resume } from "@/db/schema";
 import { useSanitizedInput } from "@/hooks/use-sanitized-input";
-import { useUser } from "@/hooks/use-user";
 import { defaultStyles } from "@/lib/utils/styles";
-import { InferSelectModel } from "drizzle-orm";
+import { Resume } from "@/localforage";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -13,20 +11,14 @@ import { DesktopLayout } from "./components/DesktopLayout";
 import { MobileLayout } from "./components/MobileLayout";
 import { ResumeHeader } from "./components/ResumeHeader";
 import { MobileTabs } from "./components/TabComponents";
-import { useAIChat } from "./hooks/useAIChat";
 import { useResumeActions } from "./hooks/useResumeActions";
 import { useResumeEditors } from "./hooks/useResumeEditors";
 import { useTabManager } from "./hooks/useTabManager";
 
-export default function ResumeEditor({
-  resume,
-}: {
-  resume: InferSelectModel<typeof Resume>;
-}) {
+export default function ResumeEditor({ resume }: { resume: Resume }) {
   const { watch, setValue } = useForm({
     defaultValues: resume,
   });
-  const { user } = useUser();
 
   // Form field watches
   const id = watch("id");
@@ -68,14 +60,19 @@ export default function ResumeEditor({
     "css",
     (error) => toast.error(`CSS sanitization: ${error}`),
   );
+  // Create current resume object from form values and editor state
+  const currentResume: Resume = {
+    id,
+    title: sanitizedTitle,
+    markdown: sanitizedMarkdown,
+    css: sanitizedCSS,
+    styles: JSON.stringify(styles),
+    createdAt: resume.createdAt,
+    updatedAt,
+  };
 
   const resumeActions = useResumeActions(
-    id,
-    resume.title,
-    sanitizedTitle,
-    sanitizedMarkdown,
-    sanitizedCSS,
-    JSON.stringify(styles),
+    currentResume, // Pass the current resume object instead of the original
     resumePreviewRef,
     (updatedResume) => {
       // Update form values
@@ -96,14 +93,6 @@ export default function ResumeEditor({
         setStyles(defaultStyles);
       }
     },
-  );
-
-  // AI Chat hook
-  const chatHooks = useAIChat(
-    sanitizedMarkdown,
-    sanitizedCSS,
-    sanitizedTitle,
-    editorHooks.applyModification,
   );
 
   // Effect to warn user before closing tab with unsaved changes
@@ -150,8 +139,6 @@ export default function ResumeEditor({
     setStyles,
   };
 
-  const userCredits = user?.credits || null;
-
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100%] max-h-[100%]">
       <ResumeHeader
@@ -183,9 +170,7 @@ export default function ResumeEditor({
           onPreviewTabChange={tabManager.setPreviewTab}
           editorState={editorState}
           editorHooks={editorHooks}
-          chatHooks={chatHooks}
           resumePreviewRef={resumePreviewRef}
-          userCredits={userCredits}
         />
 
         <MobileLayout
@@ -193,9 +178,7 @@ export default function ResumeEditor({
           onMobileTabChange={tabManager.setMobileTab}
           editorState={editorState}
           editorHooks={editorHooks}
-          chatHooks={chatHooks}
           resumePreviewRef={resumePreviewRef}
-          userCredits={userCredits}
         />
       </div>
     </div>

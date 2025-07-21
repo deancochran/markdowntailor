@@ -1,25 +1,17 @@
+"use client";
 import { ResumePreviewRef } from "@/components/ResumePreview";
-import { resume as Resume } from "@/db/schema";
 import { useSaveResume } from "@/hooks/useSaveResume";
-import {
-  createResumeFromVersion,
-  deleteResume,
-  saveResume,
-} from "@/lib/actions/resume";
-import { InferSelectModel } from "drizzle-orm";
+
+import { db, Resume } from "@/localforage";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { UseResumeActionsReturn } from "../types";
+
 export function useResumeActions(
-  resumeId: string,
-  resumeTitle: string,
-  title: string,
-  markdown: string,
-  css: string,
-  styles: string,
+  resume: Resume,
   resumePreviewRef: React.RefObject<ResumePreviewRef | null>,
-  onSaveSuccess: (updatedResume: InferSelectModel<typeof Resume>) => void,
+  onSaveSuccess: (updatedResume: Resume) => void,
 ): UseResumeActionsReturn {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -27,12 +19,7 @@ export function useResumeActions(
 
   // Manual save functionality
   const { isSaving, isDirty, save } = useSaveResume({
-    resumeId,
-    title,
-    markdown,
-    css,
-    styles,
-    saveFunction: saveResume,
+    resume,
     onSaveSuccess,
   });
 
@@ -40,16 +27,17 @@ export function useResumeActions(
     if (window.confirm("Are you sure you want to delete this resume?")) {
       setIsDeleting(true);
       try {
-        await deleteResume(resumeId);
+        await db.resumes.delete(resume.id);
         toast.success("Resume deleted successfully");
-        redirect("/resumes");
       } catch {
         toast.error("Failed to delete resume");
       } finally {
         setIsDeleting(false);
       }
+      redirect("/resumes");
     }
-  }, [resumeId]);
+  }, [resume.id]);
+
   const handlePrint = useCallback(() => {
     setIsPrinting(true);
 
@@ -68,29 +56,42 @@ export function useResumeActions(
       setIsPrinting(false);
     }
   }, [resumePreviewRef]);
+
   const handleDuplicate = useCallback(async () => {
     setIsDuplicating(true);
-    let response;
     try {
-      response = await createResumeFromVersion(resumeId);
+      const newResume = await db.resumes.createFromResume({
+        markdown: resume.markdown,
+        css: resume.css,
+        styles: resume.styles,
+      });
+
       toast.success("Resume duplicated successfully");
+      redirect(`/resumes/${newResume.id}`);
     } catch {
       toast.error("Failed to duplicate resume");
     } finally {
       setIsDuplicating(false);
     }
-    if (response) {
-      redirect(`/resumes/${response.resumeId}`);
-    }
-  }, [resumeId]);
+  }, [resume.markdown, resume.css, resume.styles]);
 
   const handleSave = useCallback(async () => {
+    console.log("handleSave called, isDirty:", isDirty);
+    console.log("Current resume:", resume);
+
+    if (!isDirty) {
+      toast.info("No changes to save");
+      return;
+    }
+
     try {
-      await save();
+      const result = await save();
+      console.log("Save result:", result);
     } catch (error) {
       console.error("Save failed:", error);
+      // Error handling is already done in the save function
     }
-  }, [save]);
+  }, [save, isDirty, resume]);
 
   return {
     isDeleting,

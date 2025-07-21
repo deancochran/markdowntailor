@@ -1,3 +1,4 @@
+"use client";
 import { useSmartPages } from "@/hooks/useSmartPages";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { DynamicCssService } from "@/services/dynamic-css";
@@ -193,8 +194,8 @@ function createCombinedPageContent(
 // Component functions
 function PreviewControls({
   zoomControls,
-  scale,
-  totalPages,
+  scale: _scale,
+  totalPages: _totalPages,
 }: PreviewControlsProps) {
   const { zoomIn, zoomOut, resetZoom } = zoomControls;
 

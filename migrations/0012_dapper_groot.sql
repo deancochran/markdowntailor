@@ -1,1 +1,0 @@
-ALTER TABLE "user" ALTER COLUMN "model_preference" SET DEFAULT 'gpt-4.1';

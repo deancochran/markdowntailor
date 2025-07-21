@@ -1,9 +1,8 @@
 import { ResumePreviewRef } from "@/components/ResumePreview";
-import { resume as Resume } from "@/db/schema";
 import { ResumeStyles } from "@/lib/utils/styles";
+import { Resume } from "@/localforage";
 import { UseChatHelpers } from "@ai-sdk/react";
 import { Attachment } from "ai";
-import { InferSelectModel } from "drizzle-orm";
 import type { editor } from "monaco-editor";
 
 // Add custom properties to HTMLDivElement type
@@ -53,12 +52,12 @@ export type Modification = {
 
 // Tab types
 export type EditorTab = "markdown" | "css";
-export type PreviewTab = "preview" | "chat";
-export type MobileTab = "markdown" | "css" | "preview" | "chat";
+export type PreviewTab = "preview";
+export type MobileTab = "markdown" | "css" | "preview";
 
 // Component prop types
 export type ResumeEditorProps = {
-  resume: InferSelectModel<typeof Resume>;
+  resume: Resume;
 };
 
 export type EditorMountHandler = (
@@ -110,7 +109,6 @@ export type UseAIChatReturn = {
   reload: UseChatHelpers["reload"];
   attachments: Attachment[];
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-  featureDisabled: boolean;
 };
 
 // Shared editor state
@@ -194,7 +192,5 @@ export type ChatPanelProps = {
   reload: UseChatHelpers["reload"];
   attachments: Attachment[];
   setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-  featureDisabled: boolean;
-  userCredits: string | null;
   isVisible: boolean;
 };

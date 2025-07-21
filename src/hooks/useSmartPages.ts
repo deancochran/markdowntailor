@@ -1,3 +1,4 @@
+"use client";
 import {
   MM_TO_PX,
   PAPER_SIZES,
