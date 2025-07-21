@@ -1,5 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import { getPost } from "@/lib/blog";
+import { getPost, getPosts } from "@/lib/blog";
 import { components } from "@/mdx-components";
 import { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
@@ -11,11 +11,21 @@ import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import remarkToc from "remark-toc";
 // Generate metadata for the page
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateStaticParams() {
+  const posts = await getPosts();
+
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
+
+interface PageProps {
+  params: Promise<{ [key: string]: string }>;
+}
+
+// Generate metadata for the page
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPost(slug);
 
@@ -37,11 +47,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function PostPage({ params }: PageProps) {
   // Get post data
   const { slug } = await params;
   const post = await getPost(slug);
@@ -145,4 +151,3 @@ export default async function PostPage({
   );
 }
 
-export const dynamicParams = true;

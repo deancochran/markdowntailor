@@ -1,14 +1,8 @@
 import AppFooter from "@/components/AppFooter";
 import { Metadata } from "next";
 
-import { headers } from "next/headers";
-
 // Default metadata for public pages
 export async function generateMetadata(): Promise<Metadata> {
-  // Get the pathname
-  const headersList = await headers();
-  const pathname = headersList.get("x-pathname") || "";
-
   const currentPage = {
     title: "Professionally Designed Resume Templates | markdowntailor",
     description:
@@ -17,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 
   // Construct canonical URL
-  const canonicalUrl = pathname;
+  const canonicalUrl = "/templates";
 
   return {
     title: currentPage.title,

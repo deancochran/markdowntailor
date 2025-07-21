@@ -1,13 +1,32 @@
 "use client";
+
+import ResumeEditorLoadingSkeleton from "@/components/loading/ResumeEditorLoadingSkeleton";
 import ResumeListing from "@/components/resume-listing";
+import ResumeEditor from "@/components/ResumeEditor";
+import ResumeVersions from "@/components/ResumeVersions";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { db, Resume } from "@/localforage";
+import { db, Resume, ResumeVersion } from "@/localforage";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-export default function ResumesPage() {
-  const [resumes, setResumes] = useState<Resume[]>([]);
+// A wrapper component to ensure useSearchParams is used within a Suspense boundary
+function ResumePageContent() {
+  const searchParams = useSearchParams();
+  const uuid = searchParams.get("uuid");
+  const view = searchParams.get("view");
 
+  if (uuid) {
+    if (view === "versions") {
+      return <ResumeVersionsWrapper resumeId={uuid} />;
+    }
+    return <ResumeEditorWrapper resumeId={uuid} />;
+  }
+
+  return <ResumeListingWrapper />;
+}
+
+function ResumeListingWrapper() {
+  const [resumes, setResumes] = useState<Resume[]>([]);
   useEffect(() => {
     async function fetchData() {
       const resumes = await db.resumes.findAll();
@@ -20,77 +39,113 @@ export default function ResumesPage() {
 
     fetchData();
   }, []);
-
   return (
-    <Suspense fallback={<LoadingSkeleton />}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">My Resumes</h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Create, manage, and export your professional resumes
-              </p>
-            </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">My Resumes</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Create, manage, and export your professional resumes
+            </p>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <ResumeListing initialResumes={resumes} />
-      </div>
-    </Suspense>
+      <ResumeListing initialResumes={resumes} />
+    </div>
   );
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="animate-pulse">
-        {/* Header skeleton */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
+function ResumeEditorWrapper({ resumeId }: { resumeId: string }) {
+  const [resume, setResume] = useState<Resume>();
+  const [loading, setLoading] = useState(true);
 
-        {/* Notice skeleton */}
-        <div className="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <Skeleton className="h-6 w-6 rounded-full" />
-            <div className="ml-3 flex-1">
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          </div>
-        </div>
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = (await db.resumes.findById(resumeId)) ?? undefined;
+        if (!cancelled) setResume(data);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeId]);
 
-        {/* Resume Listing skeleton */}
-        <Card className="border">
+  if (loading) {
+    return <ResumeEditorLoadingSkeleton />;
+  }
+  if (!resume) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Resume not found</h2>
+          <p>
+            The resume you&apos;re looking for doesn&apos;t exist or has been
+            removed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <ResumeEditor resume={resume} />;
+}
+
+function ResumeVersionsWrapper({ resumeId }: { resumeId: string }) {
+  const [versions, setVersions] = useState<ResumeVersion[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = (await db.resumeVersions.findAllByResumeId(resumeId)) ?? [];
+        if (!cancelled) setVersions(data);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeId]);
+
+  if (loading) {
+    // You can create a specific loading skeleton for versions
+    return <div>Loading versions...</div>;
+  }
+
+  if (versions?.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="w-96">
           <CardHeader>
-            <Skeleton className="h-6 w-32" />
+            <h2 className="text-2xl font-bold text-center">
+              No versions found
+            </h2>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="p-4">
-                  <div className="flex justify-between items-start mb-4">
-                    <Skeleton className="h-5 w-3/4" />
-                    <Skeleton className="h-8 w-8 rounded" />
-                  </div>
-                  <div className="space-y-2 mb-4">
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-3 w-32" />
-                    <Skeleton className="h-3 w-28" />
-                  </div>
-                  <Skeleton className="h-8 w-full" />
-                </Card>
-              ))}
-            </div>
+            <p className="text-muted-foreground text-center">
+              There are no versions for the resume you&apos;re looking for.
+            </p>
           </CardContent>
         </Card>
       </div>
-    </div>
+    );
+  }
+
+  return <ResumeVersions versions={versions} />;
+}
+
+export default function ResumesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResumePageContent />
+    </Suspense>
   );
 }

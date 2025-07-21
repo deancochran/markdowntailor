@@ -102,7 +102,7 @@ function ResumeCard({
       <CardFooter className="pt-0">
         <div className="flex w-full gap-2">
           <Button asChild variant="default" className="flex-1">
-            <Link href={`/resumes/${resume.id}`}>Edit</Link>
+            <Link href={`/resumes?uuid=${resume.id}`}>Edit</Link>
           </Button>
         </div>
       </CardFooter>
@@ -127,7 +127,7 @@ function ResumeDropdownMenu({
     try {
       const newResume = await db.resumes.createFromResume(resume);
       toast.success("Resume copied successfully");
-      router.push(`/resumes/${newResume.id}`);
+      router.push(`/resumes?uuid=${newResume.id}`);
     } catch (_error) {
       toast.error("Failed to copy resume");
     } finally {
@@ -254,7 +254,7 @@ function CreateResume({ router }: { router: ReturnType<typeof useRouter> }) {
         toast.success("Resume created successfully!");
         setIsOpen(false);
         resetForm();
-        router.push(`/resumes/${newResume.id}`);
+        router.push(`/resumes?uuid=${newResume.id}`);
       } catch (_error) {
         toast.error("Failed to create resume.");
       }
