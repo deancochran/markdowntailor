@@ -1,8 +1,6 @@
 import { ResumePreviewRef } from "@/components/ResumePreview";
 import { ResumeStyles } from "@/lib/utils/styles";
 import { Resume } from "@/localforage";
-import { UseChatHelpers } from "@ai-sdk/react";
-import { Attachment } from "ai";
 import type { editor } from "monaco-editor";
 
 // Add custom properties to HTMLDivElement type
@@ -98,18 +96,7 @@ export type UseTabManagerReturn = {
   setMobileTab: (tab: MobileTab) => void;
 };
 
-export type UseAIChatReturn = {
-  messages: UseChatHelpers["messages"];
-  setMessages: UseChatHelpers["setMessages"];
-  handleSubmit: UseChatHelpers["handleSubmit"];
-  input: UseChatHelpers["input"];
-  setInput: UseChatHelpers["setInput"];
-  status: UseChatHelpers["status"];
-  stop: UseChatHelpers["stop"];
-  reload: UseChatHelpers["reload"];
-  attachments: Attachment[];
-  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-};
+
 
 // Shared editor state
 export type EditorState = {
@@ -181,16 +168,3 @@ export type PreviewPanelProps = {
   isVisible: boolean;
 };
 
-export type ChatPanelProps = {
-  messages: UseChatHelpers["messages"];
-  setMessages: UseChatHelpers["setMessages"];
-  input: UseChatHelpers["input"];
-  setInput: UseChatHelpers["setInput"];
-  handleSubmit: UseChatHelpers["handleSubmit"];
-  status: UseChatHelpers["status"];
-  stop: UseChatHelpers["stop"];
-  reload: UseChatHelpers["reload"];
-  attachments: Attachment[];
-  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
-  isVisible: boolean;
-};
